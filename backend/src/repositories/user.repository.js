@@ -4,10 +4,22 @@ async function findByEmail(email) {
   const request = await getRequest();
   request.input('email', sql.NVarChar(200), email);
   const result = await request.query(`
-    SELECT TOP 1 Id, Nome, Email, SenhaHash, Tipo, Ativo
+    SELECT TOP 1 Id, Nome, Email, SenhaHash, Tipo, Ativo, UltimoLoginEm, CreatedAt
     FROM dbo.Users
-    WHERE Email = @email
+    WHERE LOWER(Email) = LOWER(@email)
   `);
+  return result.recordset[0] || null;
+}
+
+async function findById(id) {
+  const request = await getRequest();
+  request.input('id', sql.Int, id);
+  const result = await request.query(`
+    SELECT TOP 1 Id, Nome, Email, Tipo, Ativo, UltimoLoginEm, CreatedAt
+    FROM dbo.Users
+    WHERE Id = @id
+  `);
+
   return result.recordset[0] || null;
 }
 
@@ -27,7 +39,19 @@ async function createUser({ nome, email, senhaHash, tipo }) {
   return result.recordset[0];
 }
 
+async function touchLastLogin(id) {
+  const request = await getRequest();
+  request.input('id', sql.Int, id);
+  await request.query(`
+    UPDATE dbo.Users
+    SET UltimoLoginEm = SYSUTCDATETIME()
+    WHERE Id = @id
+  `);
+}
+
 module.exports = {
   findByEmail,
-  createUser
+  findById,
+  createUser,
+  touchLastLogin
 };

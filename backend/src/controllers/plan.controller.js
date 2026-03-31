@@ -9,6 +9,16 @@ async function list(req, res, next) {
   }
 }
 
+async function getBySlug(req, res, next) {
+  try {
+    const plan = await planService.getPlanBySlug(req.params.slug);
+    res.json(plan);
+  } catch (e) {
+    next(e);
+  }
+}
+
 module.exports = {
-  list
+  list,
+  getBySlug
 };

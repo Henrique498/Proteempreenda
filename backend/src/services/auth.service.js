@@ -19,7 +19,15 @@ async function register(input) {
   });
 
   const token = signToken({ sub: user.Id, tipo: user.Tipo, email: user.Email });
-  return { user, token };
+  return {
+    user: {
+      Id: user.Id,
+      Nome: user.Nome,
+      Email: user.Email,
+      Tipo: user.Tipo
+    },
+    token
+  };
 }
 
 async function login({ email, senha }) {
@@ -36,6 +44,8 @@ async function login({ email, senha }) {
     err.status = 401;
     throw err;
   }
+
+  await userRepository.touchLastLogin(user.Id);
 
   const token = signToken({ sub: user.Id, tipo: user.Tipo, email: user.Email });
   return {
