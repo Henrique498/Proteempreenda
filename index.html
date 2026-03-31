@@ -259,7 +259,7 @@
       overflow: hidden;
     }
     :root.light-mode .splash-loading {
-      background: var(--navy);
+      background: #F0F4FA;
     }
     .splash-loading.hidden {
       opacity: 0;
@@ -281,7 +281,8 @@
       filter: saturate(0.88) contrast(0.95) brightness(0.92);
     }
     .splash-lottie-fallback {
-      font-size: 6rem;
+      width: min(42vw, 220px);
+      height: auto;
       filter: drop-shadow(0 0 16px rgba(122,184,240,0.32));
       animation: flutuar 1.8s ease-in-out infinite;
     }
@@ -291,7 +292,7 @@
 
   <div id="splash-loading" class="splash-loading" aria-hidden="true">
     <div id="splash-lottie" class="splash-lottie">
-      <div id="splash-fallback" class="splash-lottie-fallback">🛡️</div>
+      <img id="splash-fallback" class="splash-lottie-fallback" src="logo.png" alt="GuardianNet">
     </div>
   </div>
 
@@ -532,7 +533,7 @@
     function iniciarSplashAnimacao() {
       if (!window.lottie || !splashLottie) return;
       const temaAtual = html.classList.contains('light-mode') ? 'light' : 'dark';
-      const caminhoAnimacao = temaAtual === 'light' ? 'Logo-3-remix.json' : 'Logo-3-remix.json';
+      const caminhoAnimacao = temaAtual === 'light' ? 'logoremixbranca.json' : 'Logo-3-remix.json';
 
       if (splashAnim) {
         splashAnim.destroy();
@@ -550,6 +551,10 @@
         }
       });
 
+      if (temaAtual === 'light') {
+        splashAnim.setSpeed(1);
+      }
+
       splashAnim.addEventListener('DOMLoaded', () => {
         if (splashFallback) splashFallback.style.display = 'none';
       });
@@ -561,10 +566,13 @@
       document.body.style.overflow = '';
       setTimeout(() => splash.remove(), 420);
     }
-    window.addEventListener('load', () => {
+    document.addEventListener('DOMContentLoaded', () => {
       document.body.style.overflow = 'hidden';
       iniciarSplashAnimacao();
       setTimeout(fecharSplash, 1800);
+    });
+    window.addEventListener('load', () => {
+      if (!splashAnim) iniciarSplashAnimacao();
     });
     setTimeout(fecharSplash, 4200);
   </script>
