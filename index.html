@@ -286,9 +286,68 @@
       filter: drop-shadow(0 0 16px rgba(122,184,240,0.32));
       animation: flutuar 1.8s ease-in-out infinite;
     }
+
+    .toast-logout {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 240px;
+      max-width: 340px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(46,204,113,0.35);
+      background: rgba(46,204,113,0.14);
+      color: var(--texto);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+    }
+
+    .toast-logout.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-logout .ico {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(46,204,113,0.2);
+      color: #2ecc71;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .toast-logout .txt {
+      font-size: 0.84rem;
+      line-height: 1.35;
+      color: var(--white-dim);
+    }
+
+    @media (max-width: 720px) {
+      .toast-logout {
+        left: 14px;
+        right: 14px;
+        bottom: 14px;
+        max-width: none;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <div id="toast-logout" class="toast-logout" role="status" aria-live="polite" aria-atomic="true">
+    <span class="ico">✓</span>
+    <span class="txt">Você saiu da conta com sucesso.</span>
+  </div>
 
   <div id="splash-loading" class="splash-loading" aria-hidden="true">
     <div id="splash-lottie" class="splash-lottie">
@@ -570,6 +629,16 @@
       document.body.style.overflow = 'hidden';
       iniciarSplashAnimacao();
       setTimeout(fecharSplash, 1800);
+
+      const logoutSuccess = sessionStorage.getItem('gn_logout_success') === '1';
+      if (logoutSuccess) {
+        const toast = document.getElementById('toast-logout');
+        sessionStorage.removeItem('gn_logout_success');
+        if (toast) {
+          requestAnimationFrame(() => toast.classList.add('show'));
+          setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+      }
     });
     window.addEventListener('load', () => {
       if (!splashAnim) iniciarSplashAnimacao();

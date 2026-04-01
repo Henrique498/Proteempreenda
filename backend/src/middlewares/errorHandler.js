@@ -6,10 +6,16 @@ function errorHandler(err, req, res, next) {
     console.error('[ERROR]', err);
   }
 
-  res.status(status).json({
+  const payload = {
     error: true,
     message
-  });
+  };
+
+  if (err.code) payload.code = err.code;
+  if (err.details) payload.details = err.details;
+  if (err.paidPlans) payload.paidPlans = err.paidPlans;
+
+  res.status(status).json(payload);
 }
 
 module.exports = errorHandler;

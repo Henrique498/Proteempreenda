@@ -255,6 +255,22 @@
 
     .topbar-btn:hover { background: var(--border); }
 
+    .topbar-logout {
+      width: auto;
+      border-radius: 999px;
+      padding: 0 12px;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--red);
+      border-color: rgba(255,59,92,0.25);
+      background: rgba(255,59,92,0.06);
+    }
+
+    .topbar-logout:hover {
+      background: rgba(255,59,92,0.14);
+    }
+
     .user-pill {
       display: flex; align-items: center; gap: 8px;
       background: var(--navy); border: 1px solid var(--border);
@@ -579,6 +595,7 @@
       .app { grid-template-columns: 1fr; }
       .sidebar { display: none; }
       .topbar, .main { grid-column: 1; }
+      .search-box { display: none; }
       .stats-row { grid-template-columns: 1fr 1fr; }
       .grid-3, .grid-2 { grid-template-columns: 1fr; }
     }
@@ -640,6 +657,7 @@
         <input type="text" placeholder="Buscar alertas, contatos...">
       </div>
       <button class="topbar-btn" onclick="toggleTheme()" id="theme-btn" title="Tema">🌙</button>
+      <button class="topbar-btn topbar-logout" onclick="logout()" title="Sair da conta">🚪 Sair</button>
       <div class="user-pill">
         <div class="user-av" id="user-av">U</div>
         <span class="user-name" id="user-name">Usuário</span>
@@ -1297,9 +1315,20 @@
   /* ════════════════════════════════════
      LOGOUT
   ════════════════════════════════════ */
+  function clearAuthSession() {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('gn_'))
+      .forEach((k) => localStorage.removeItem(k));
+
+    Object.keys(sessionStorage)
+      .filter((k) => k.startsWith('gn_'))
+      .forEach((k) => sessionStorage.removeItem(k));
+  }
+
   function logout() {
     if (confirm('Deseja sair da conta?')) {
-      ['gn_logado','gn_plano','gn_periodo','gn_nome'].forEach(k => localStorage.removeItem(k));
+      clearAuthSession();
+      sessionStorage.setItem('gn_logout_success', '1');
       window.location.href = 'index.html';
     }
   }
