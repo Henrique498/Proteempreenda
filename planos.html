@@ -78,13 +78,38 @@
       display: inline-block;
       padding: 4px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(46, 204, 113, 0.32);
-      background: rgba(46, 204, 113, 0.12);
-      color: #7cf0a7;
+      border: 1px solid rgba(122, 184, 240, 0.45);
+      background: rgba(122, 184, 240, 0.16);
+      color: var(--azul-pastel);
       font-size: 0.72rem;
       font-weight: 700;
       letter-spacing: 0.6px;
       text-transform: uppercase;
+    }
+    .hero-pontos-planos {
+      margin: 14px auto 0;
+      max-width: 560px;
+      text-align: left;
+      color: var(--white-dim);
+      padding-left: 18px;
+    }
+    .hero-pontos-planos li {
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+    .aviso-expirado {
+      margin: 14px auto 0;
+      max-width: 720px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 59, 92, 0.35);
+      background: rgba(255, 59, 92, 0.12);
+      color: #ff8fa4;
+      font-size: 0.88rem;
+      font-weight: 600;
+      line-height: 1.45;
+      text-align: center;
     }
 
     /* Cards de plano */
@@ -243,6 +268,7 @@
     .faq-item.aberto .faq-resposta { max-height: 200px; padding: 0 24px 20px; }
 
     @media (max-width: 900px) { .planos-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) { .planos-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -270,8 +296,11 @@
     <div class="container">
       <span class="tag-secao animar">Planos</span>
       <h1 class="titulo-secao hero-title-xl animar-2">Proteção para <span>todo tipo de família</span></h1>
-      <p class="subtitulo-secao animar-3 mx-auto">Comece grátis. Sem cartão de crédito. Cancele quando quiser.</p>
-      <div class="aviso-trial animar-3">🎁 30 dias grátis nos planos pagos</div>
+      <p class="subtitulo-secao animar-3 mx-auto">Teste de 30 dias no plano gratuito. Depois, escolha uma assinatura para continuar.</p>
+      <ul class="hero-pontos-planos animar-3">
+      </ul>
+      <div class="aviso-expirado hidden" id="aviso-expirado">Seu período gratuito de 30 dias terminou. Para continuar usando o GuardianNet, assine um dos planos abaixo.</div>
+      
 
       <div class="toggle-periodo animar-4" onclick="togglePeriodo()">
         <span id="label-mensal" class="ativo">Mensal</span>
@@ -289,13 +318,14 @@
         <!-- GRATUITO -->
         <div class="plano-card">
           <div class="plano-nome">Gratuito</div>
+          <div class="plano-trial">30 dias grátis</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
             <span class="plano-valor">0</span>
           </div>
-          <div class="plano-periodo" id="periodo-gratuito">Para sempre</div>
+          <div class="plano-periodo" id="periodo-gratuito">por 30 dias</div>
           <div class="plano-periodo-equiv" id="periodo-gratuito-equiv"></div>
-          <p class="plano-descricao">Ideal para começar e conhecer o sistema com proteção básica para até 2 crianças.</p>
+          <p class="plano-descricao">Teste de 30 dias no plano gratuito. Ideal para começar com proteção básica para até 2 crianças.</p>
           <div class="divisor"></div>
           <div class="plano-features">
             <div class="feature-item"><span class="feature-check">✓</span> Até 2 crianças monitoradas</div>
@@ -313,7 +343,6 @@
         <!-- BÁSICO -->
         <div class="plano-card">
           <div class="plano-nome">Básico</div>
-          <div class="plano-trial">30 dias grátis</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
             <span class="plano-valor" id="preco-basico">9,90</span>
@@ -341,7 +370,6 @@
         <div class="plano-card plano-destaque">
           <div class="badge-popular">⭐ MAIS POPULAR</div>
           <div class="plano-nome text-azul">Premium</div>
-          <div class="plano-trial">30 dias grátis</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
             <span class="plano-valor" id="preco-premium">24,90</span>
@@ -368,7 +396,6 @@
         <!-- ESCOLA -->
         <div class="plano-card">
           <div class="plano-nome">Escola</div>
-          <div class="plano-trial">30 dias grátis</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
             <span class="plano-valor" id="preco-escola">149,00</span>
@@ -397,7 +424,7 @@
   </section>
 
   <!-- FAQ -->
-  <section class="secao secao-surface">
+  <section class="secao secao-surface" id="faq">
     <div class="container container-narrow">
       <span class="tag-secao">FAQ</span>
       <h2 class="titulo-secao">Perguntas <span>frequentes</span></h2>
@@ -448,12 +475,13 @@
         <div><a href="index.html" class="logo"><img src="logo.png" alt="GuardianNet Logo" class="logo-icon">Guardian<span>Net</span></a><p class="footer-desc">Proteção digital infantil com inteligência artificial.</p><br><span class="badge-lei">⚠️ Conforme Lei 15.211/2025</span></div>
         <div class="footer-col"><h4>Produto</h4><ul><li><a href="como-funciona.html">Como Funciona</a></li><li><a href="planos.html">Planos</a></li></ul></div>
         <div class="footer-col"><h4>Empresa</h4><ul><li><a href="sobre.html">Sobre nós</a></li><li><a href="sobre.html">Base Legal</a></li></ul></div>
-        <div class="footer-col"><h4>Suporte</h4><ul><li><a href="#">FAQ</a></li><li><a href="#">Privacidade</a></li></ul></div>
+        <div class="footer-col"><h4>Suporte</h4><ul><li><a href="planos.html#faq">FAQ</a></li><li><a href="sobre.html">Privacidade</a></li></ul></div>
       </div>
       <div class="footer-bottom"><span>© 2026 GuardianNet · Todos os direitos reservados</span><span class="footer-love">Feito com 💙 para proteger crianças</span></div>
     </div>
   </footer>
 
+  <script src="site-animations.js"></script>
   <script>
     window.addEventListener('scroll', () => document.getElementById('header').classList.toggle('scrolled', window.scrollY > 40));
     function toggleMenu() { document.getElementById('nav-links').classList.toggle('aberto'); }
@@ -486,9 +514,8 @@
     function atualizarPrecos() {
       if (anual) {
         // Modo anual: mostrar preço total anual + equivalente mensal
-        document.getElementById('periodo-gratuito').textContent = '/ano';
-        document.getElementById('periodo-gratuito-equiv').textContent = 'R$ 0,00/mês';
-        document.getElementById('periodo-gratuito-equiv').classList.add('ativo');
+        document.getElementById('periodo-gratuito').textContent = 'por 30 dias';
+        document.getElementById('periodo-gratuito-equiv').classList.remove('ativo');
 
         document.getElementById('preco-basico').textContent = (9.90 * 12).toFixed(2).replace('.', ',');
         document.getElementById('periodo-basico').textContent = '/ano';
@@ -506,7 +533,7 @@
         document.getElementById('periodo-escola-equiv').classList.add('ativo');
       } else {
         // Modo mensal: mostrar apenas preço mensal
-        document.getElementById('periodo-gratuito').textContent = 'Para sempre';
+        document.getElementById('periodo-gratuito').textContent = 'por 30 dias';
         document.getElementById('periodo-gratuito-equiv').classList.remove('ativo');
 
         document.getElementById('preco-basico').textContent = '9,90';
@@ -535,9 +562,15 @@
 
     function ativarPlanoGratuito(event) {
       event.preventDefault();
+      const inicio = new Date();
+      const fim = new Date(inicio);
+      fim.setDate(fim.getDate() + 30);
+
       localStorage.setItem('gn_logado', 'true');
       localStorage.setItem('gn_plano', 'gratuito');
       localStorage.setItem('gn_periodo', 'mensal');
+      localStorage.setItem('gn_trial_started_at', inicio.toISOString());
+      localStorage.setItem('gn_trial_ends_at', fim.toISOString());
       if (!localStorage.getItem('gn_nome')) {
         localStorage.setItem('gn_nome', 'Responsável');
       }
@@ -560,6 +593,12 @@
       html.classList.add('light-mode');
     } else {
       html.classList.remove('light-mode');
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('trial') === 'expirado') {
+      const aviso = document.getElementById('aviso-expirado');
+      if (aviso) aviso.classList.remove('hidden');
     }
     
     // Update icon when page loads

@@ -226,6 +226,22 @@
       font-size: 1.1rem; font-weight: 800;
     }
 
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar-menu {
+      display: none;
+      width: auto;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      gap: 6px;
+    }
+
     .topbar-right { display: flex; align-items: center; gap: 10px; }
 
     .search-box {
@@ -296,6 +312,21 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 80;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+
+    .drawer-backdrop.aberto {
+      opacity: 1;
+      pointer-events: auto;
     }
 
     /* ══════════════════════════════════════
@@ -593,9 +624,19 @@
 
     @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
+      .sidebar {
+        display: flex;
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(82vw, 280px);
+        z-index: 90;
+        transform: translateX(-104%);
+        transition: transform .22s ease;
+      }
+      .sidebar.aberto { transform: translateX(0); }
       .topbar, .main { grid-column: 1; }
       .search-box { display: none; }
+      .topbar-menu { display: inline-flex; }
       .stats-row { grid-template-columns: 1fr 1fr; }
       .grid-3, .grid-2 { grid-template-columns: 1fr; }
     }
@@ -646,11 +687,16 @@
 
   </aside>
 
+  <div class="drawer-backdrop" id="drawer-backdrop" onclick="toggleSidebarMobile(false)"></div>
+
   <!-- ══════════════════════════════════
        TOPBAR
   ══════════════════════════════════ -->
   <header class="topbar">
-    <div class="topbar-titulo" id="topbar-titulo">Dashboard</div>
+    <div class="topbar-left">
+      <button class="topbar-btn topbar-menu" onclick="toggleSidebarMobile()" title="Abrir menu">☰ Menu</button>
+      <div class="topbar-titulo" id="topbar-titulo">Dashboard</div>
+    </div>
     <div class="topbar-right">
       <div class="search-box">
         <span style="color:var(--dim)">🔍</span>
@@ -1002,8 +1048,30 @@
   /* ════════════════════════════════════
      PROTEÇÃO DE ROTA
   ════════════════════════════════════ */
+  function trialGratuitoExpirou() {
+    const plano = localStorage.getItem('gn_plano');
+    if (plano !== 'gratuito') return false;
+
+    const fimTrial = localStorage.getItem('gn_trial_ends_at');
+    if (!fimTrial) return false;
+
+    const expiraEm = new Date(fimTrial).getTime();
+    if (Number.isNaN(expiraEm)) return false;
+
+    return Date.now() > expiraEm;
+  }
+
   if (!localStorage.getItem('gn_logado')) {
     window.location.href = 'planos.html';
+  }
+
+  if (trialGratuitoExpirou()) {
+    localStorage.removeItem('gn_logado');
+    localStorage.removeItem('gn_plano');
+    localStorage.removeItem('gn_periodo');
+    localStorage.removeItem('gn_trial_started_at');
+    localStorage.removeItem('gn_trial_ends_at');
+    window.location.href = 'planos.html?trial=expirado';
   }
 
   /* ════════════════════════════════════
@@ -1111,6 +1179,16 @@
   const pags = ['overview','alertas','contatos','relatorios','plano'];
   const titulos = { overview:'Dashboard', alertas:'Alertas', contatos:'Contatos Confiáveis', relatorios:'Relatórios', plano:'Meu Plano' };
 
+  function toggleSidebarMobile(force) {
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.getElementById('drawer-backdrop');
+    if (!sidebar || !backdrop) return;
+
+    const abrir = typeof force === 'boolean' ? force : !sidebar.classList.contains('aberto');
+    sidebar.classList.toggle('aberto', abrir);
+    backdrop.classList.toggle('aberto', abrir);
+  }
+
   function mudarPag(id, el) {
     pags.forEach(p => {
       const el = document.getElementById('pg-' + p);
@@ -1126,6 +1204,10 @@
       if (b) b.style.display = 'none';
     }
     if (id === 'relatorios') setTimeout(desenharGraficoRelatorio, 60);
+
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      toggleSidebarMobile(false);
+    }
   }
 
   /* ════════════════════════════════════

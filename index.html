@@ -69,7 +69,18 @@
       color: var(--white-dim);
       max-width: 480px;
       line-height: 1.8;
-      margin-bottom: 40px;
+      margin-bottom: 18px;
+    }
+    .hero-pontos {
+      margin: 0 0 36px;
+      padding-left: 18px;
+      color: var(--white-dim);
+      max-width: 520px;
+    }
+    .hero-pontos li {
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+      line-height: 1.55;
     }
     .hero-botoes { display: flex; gap: 16px; flex-wrap: wrap; }
     .hero-visual { position: relative; display: flex; justify-content: center; }
@@ -392,8 +403,13 @@
             O GuardianNet usa inteligência artificial para identificar sinais de aliciamento
             e manipulação em conversas online — antes que algo grave aconteça.
           </p>
+          <ul class="hero-pontos animar-3">
+            <li>Detecção de risco em tempo real.</li>
+            <li>Alerta imediato para responsáveis.</li>
+            <li>Teste de 30 dias no plano gratuito.</li>
+          </ul>
           <div class="hero-botoes animar-4">
-            <a href="planos.html" class="btn-primario">🛡️ Proteger Agora</a>
+            <a href="planos.html" class="btn-primario">🛡️ Começar grátis</a>
             <a href="como-funciona.html" class="btn-secundario">Ver como funciona →</a>
           </div>
         </div>
@@ -477,10 +493,10 @@
   <section class="cta-section">
     <div class="container">
       <h2 class="cta-titulo">Comece a proteger<br><span class="texto-gradiente">gratuitamente hoje</span></h2>
-      <p class="cta-desc">Versão gratuita disponível para sempre. Sem cartão de crédito. Configure em menos de 5 minutos.</p>
+      <p class="cta-desc">Teste de 30 dias no plano gratuito. Sem cartão de crédito. Configure em menos de 5 minutos.</p>
       <div class="cta-botoes">
-        <a href="planos.html" class="btn-primario">🛡️ Criar conta grátis</a>
-        <a href="como-funciona.html" class="btn-secundario">Saiba mais →</a>
+        <a href="planos.html" class="btn-primario">🛡️ Começar grátis</a>
+        <a href="como-funciona.html" class="btn-secundario">Ver como funciona →</a>
       </div>
     </div>
   </section>
@@ -495,7 +511,7 @@
         </div>
         <div class="footer-col"><h4>Produto</h4><ul><li><a href="como-funciona.html">Como Funciona</a></li><li><a href="planos.html">Planos e Preços</a></li></ul></div>
         <div class="footer-col"><h4>Empresa</h4><ul><li><a href="sobre.html">Sobre nós</a></li><li><a href="sobre.html">Base Legal</a></li></ul></div>
-        <div class="footer-col"><h4>Suporte</h4><ul><li><a href="#">FAQ</a></li><li><a href="#">Privacidade</a></li></ul></div>
+        <div class="footer-col"><h4>Suporte</h4><ul><li><a href="planos.html#faq">FAQ</a></li><li><a href="sobre.html">Privacidade</a></li></ul></div>
       </div>
       <div class="footer-bottom">
         <span>© 2026 GuardianNet · Todos os direitos reservados</span>
@@ -504,7 +520,7 @@
     </div>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+  <script src="site-animations.js"></script>
   <script>
     const header = document.getElementById('header');
     window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 40));
@@ -521,24 +537,29 @@
     resize();
     window.addEventListener('resize', resize);
 
-    for (let i = 0; i < 80; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.5+0.3, vx: (Math.random()-.5)*.4, vy: (Math.random()-.5)*.4, a: Math.random()*.5+.1 });
+    const isMobile = window.matchMedia('(max-width: 900px)').matches;
+    if (!isMobile) {
+      for (let i = 0; i < 80; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.5+0.3, vx: (Math.random()-.5)*.4, vy: (Math.random()-.5)*.4, a: Math.random()*.5+.1 });
 
-    function draw() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      pts.forEach(p => {
-        p.x+=p.vx; p.y+=p.vy;
-        if(p.x<0||p.x>canvas.width) p.vx*=-1;
-        if(p.y<0||p.y>canvas.height) p.vy*=-1;
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle=`rgba(0,200,255,${p.a})`; ctx.fill();
-      });
-      for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) {
-        const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
-        if(d<120) { ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.strokeStyle=`rgba(0,200,255,${.08*(1-d/120)})`; ctx.lineWidth=.5; ctx.stroke(); }
+      function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pts.forEach(p => {
+          p.x+=p.vx; p.y+=p.vy;
+          if(p.x<0||p.x>canvas.width) p.vx*=-1;
+          if(p.y<0||p.y>canvas.height) p.vy*=-1;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+          ctx.fillStyle=`rgba(0,200,255,${p.a})`; ctx.fill();
+        });
+        for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) {
+          const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
+          if(d<120) { ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.strokeStyle=`rgba(0,200,255,${.08*(1-d/120)})`; ctx.lineWidth=.5; ctx.stroke(); }
+        }
+        requestAnimationFrame(draw);
       }
-      requestAnimationFrame(draw);
+      draw();
+    } else {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
     }
-    draw();
 
     const html = document.documentElement;
     const themeIcon = document.getElementById('theme-icon');
@@ -589,6 +610,18 @@
 
     let splashAnim = null;
 
+    function carregarLottieApos() {
+      if (window.lottie) return Promise.resolve();
+      return new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js';
+        s.async = true;
+        s.onload = () => resolve();
+        s.onerror = () => resolve();
+        document.body.appendChild(s);
+      });
+    }
+
     function iniciarSplashAnimacao() {
       if (!window.lottie || !splashLottie) return;
       const temaAtual = html.classList.contains('light-mode') ? 'light' : 'dark';
@@ -626,9 +659,19 @@
       setTimeout(() => splash.remove(), 420);
     }
     document.addEventListener('DOMContentLoaded', () => {
+      if (window.__gnCurtainActive) {
+        // Se a curtain Lottie está ativa, não usar splash duplicado
+        if (splash) {
+          splash.classList.add('hidden');
+          setTimeout(() => splash.remove(), 20);
+        }
+        return;
+      }
       document.body.style.overflow = 'hidden';
-      iniciarSplashAnimacao();
-      setTimeout(fecharSplash, 1800);
+      setTimeout(() => {
+        carregarLottieApos().then(() => iniciarSplashAnimacao());
+      }, 120);
+      setTimeout(fecharSplash, 800);
 
       const logoutSuccess = sessionStorage.getItem('gn_logout_success') === '1';
       if (logoutSuccess) {
@@ -641,9 +684,9 @@
       }
     });
     window.addEventListener('load', () => {
+      if (window.__gnCurtainActive) return;
       if (!splashAnim) iniciarSplashAnimacao();
     });
-    setTimeout(fecharSplash, 4200);
   </script>
 </body>
 </html>
