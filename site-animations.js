@@ -88,6 +88,9 @@
     if (reduceMotion) return;
     if (curtainInitialized) return;
     if (document.getElementById('gn-curtain-main')) return;
+    const path = window.location.pathname.toLowerCase();
+    const isHome = path.endsWith('/') || path.endsWith('/index.html') || path.endsWith('index.html');
+    if (!isHome) return;
     curtainInitialized = true;
     window.__gnCurtainActive = true;
 

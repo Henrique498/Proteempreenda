@@ -807,6 +807,19 @@
             localStorage.setItem('gn_nome',    document.getElementById('nome').value.split(' ')[0]);
             localStorage.removeItem('gn_trial_started_at');
             localStorage.removeItem('gn_trial_ends_at');
+            
+            // Registra no banco (API local)
+            fetch('http://localhost:5000/api/checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                nome: document.getElementById('nome').value,
+                plano,
+                periodo,
+                metodo,
+                valor: tabelaPrecos[plano]?.[periodo] ?? 24.90
+              })
+            }).catch(() => {});
 
             // Redireciona para dashboard após 1.5s
             setTimeout(() => {
