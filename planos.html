@@ -59,6 +59,34 @@
       font-weight: 700;
     }
 
+    .aviso-trial {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(46, 204, 113, 0.35);
+      background: rgba(46, 204, 113, 0.12);
+      color: #7cf0a7;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .plano-trial {
+      margin-bottom: 14px;
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(46, 204, 113, 0.32);
+      background: rgba(46, 204, 113, 0.12);
+      color: #7cf0a7;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
     /* Cards de plano */
     .secao-no-top .container {
       max-width: 1680px;
@@ -243,6 +271,7 @@
       <span class="tag-secao animar">Planos</span>
       <h1 class="titulo-secao hero-title-xl animar-2">Proteção para <span>todo tipo de família</span></h1>
       <p class="subtitulo-secao animar-3 mx-auto">Comece grátis. Sem cartão de crédito. Cancele quando quiser.</p>
+      <div class="aviso-trial animar-3">🎁 30 dias grátis nos planos pagos</div>
 
       <div class="toggle-periodo animar-4" onclick="togglePeriodo()">
         <span id="label-mensal" class="ativo">Mensal</span>
@@ -284,6 +313,7 @@
         <!-- BÁSICO -->
         <div class="plano-card">
           <div class="plano-nome">Básico</div>
+          <div class="plano-trial">30 dias grátis</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
             <span class="plano-valor" id="preco-basico">9,90</span>
@@ -311,6 +341,7 @@
         <div class="plano-card plano-destaque">
           <div class="badge-popular">⭐ MAIS POPULAR</div>
           <div class="plano-nome text-azul">Premium</div>
+          <div class="plano-trial">30 dias grátis</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
             <span class="plano-valor" id="preco-premium">24,90</span>
@@ -337,6 +368,7 @@
         <!-- ESCOLA -->
         <div class="plano-card">
           <div class="plano-nome">Escola</div>
+          <div class="plano-trial">30 dias grátis</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
             <span class="plano-valor" id="preco-escola">149,00</span>
