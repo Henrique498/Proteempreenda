@@ -2,17 +2,20 @@
 # Módulo central de conexão com o SQL Server via pyodbc
 
 import pyodbc
+from dotenv import load_dotenv
+import os
 
+load_dotenv()  # Carrega variáveis de ambiente do .env 
 # ============================================================
 #  STRING DE CONEXÃO — SQL Server (Windows Authentication)
 #  Autenticação Windows (Trusted_Connection) — sem usuário/senha
 # ============================================================
 CONNECTION_STRING = (
-    "Driver={SQL Server};"
-    "Server=TBS0676779W11-1;"       # Nome do servidor (ou IP\INSTANCIA)
-    "Database=EMPREENDA;"           # Nome do banco de dados
-    "Trusted_Connection=yes;"       # Autenticação Windows
-    "Encrypt=no;"                   # Sem TLS (rede local)
+    f"Driver={{{os.getenv('DB_DRIVER')}}};"
+    f"Server={os.getenv('DB_SERVER')};"
+    f"Database={os.getenv('DB_NAME')};"
+    f"Trusted_Connection={os.getenv('DB_TRUSTED')};"
+    f"Encrypt={os.getenv('DB_ENCRYPT')};"
 )
 
 # ============================================================

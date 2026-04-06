@@ -3,26 +3,31 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from conexao import executar, get_connection
-import pyodbc
+from dotenv import load_dotenv
+from conexao import executar
+import os
 
+# 1. Carrega o .env PRIMEIRO
+load_dotenv()
+
+# 2. Cria o app DEPOIS
 app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET_KEY')
 CORS(app)
 
 
 # ============================================================
 #  ROTA: POST /api/checkout
 #  Registra um novo pagamento na tabela dbo.[User]
-#  (compatibilidade com o código HTML existente)
 # ============================================================
 @app.route('/api/checkout', methods=['POST'])
 def checkout():
-    data   = request.get_json(silent=True) or {}
-    nome   = (data.get('nome')   or '').strip()
-    plano  = (data.get('plano')  or '').strip()
+    data    = request.get_json(silent=True) or {}
+    nome    = (data.get('nome')    or '').strip()
+    plano   = (data.get('plano')   or '').strip()
     periodo = (data.get('periodo') or '').strip()
-    metodo = (data.get('metodo') or '').strip()
-    valor  = data.get('valor')
+    metodo  = (data.get('metodo')  or '').strip()
+    valor   = data.get('valor')
 
     if not nome or not plano or not periodo or not metodo or valor is None:
         return jsonify({"error": "Dados inválidos. Preencha todos os campos."}), 400
@@ -43,7 +48,6 @@ def checkout():
 
 # ============================================================
 #  ROTA: GET /api/usuarios
-#  Retorna todos os usuários cadastrados
 # ============================================================
 @app.route('/api/usuarios', methods=['GET'])
 def listar_usuarios():
@@ -59,7 +63,6 @@ def listar_usuarios():
 
 # ============================================================
 #  ROTA: GET /api/planos
-#  Retorna os planos disponíveis
 # ============================================================
 @app.route('/api/planos', methods=['GET'])
 def listar_planos():
@@ -75,7 +78,6 @@ def listar_planos():
 
 # ============================================================
 #  ROTA: GET /api/dashboard
-#  Dados agregados para o dashboard.html
 # ============================================================
 @app.route('/api/dashboard', methods=['GET'])
 def dashboard():
@@ -104,7 +106,6 @@ def dashboard():
 
 # ============================================================
 #  ROTA: GET /api/historico
-#  Histórico de pagamentos da tabela dbo.[User] (legado)
 # ============================================================
 @app.route('/api/historico', methods=['GET'])
 def historico():
@@ -119,4 +120,8 @@ def historico():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(
+        host='0.0.0.0',
+        port=int(os.getenv('FLASK_PORT', 5000)),
+        debug=os.getenv('FLASK_DEBUG') == 'True'
+    )
