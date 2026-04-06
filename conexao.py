@@ -14,22 +14,9 @@ CONNECTION_STRING = (
     f"Driver={{{os.getenv('DB_DRIVER')}}};"
     f"Server={os.getenv('DB_SERVER')};"
     f"Database={os.getenv('DB_NAME')};"
-    f"Trusted_Connection={os.getenv('DB_TRUSTED')};"
-    f"Encrypt={os.getenv('DB_ENCRYPT')};"
+    f"Trusted_Connection=yes;"
 )
 
-# ============================================================
-#  STRING ALTERNATIVA — SQL Server (usuário e senha)
-#  Use esta se o servidor exigir login SQL em vez de Windows
-# ============================================================
-# CONNECTION_STRING = (
-#     "Driver={SQL Server};"
-#     "Server=TBS0676774W11-1;"
-#     "Database=empreenda;"
-#     "UID=seu_usuario;"
-#     "PWD=sua_senha;"
-#     "Encrypt=no;"
-# )
 
 def get_connection() -> pyodbc.Connection:
     """
