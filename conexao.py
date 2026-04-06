@@ -9,8 +9,8 @@ import pyodbc
 # ============================================================
 CONNECTION_STRING = (
     "Driver={SQL Server};"
-    "Server=TBS0676774W11-1;"       # Nome do servidor (ou IP\INSTANCIA)
-    "Database=empreenda;"           # Nome do banco de dados
+    "Server=TBS0676779W11-1;"       # Nome do servidor (ou IP\INSTANCIA)
+    "Database=EMPREENDA;"           # Nome do banco de dados
     "Trusted_Connection=yes;"       # Autenticação Windows
     "Encrypt=no;"                   # Sem TLS (rede local)
 )
