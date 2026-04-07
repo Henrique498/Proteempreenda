@@ -6,16 +6,38 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()  # Carrega variáveis de ambiente do .env 
-# ============================================================
-#  STRING DE CONEXÃO — SQL Server (Windows Authentication)
-#  Autenticação Windows (Trusted_Connection) — sem usuário/senha
-# ============================================================
-CONNECTION_STRING = (
-    f"Driver={{{os.getenv('DB_DRIVER')}}};"
-    f"Server={os.getenv('DB_SERVER')};"
-    f"Database={os.getenv('DB_NAME')};"
-    f"Trusted_Connection=yes;"
-)
+
+
+def _as_bool(value: str, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return str(value).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _build_connection_string() -> str:
+    driver = os.getenv('DB_DRIVER', 'ODBC Driver 17 for SQL Server')
+    server = os.getenv('DB_SERVER', '')
+    database = os.getenv('DB_NAME', '')
+    trusted = _as_bool(os.getenv('DB_TRUSTED', 'no'))
+    encrypt = 'yes' if _as_bool(os.getenv('DB_ENCRYPT', 'yes')) else 'no'
+    trust_cert = 'yes' if _as_bool(os.getenv('DB_TRUST_SERVER_CERTIFICATE', 'yes')) else 'no'
+
+    parts = [
+        f"Driver={{{driver}}}",
+        f"Server={server}",
+        f"Database={database}",
+        f"Encrypt={encrypt}",
+        f"TrustServerCertificate={trust_cert}",
+        "Connection Timeout=10",
+    ]
+
+    if trusted:
+        parts.append('Trusted_Connection=yes')
+    else:
+        parts.append(f"UID={os.getenv('DB_USER', '')}")
+        parts.append(f"PWD={os.getenv('DB_PASS', '')}")
+
+    return ';'.join(parts) + ';'
 
 
 def get_connection() -> pyodbc.Connection:
@@ -23,7 +45,7 @@ def get_connection() -> pyodbc.Connection:
     Retorna uma conexão ativa com o SQL Server.
     Levanta exceção se falhar — trate com try/except no chamador.
     """
-    return pyodbc.connect(CONNECTION_STRING)
+    return pyodbc.connect(_build_connection_string())
 
 
 def executar(sql: str, params: tuple = (), fetch: bool = False):

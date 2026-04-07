@@ -1028,7 +1028,7 @@
           </div>
           <div id="plano-recursos" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
           </div>
-          <button onclick="logout()" style="width:100%;padding:10px;background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.2);border-radius:8px;color:var(--red);font-family:var(--font-body);font-size:.85rem;font-weight:600;cursor:pointer">Cancelar assinatura e sair</button>
+          <button onclick="cancelarAssinaturaESair()" style="width:100%;padding:10px;background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.2);border-radius:8px;color:var(--red);font-family:var(--font-body);font-size:.85rem;font-weight:600;cursor:pointer">Cancelar assinatura e sair</button>
         </div>
         <div class="panel">
           <div class="panel-titulo" style="margin-bottom:14px">📞 Suporte</div>
@@ -1045,6 +1045,9 @@
 
 
 <script>
+  const AUTH_API = 'http://localhost:5000/api/auth';
+  const SUBS_API = 'http://localhost:5000/api/subscription';
+
   /* ════════════════════════════════════
      PROTEÇÃO DE ROTA
   ════════════════════════════════════ */
@@ -1061,8 +1064,10 @@
     return Date.now() > expiraEm;
   }
 
-  if (!localStorage.getItem('gn_logado')) {
-    window.location.href = 'planos.html';
+  const gnToken = localStorage.getItem('gn_token');
+
+  if (!gnToken) {
+    window.location.href = 'index.html#acesso';
   }
 
   if (trialGratuitoExpirou()) {
@@ -1073,6 +1078,47 @@
     localStorage.removeItem('gn_trial_ends_at');
     window.location.href = 'planos.html?trial=expirado';
   }
+
+  async function validarSessaoServidor() {
+    const token = localStorage.getItem('gn_token');
+    if (!token) {
+      window.location.href = 'index.html#acesso';
+      return;
+    }
+
+    try {
+      const resp = await fetch(`${AUTH_API}/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error('Sessão inválida');
+      const me = await resp.json();
+      if (me?.nome) {
+        localStorage.setItem('gn_nome', (me.nome || '').split(' ')[0] || 'Usuário');
+      }
+
+      const respSubs = await fetch(`${SUBS_API}/current`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!respSubs.ok) throw new Error('Falha ao validar plano');
+      const subsData = await respSubs.json();
+      const assinatura = subsData?.assinatura;
+
+      if (!assinatura || !['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
+        localStorage.removeItem('gn_logado');
+        window.location.href = 'planos.html';
+        return;
+      }
+
+      localStorage.setItem('gn_logado', 'true');
+      localStorage.setItem('gn_plano', assinatura.plano || localStorage.getItem('gn_plano') || 'premium');
+      localStorage.setItem('gn_periodo', assinatura.periodo || localStorage.getItem('gn_periodo') || 'mensal');
+    } catch (_) {
+      clearAuthSession();
+      window.location.href = 'index.html#acesso';
+    }
+  }
+
+  validarSessaoServidor();
 
   /* ════════════════════════════════════
      DADOS DO USUÁRIO
@@ -1407,12 +1453,38 @@
       .forEach((k) => sessionStorage.removeItem(k));
   }
 
-  function logout() {
-    if (confirm('Deseja sair da conta?')) {
-      clearAuthSession();
-      sessionStorage.setItem('gn_logout_success', '1');
-      window.location.href = 'index.html';
+  async function logout() {
+    if (!confirm('Deseja sair da conta?')) return;
+
+    const token = localStorage.getItem('gn_token');
+    if (token) {
+      try {
+        await fetch(`${AUTH_API}/logout`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (_) {}
     }
+
+    clearAuthSession();
+    sessionStorage.setItem('gn_logout_success', '1');
+    window.location.href = 'index.html';
+  }
+
+  async function cancelarAssinaturaESair() {
+    if (!confirm('Deseja cancelar sua assinatura e sair?')) return;
+
+    const token = localStorage.getItem('gn_token');
+    if (token) {
+      try {
+        await fetch(`${SUBS_API}/cancel`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (_) {}
+    }
+
+    await logout();
   }
 </script>
 

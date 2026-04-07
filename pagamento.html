@@ -29,6 +29,72 @@
       align-items: start;
     }
 
+    .auth-inline {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 100px 24px 60px;
+      display: none;
+      min-height: calc(100vh - 24px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-inline.ativo { display: flex; }
+
+    .auth-inline .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .auth-inline-card {
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .auth-inline-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-form input {
+      width: 100%;
+      background: var(--navy-3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--white);
+      outline: none;
+    }
+
+    .auth-form input:focus {
+      border-color: var(--azul-pastel);
+      box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+
+    .auth-msg {
+      min-height: 18px;
+      font-size: 0.82rem;
+      color: var(--white-dim);
+    }
+
+    .auth-msg.erro { color: var(--red); }
+    .auth-msg.ok { color: #4ec97a; }
+
     /* ── FORMULÁRIO ── */
     .form-card {
       background: var(--navy-2);
@@ -78,7 +144,10 @@
     }
 
     .form-grupo input::placeholder { color: var(--white-dim); opacity: 0.5; }
-    .form-grupo select option { color: #111; }
+    .form-grupo select option {
+      color: var(--white);
+      background: var(--navy-3);
+    }
 
     .form-grupo input:focus {
       border-color: var(--azul-pastel);
@@ -386,12 +455,47 @@
     }
 
     @media (max-width: 768px) {
+      .auth-inline { padding: 88px 16px 36px; min-height: auto; }
+      .auth-inline-grid { grid-template-columns: 1fr; }
       .pagamento-container { grid-template-columns: 1fr; }
       .form-linha { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+
+  <section class="auth-inline" id="auth-inline">
+    <div class="container">
+      <div class="auth-inline-card">
+        <span class="tag-secao">Acesso</span>
+        <h2 class="titulo-secao" style="margin-bottom:10px">Entre ou crie sua conta</h2>
+        <p class="subtitulo-secao">Faça login/cadastro aqui para continuar com o pagamento e liberar o dashboard depois.</p>
+
+        <div class="auth-inline-grid">
+          <div>
+            <h3 style="font-family:var(--font-head);margin-bottom:12px">Entrar</h3>
+            <form id="form-login" class="auth-form">
+              <input type="email" id="login-email" placeholder="Seu e-mail" required>
+              <input type="password" id="login-senha" placeholder="Sua senha" required minlength="6">
+              <button type="submit" class="btn-primario">Entrar</button>
+              <div id="login-msg" class="auth-msg"></div>
+            </form>
+          </div>
+
+          <div>
+            <h3 style="font-family:var(--font-head);margin-bottom:12px">Criar conta</h3>
+            <form id="form-register" class="auth-form">
+              <input type="text" id="reg-nome" placeholder="Nome completo" required minlength="3">
+              <input type="email" id="reg-email" placeholder="Seu e-mail" required>
+              <input type="password" id="reg-senha" placeholder="Crie uma senha" required minlength="6">
+              <button type="submit" class="btn-primario">Criar conta</button>
+              <div id="register-msg" class="auth-msg"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Header -->
   <header id="header" class="scrolled">
@@ -592,7 +696,98 @@
     const params  = new URLSearchParams(window.location.search);
     const plano   = params.get('plano')   || localStorage.getItem('gn_plano') || 'premium';
     const periodo = params.get('periodo') || localStorage.getItem('gn_periodo') || 'mensal';
+    let tokenAuth = localStorage.getItem('gn_token');
     let etapaPagamento = 1;
+
+    const authInline = document.getElementById('auth-inline');
+    const pagamentoWrapper = document.querySelector('.pagamento-wrapper');
+
+    function setAuthMessage(el, text, type = '') {
+      if (!el) return;
+      el.className = 'auth-msg' + (type ? ` ${type}` : '');
+      el.textContent = text || '';
+    }
+
+    function authRequest(path, payload) {
+      return fetch(`http://localhost:5000/api/auth${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(async (resp) => {
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Erro de autenticação');
+        return data;
+      });
+    }
+
+    function mostrarAuthInline() {
+      if (authInline) authInline.classList.add('ativo');
+      if (pagamentoWrapper) pagamentoWrapper.style.display = 'none';
+    }
+
+    function liberarPagamento() {
+      if (authInline) authInline.classList.remove('ativo');
+      if (pagamentoWrapper) pagamentoWrapper.style.display = 'flex';
+      localStorage.setItem('gn_logado', 'true');
+    }
+
+    if (!tokenAuth) {
+      mostrarAuthInline();
+    } else {
+      liberarPagamento();
+    }
+
+    const loginForm = document.getElementById('form-login');
+    const registerForm = document.getElementById('form-register');
+    const loginMsg = document.getElementById('login-msg');
+    const registerMsg = document.getElementById('register-msg');
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setAuthMessage(loginMsg, 'Entrando...');
+        try {
+          const data = await authRequest('/login', {
+            email: document.getElementById('login-email').value.trim(),
+            senha: document.getElementById('login-senha').value
+          });
+          tokenAuth = data.token;
+          localStorage.setItem('gn_token', data.token);
+          liberarPagamento();
+          setAuthMessage(loginMsg, 'Autenticado. Agora conclua o pagamento.', 'ok');
+        } catch (err) {
+          setAuthMessage(loginMsg, err.message, 'erro');
+        }
+      });
+    }
+
+    if (registerForm) {
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setAuthMessage(registerMsg, 'Criando conta...');
+        try {
+          const data = await authRequest('/register', {
+            nome: document.getElementById('reg-nome').value.trim(),
+            email: document.getElementById('reg-email').value.trim(),
+            senha: document.getElementById('reg-senha').value
+          });
+          tokenAuth = data.token;
+          localStorage.setItem('gn_token', data.token);
+          liberarPagamento();
+          setAuthMessage(registerMsg, 'Conta criada. Agora conclua o pagamento.', 'ok');
+        } catch (err) {
+          setAuthMessage(registerMsg, err.message, 'erro');
+        }
+      });
+    }
+
+    function esconderDetalhesCobranca() {
+      document.getElementById('detalhes-cobranca').classList.remove('ativo');
+    }
+
+    function mostrarDetalhesCobranca() {
+      document.getElementById('detalhes-cobranca').classList.add('ativo');
+    }
 
     // Tabela de preços
     // anual = valor mensal equivalente no plano anual (20% OFF)
@@ -744,10 +939,24 @@
     }
 
     function liberarEtapaFinal() {
-      document.getElementById('detalhes-cobranca').classList.add('ativo');
+      mostrarDetalhesCobranca();
       document.getElementById('btn-pagar').textContent = '🔒 Pagar com segurança';
       etapaPagamento = 2;
     }
+
+    // Permite trocar entre PIX e Cartão mesmo após avançar
+    document.getElementById('metodo').addEventListener('change', function() {
+      if (etapaPagamento !== 2) return;
+
+      const btn = document.getElementById('btn-pagar');
+      if (this.value === 'pix') {
+        esconderDetalhesCobranca();
+        btn.textContent = '✅ Confirmar pagamento';
+      } else if (this.value === 'cartao') {
+        mostrarDetalhesCobranca();
+        btn.textContent = '🔒 Pagar com segurança';
+      }
+    });
 
     // ── Processar pagamento ──────────────────────────────────────
     function processar() {
@@ -801,7 +1010,6 @@
             `;
 
             // Salva no localStorage
-            localStorage.setItem('gn_logado',  'true');
             localStorage.setItem('gn_plano',   plano);
             localStorage.setItem('gn_periodo', periodo);
             localStorage.setItem('gn_nome',    document.getElementById('nome').value.split(' ')[0]);
@@ -821,10 +1029,37 @@
               })
             }).catch(() => {});
 
-            // Redireciona para dashboard após 1.5s
-            setTimeout(() => {
-              window.location.href = 'dashboard.html';
-            }, 1500);
+            // Registra assinatura do usuário autenticado
+            fetch('http://localhost:5000/api/subscription/start', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('gn_token') || tokenAuth || ''}`
+              },
+              body: JSON.stringify({
+                plano,
+                periodo,
+                metodo,
+                valor: tabelaPrecos[plano]?.[periodo] ?? 24.90
+              })
+            })
+            .then((r) => {
+              if (r.ok) {
+                localStorage.setItem('gn_logado', 'true');
+                setTimeout(() => {
+                  window.location.href = 'dashboard.html';
+                }, 1500);
+              } else {
+                localStorage.removeItem('gn_logado');
+                alert('Pagamento concluído, mas não foi possível ativar o plano. Tente novamente.');
+                window.location.href = 'planos.html';
+              }
+            })
+            .catch(() => {
+              localStorage.removeItem('gn_logado');
+              alert('Pagamento concluído, mas houve erro ao ativar assinatura.');
+              window.location.href = 'planos.html';
+            });
 
           } else {
             textoEl.textContent = texto;

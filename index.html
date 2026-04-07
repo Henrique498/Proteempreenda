@@ -343,12 +343,73 @@
       color: var(--white-dim);
     }
 
+    .auth-section {
+      padding: 80px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--navy-2);
+    }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 28px;
+    }
+
+    .auth-card {
+      background: var(--navy-3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .auth-card h3 {
+      font-family: var(--font-head);
+      font-size: 1.15rem;
+      margin-bottom: 14px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-form input {
+      width: 100%;
+      background: var(--navy-2);
+      color: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    .auth-form input:focus {
+      border-color: var(--azul-pastel);
+      box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+
+    .auth-msg {
+      min-height: 20px;
+      font-size: 0.82rem;
+      color: var(--white-dim);
+    }
+
+    .auth-msg.erro { color: var(--red); }
+    .auth-msg.ok { color: #4ec97a; }
+
     @media (max-width: 720px) {
       .toast-logout {
         left: 14px;
         right: 14px;
         bottom: 14px;
         max-width: none;
+      }
+
+      .auth-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -522,6 +583,102 @@
 
   <script src="site-animations.js"></script>
   <script>
+    const AUTH_API = 'http://localhost:5000/api/auth';
+    const SUBS_API = 'http://localhost:5000/api/subscription';
+
+    function setAuthMessage(el, text, type = '') {
+      if (!el) return;
+      el.className = 'auth-msg' + (type ? ` ${type}` : '');
+      el.textContent = text || '';
+    }
+
+    async function authRequest(path, payload, token = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const resp = await fetch(`${AUTH_API}${path}`, {
+        method: payload ? 'POST' : 'GET',
+        headers,
+        body: payload ? JSON.stringify(payload) : undefined
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Erro de autenticação');
+      return data;
+    }
+
+    function salvarSessao(token) {
+      localStorage.setItem('gn_token', token);
+    }
+
+    async function buscarAssinaturaAtual(token) {
+      const resp = await fetch(`${SUBS_API}/current`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error('Falha ao verificar assinatura');
+      const data = await resp.json();
+      return data?.assinatura || null;
+    }
+
+    async function redirecionarPosAuth(msgEl) {
+      const token = localStorage.getItem('gn_token');
+      if (!token) {
+        window.location.href = 'planos.html';
+        return;
+      }
+
+      try {
+        const assinatura = await buscarAssinaturaAtual(token);
+        if (assinatura && ['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
+          localStorage.setItem('gn_logado', 'true');
+          localStorage.setItem('gn_plano', assinatura.plano || 'premium');
+          localStorage.setItem('gn_periodo', assinatura.periodo || 'mensal');
+          setAuthMessage(msgEl, 'Acesso liberado! Redirecionando para o dashboard...', 'ok');
+          setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
+          return;
+        }
+
+        localStorage.removeItem('gn_logado');
+        setAuthMessage(msgEl, 'Conta pronta. Agora escolha um plano para continuar.', 'ok');
+        setTimeout(() => { window.location.href = 'planos.html'; }, 500);
+      } catch (_) {
+        localStorage.removeItem('gn_logado');
+        setAuthMessage(msgEl, 'Conta pronta. Agora escolha um plano para continuar.', 'ok');
+        setTimeout(() => { window.location.href = 'planos.html'; }, 500);
+      }
+    }
+
+    async function atualizarEstadoAuth() {
+      const token = localStorage.getItem('gn_token');
+      const navLogin = document.getElementById('nav-login');
+      if (!token) return;
+
+      try {
+        const perfil = await authRequest('/me', null, token);
+        localStorage.setItem('gn_nome', (perfil.nome || '').split(' ')[0] || 'Usuário');
+        if (navLogin) {
+          try {
+            const assinatura = await buscarAssinaturaAtual(token);
+            if (assinatura && ['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
+              localStorage.setItem('gn_logado', 'true');
+              navLogin.textContent = 'Ir para Dashboard';
+              navLogin.href = 'dashboard.html';
+            } else {
+              localStorage.removeItem('gn_logado');
+              navLogin.textContent = 'Escolher plano';
+              navLogin.href = 'planos.html';
+            }
+          } catch (_) {
+            navLogin.textContent = 'Escolher plano';
+            navLogin.href = 'planos.html';
+          }
+        }
+      } catch (_) {
+        localStorage.removeItem('gn_token');
+        localStorage.removeItem('gn_logado');
+      }
+    }
+
     const header = document.getElementById('header');
     window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 40));
 
@@ -659,6 +816,46 @@
       setTimeout(() => splash.remove(), 420);
     }
     document.addEventListener('DOMContentLoaded', () => {
+      const formLogin = document.getElementById('form-login');
+      const formRegister = document.getElementById('form-register');
+      const loginMsg = document.getElementById('login-msg');
+      const registerMsg = document.getElementById('register-msg');
+
+      if (formLogin) {
+        formLogin.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setAuthMessage(loginMsg, 'Entrando...');
+          try {
+            const email = document.getElementById('login-email').value.trim();
+            const senha = document.getElementById('login-senha').value;
+            const data = await authRequest('/login', { email, senha });
+            salvarSessao(data.token);
+            await redirecionarPosAuth(loginMsg);
+          } catch (err) {
+            setAuthMessage(loginMsg, err.message, 'erro');
+          }
+        });
+      }
+
+      if (formRegister) {
+        formRegister.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setAuthMessage(registerMsg, 'Criando conta...');
+          try {
+            const nome = document.getElementById('reg-nome').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const senha = document.getElementById('reg-senha').value;
+            const data = await authRequest('/register', { nome, email, senha });
+            salvarSessao(data.token);
+            await redirecionarPosAuth(registerMsg);
+          } catch (err) {
+            setAuthMessage(registerMsg, err.message, 'erro');
+          }
+        });
+      }
+
+      atualizarEstadoAuth();
+
       if (window.__gnCurtainActive) {
         // Se a curtain Lottie está ativa, não usar splash duplicado
         if (splash) {
