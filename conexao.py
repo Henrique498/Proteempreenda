@@ -58,7 +58,10 @@ def get_connection() -> pyodbc.Connection:
     Retorna uma conexão ativa com o SQL Server.
     Levanta exceção se falhar — trate com try/except no chamador.
     """
-    return pyodbc.connect(_build_connection_string())
+    conn = pyodbc.connect(_build_connection_string())
+    # Timeout de comandos SQL para evitar requisições penduradas.
+    conn.timeout = 30
+    return conn
 
 
 def executar(sql: str, params: tuple = (), fetch: bool = False):

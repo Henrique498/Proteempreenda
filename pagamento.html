@@ -92,6 +92,18 @@
       color: var(--white-dim);
     }
 
+    .auth-link {
+      align-self: flex-start;
+      border: 0;
+      background: transparent;
+      color: var(--azul-pastel);
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
     .auth-msg.erro { color: var(--red); }
     .auth-msg.ok { color: #4ec97a; }
 
@@ -477,6 +489,7 @@
             <form id="form-login" class="auth-form">
               <input type="email" id="login-email" placeholder="Seu e-mail" required>
               <input type="password" id="login-senha" placeholder="Sua senha" required minlength="6">
+              <button type="button" id="btn-forgot-password" class="auth-link">Esqueci minha senha</button>
               <button type="submit" class="btn-primario">Entrar</button>
               <div id="login-msg" class="auth-msg"></div>
             </form>
@@ -709,17 +722,28 @@
     }
 
     function authRequest(path, payload) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       return fetch(`http://localhost:5000/api/auth${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal
       }).then(async (resp) => {
+        clearTimeout(timeoutId);
         const data = await resp.json();
         if (!resp.ok) {
           const msg = data.detail ? `${data.error || 'Erro de autenticação'} ${data.detail}` : (data.error || 'Erro de autenticação');
           throw new Error(msg);
         }
         return data;
+      }).catch((err) => {
+        clearTimeout(timeoutId);
+        if (err && err.name === 'AbortError') {
+          throw new Error('A API demorou para responder. Verifique o servidor e a conexão com o banco.');
+        }
+        throw err;
       });
     }
 
@@ -742,8 +766,50 @@
 
     const loginForm = document.getElementById('form-login');
     const registerForm = document.getElementById('form-register');
+    const forgotPasswordBtn = document.getElementById('btn-forgot-password');
     const loginMsg = document.getElementById('login-msg');
     const registerMsg = document.getElementById('register-msg');
+
+    async function iniciarRecuperacaoSenha() {
+      const email = (window.prompt('Digite seu e-mail cadastrado:') || '').trim();
+      if (!email) {
+        setAuthMessage(loginMsg, 'Informe um e-mail para recuperar a senha.', 'erro');
+        return;
+      }
+
+      setAuthMessage(loginMsg, 'Iniciando recuperação de senha...');
+
+      try {
+        const data = await authRequest('/forgot-password', { email });
+        let token = '';
+
+        if (data.resetToken) {
+          token = (window.prompt('Token de recuperação (ambiente local):', data.resetToken) || '').trim();
+        } else {
+          token = (window.prompt('Digite o token enviado para seu e-mail:') || '').trim();
+        }
+
+        if (!token) {
+          setAuthMessage(loginMsg, data.message || 'Recuperação iniciada. Informe o token para redefinir a senha.');
+          return;
+        }
+
+        const novaSenha = window.prompt('Digite a nova senha (mínimo 6 caracteres):') || '';
+        if (novaSenha.length < 6) {
+          setAuthMessage(loginMsg, 'A nova senha precisa ter pelo menos 6 caracteres.', 'erro');
+          return;
+        }
+
+        await authRequest('/reset-password', { token, senha: novaSenha });
+        setAuthMessage(loginMsg, 'Senha redefinida. Agora faça login.', 'ok');
+      } catch (err) {
+        setAuthMessage(loginMsg, err.message, 'erro');
+      }
+    }
+
+    if (forgotPasswordBtn) {
+      forgotPasswordBtn.addEventListener('click', iniciarRecuperacaoSenha);
+    }
 
     if (loginForm) {
       loginForm.addEventListener('submit', async (e) => {

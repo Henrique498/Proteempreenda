@@ -15,7 +15,9 @@ from conexao import get_connection
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 TOKEN_TTL_HORAS = 24
+RESET_TOKEN_TTL_MINUTOS = 30
 _RATE_BUCKETS = {}
+_PASSWORD_RESET_TOKENS = {}
 DEBUG_ENABLED = str(os.getenv('FLASK_DEBUG', 'false')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
@@ -56,6 +58,17 @@ def _token_hash(token: str) -> str:
 
 def _gerar_token() -> str:
     return secrets.token_urlsafe(48)
+
+
+def _limpar_tokens_reset_expirados() -> None:
+    agora = datetime.now(timezone.utc).replace(tzinfo=None)
+    expirados = [
+        token_hash
+        for token_hash, data in _PASSWORD_RESET_TOKENS.items()
+        if data.get('expira_em') is None or data.get('expira_em') <= agora
+    ]
+    for token_hash in expirados:
+        _PASSWORD_RESET_TOKENS.pop(token_hash, None)
 
 
 def _buscar_usuario_por_email(email: str):
@@ -173,9 +186,6 @@ def register():
         if len(nome) < 3 or not _email_valido(email) or len(senha) < 6:
             return jsonify({'error': 'Dados inválidos.'}), 400
 
-        if _buscar_usuario_por_email(email):
-            return jsonify({'error': 'E-mail já cadastrado.'}), 409
-
         senha_hash = generate_password_hash(senha)
 
         conn = get_connection()
@@ -191,6 +201,11 @@ def register():
             )
             user_id = cur.fetchone()[0]
             conn.commit()
+        except Exception as e:
+            msg = str(e)
+            if '2601' in msg or '2627' in msg or 'UQ_Usuarios_Email' in msg:
+                return jsonify({'error': 'E-mail já cadastrado.'}), 409
+            raise
         finally:
             conn.close()
 
@@ -223,6 +238,95 @@ def login():
         return jsonify({'ok': True, 'token': token, 'ttlHoras': TOKEN_TTL_HORAS}), 200
     except Exception as e:
         return jsonify({'error': 'Falha ao fazer login.', 'detail': str(e)}), 500
+
+
+@auth_bp.post('/forgot-password')
+@_rate_limit(max_calls=10, window_seconds=60)
+def forgot_password():
+    try:
+        data = request.get_json(silent=True) or {}
+        email = _normalize_email(data.get('email'))
+
+        _limpar_tokens_reset_expirados()
+
+        token_claro = None
+        if _email_valido(email):
+            user = _buscar_usuario_por_email(email)
+            if user and bool(user[4]):
+                user_id = int(user[0])
+                token_claro = secrets.token_urlsafe(24)
+                token_hash = _token_hash(token_claro)
+                expira_em = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=RESET_TOKEN_TTL_MINUTOS)
+                _PASSWORD_RESET_TOKENS[token_hash] = {'user_id': user_id, 'expira_em': expira_em}
+
+        payload = {
+            'ok': True,
+            'message': 'Se o e-mail existir, um token de recuperação foi gerado.'
+        }
+        if DEBUG_ENABLED and token_claro:
+            payload['resetToken'] = token_claro
+            payload['ttlMinutos'] = RESET_TOKEN_TTL_MINUTOS
+
+        return jsonify(payload), 200
+    except Exception as e:
+        return jsonify({'error': 'Falha ao iniciar recuperação de senha.', 'detail': str(e)}), 500
+
+
+@auth_bp.post('/reset-password')
+@_rate_limit(max_calls=15, window_seconds=60)
+def reset_password():
+    try:
+        data = request.get_json(silent=True) or {}
+        token = (data.get('token') or '').strip()
+        senha = (data.get('senha') or '').strip()
+
+        if len(token) < 10 or len(senha) < 6:
+            return jsonify({'error': 'Token ou senha inválidos.'}), 400
+
+        _limpar_tokens_reset_expirados()
+        token_hash = _token_hash(token)
+        token_data = _PASSWORD_RESET_TOKENS.get(token_hash)
+        if not token_data:
+            return jsonify({'error': 'Token inválido ou expirado.'}), 400
+
+        user_id = int(token_data['user_id'])
+        senha_hash = generate_password_hash(senha)
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                UPDATE dbo.Usuarios
+                SET SenhaHash = ?,
+                    AtualizadoEm = SYSUTCDATETIME()
+                WHERE Id = ?
+                  AND Ativo = 1
+                """,
+                (senha_hash, user_id),
+            )
+
+            if cur.rowcount == 0:
+                return jsonify({'error': 'Usuário não encontrado ou inativo.'}), 404
+
+            cur.execute(
+                """
+                UPDATE dbo.AuthTokens
+                SET Revogado = 1,
+                    RevogadoEm = SYSUTCDATETIME()
+                WHERE UserId = ?
+                  AND Revogado = 0
+                """,
+                (user_id,),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        _PASSWORD_RESET_TOKENS.pop(token_hash, None)
+        return jsonify({'ok': True, 'message': 'Senha redefinida com sucesso.'}), 200
+    except Exception as e:
+        return jsonify({'error': 'Falha ao redefinir senha.', 'detail': str(e)}), 500
 
 
 @auth_bp.get('/me')

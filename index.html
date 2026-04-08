@@ -596,11 +596,25 @@
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const resp = await fetch(`${AUTH_API}${path}`, {
-        method: payload ? 'POST' : 'GET',
-        headers,
-        body: payload ? JSON.stringify(payload) : undefined
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      let resp;
+      try {
+        resp = await fetch(`${AUTH_API}${path}`, {
+          method: payload ? 'POST' : 'GET',
+          headers,
+          body: payload ? JSON.stringify(payload) : undefined,
+          signal: controller.signal
+        });
+      } catch (err) {
+        if (err && err.name === 'AbortError') {
+          throw new Error('A API demorou para responder. Verifique o servidor e a conexão com o banco.');
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       const data = await resp.json();
       if (!resp.ok) {
@@ -615,12 +629,25 @@
     }
 
     async function buscarAssinaturaAtual(token) {
-      const resp = await fetch(`${SUBS_API}/current`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!resp.ok) throw new Error('Falha ao verificar assinatura');
-      const data = await resp.json();
-      return data?.assinatura || null;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const resp = await fetch(`${SUBS_API}/current`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal
+        });
+        if (!resp.ok) throw new Error('Falha ao verificar assinatura');
+        const data = await resp.json();
+        return data?.assinatura || null;
+      } catch (err) {
+        if (err && err.name === 'AbortError') {
+          throw new Error('A consulta de assinatura demorou demais.');
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
     }
 
     async function redirecionarPosAuth(msgEl) {
@@ -853,6 +880,9 @@
             await redirecionarPosAuth(registerMsg);
           } catch (err) {
             setAuthMessage(registerMsg, err.message, 'erro');
+            if ((err.message || '').includes('assinatura')) {
+              setTimeout(() => { window.location.href = 'planos.html'; }, 700);
+            }
           }
         });
       }
