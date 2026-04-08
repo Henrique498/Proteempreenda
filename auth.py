@@ -164,59 +164,65 @@ def require_auth(fn):
 @auth_bp.post('/register')
 @_rate_limit(max_calls=20, window_seconds=60)
 def register():
-    data = request.get_json(silent=True) or {}
-    nome = (data.get('nome') or '').strip()
-    email = _normalize_email(data.get('email'))
-    senha = (data.get('senha') or '').strip()
-
-    if len(nome) < 3 or not _email_valido(email) or len(senha) < 6:
-        return jsonify({'error': 'Dados inválidos.'}), 400
-
-    if _buscar_usuario_por_email(email):
-        return jsonify({'error': 'E-mail já cadastrado.'}), 409
-
-    senha_hash = generate_password_hash(senha)
-
-    conn = get_connection()
     try:
-        cur = conn.cursor()
-        cur.execute(
-            """
-            INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash)
-            OUTPUT INSERTED.Id
-            VALUES (?, ?, ?)
-            """,
-            (nome, email, senha_hash),
-        )
-        user_id = cur.fetchone()[0]
-        conn.commit()
-    finally:
-        conn.close()
+        data = request.get_json(silent=True) or {}
+        nome = (data.get('nome') or '').strip()
+        email = _normalize_email(data.get('email'))
+        senha = (data.get('senha') or '').strip()
 
-    token = _emitir_token(user_id)
-    return jsonify({'ok': True, 'token': token, 'ttlHoras': TOKEN_TTL_HORAS}), 201
+        if len(nome) < 3 or not _email_valido(email) or len(senha) < 6:
+            return jsonify({'error': 'Dados inválidos.'}), 400
+
+        if _buscar_usuario_por_email(email):
+            return jsonify({'error': 'E-mail já cadastrado.'}), 409
+
+        senha_hash = generate_password_hash(senha)
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash)
+                OUTPUT INSERTED.Id
+                VALUES (?, ?, ?)
+                """,
+                (nome, email, senha_hash),
+            )
+            user_id = cur.fetchone()[0]
+            conn.commit()
+        finally:
+            conn.close()
+
+        token = _emitir_token(user_id)
+        return jsonify({'ok': True, 'token': token, 'ttlHoras': TOKEN_TTL_HORAS}), 201
+    except Exception as e:
+        return jsonify({'error': 'Falha ao criar conta.', 'detail': str(e)}), 500
 
 
 @auth_bp.post('/login')
 @_rate_limit(max_calls=30, window_seconds=60)
 def login():
-    data = request.get_json(silent=True) or {}
-    email = _normalize_email(data.get('email'))
-    senha = (data.get('senha') or '').strip()
+    try:
+        data = request.get_json(silent=True) or {}
+        email = _normalize_email(data.get('email'))
+        senha = (data.get('senha') or '').strip()
 
-    user = _buscar_usuario_por_email(email)
-    if not user:
-        return jsonify({'error': 'Credenciais inválidas.'}), 401
+        user = _buscar_usuario_por_email(email)
+        if not user:
+            return jsonify({'error': 'Credenciais inválidas.'}), 401
 
-    user_id, _nome, _email, senha_hash, ativo = user
-    if not ativo:
-        return jsonify({'error': 'Usuário inativo.'}), 403
+        user_id, _nome, _email, senha_hash, ativo = user
+        if not ativo:
+            return jsonify({'error': 'Usuário inativo.'}), 403
 
-    if not check_password_hash(senha_hash, senha):
-        return jsonify({'error': 'Credenciais inválidas.'}), 401
+        if not check_password_hash(senha_hash, senha):
+            return jsonify({'error': 'Credenciais inválidas.'}), 401
 
-    token = _emitir_token(user_id)
-    return jsonify({'ok': True, 'token': token, 'ttlHoras': TOKEN_TTL_HORAS}), 200
+        token = _emitir_token(user_id)
+        return jsonify({'ok': True, 'token': token, 'ttlHoras': TOKEN_TTL_HORAS}), 200
+    except Exception as e:
+        return jsonify({'error': 'Falha ao fazer login.', 'detail': str(e)}), 500
 
 
 @auth_bp.get('/me')

@@ -15,27 +15,40 @@ def _as_bool(value: str, default: bool = False) -> bool:
 
 
 def _build_connection_string() -> str:
-    driver = os.getenv('DB_DRIVER', 'ODBC Driver 17 for SQL Server')
-    server = os.getenv('DB_SERVER', '')
-    database = os.getenv('DB_NAME', '')
+    driver = os.getenv('DB_DRIVER', 'ODBC Driver 17 for SQL Server').strip()
+    server = os.getenv('DB_SERVER', '').strip()
+    database = os.getenv('DB_NAME', '').strip()
     trusted = _as_bool(os.getenv('DB_TRUSTED', 'no'))
-    encrypt = 'yes' if _as_bool(os.getenv('DB_ENCRYPT', 'yes')) else 'no'
+    encrypt = 'yes' if _as_bool(os.getenv('DB_ENCRYPT', 'no')) else 'no'
     trust_cert = 'yes' if _as_bool(os.getenv('DB_TRUST_SERVER_CERTIFICATE', 'yes')) else 'no'
+
+    if not server:
+        raise RuntimeError('DB_SERVER não definido no arquivo .env.')
+    if not database:
+        raise RuntimeError('DB_NAME não definido no arquivo .env.')
 
     parts = [
         f"Driver={{{driver}}}",
         f"Server={server}",
         f"Database={database}",
-        f"Encrypt={encrypt}",
-        f"TrustServerCertificate={trust_cert}",
         "Connection Timeout=10",
     ]
 
+    # O driver antigo "SQL Server" costuma rejeitar alguns atributos modernos.
+    if driver.lower() != 'sql server':
+        parts.append(f"Encrypt={encrypt}")
+        parts.append(f"TrustServerCertificate={trust_cert}")
+
     if trusted:
         parts.append('Trusted_Connection=yes')
+        parts.append('Integrated Security=SSPI')
     else:
-        parts.append(f"UID={os.getenv('DB_USER', '')}")
-        parts.append(f"PWD={os.getenv('DB_PASS', '')}")
+        user = os.getenv('DB_USER', '').strip()
+        password = os.getenv('DB_PASS', '').strip()
+        if not user or not password:
+            raise RuntimeError('DB_USER/DB_PASS não definidos no arquivo .env.')
+        parts.append(f"UID={user}")
+        parts.append(f"PWD={password}")
 
     return ';'.join(parts) + ';'
 

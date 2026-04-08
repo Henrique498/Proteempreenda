@@ -715,7 +715,10 @@
         body: JSON.stringify(payload)
       }).then(async (resp) => {
         const data = await resp.json();
-        if (!resp.ok) throw new Error(data.error || 'Erro de autenticação');
+        if (!resp.ok) {
+          const msg = data.detail ? `${data.error || 'Erro de autenticação'} ${data.detail}` : (data.error || 'Erro de autenticação');
+          throw new Error(msg);
+        }
         return data;
       });
     }

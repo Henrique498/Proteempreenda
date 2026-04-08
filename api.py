@@ -42,8 +42,7 @@ app.register_blueprint(subscription_bp)
 @app.errorhandler(Exception)
 def handle_unexpected_error(e):
     payload = {'error': 'Erro interno da API.'}
-    if DEBUG_ENABLED:
-        payload['detail'] = str(e)
+    payload['detail'] = str(e)
     return jsonify(payload), 500
 
 
