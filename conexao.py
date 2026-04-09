@@ -37,18 +37,30 @@ def _build_connection_string() -> str:
         "Connection Timeout=10",
     ]
 
+    # Encrypt e TrustServerCertificate só para drivers modernos
     if driver.lower() != 'sql server':
         parts.append(f"Encrypt={encrypt}")
         parts.append(f"TrustServerCertificate={trust_cert}")
 
     if trusted:
+        # Autenticação Windows (só funciona se as máquinas estiverem no mesmo domínio)
         parts.append('Trusted_Connection=yes')
         parts.append('Integrated Security=SSPI')
     else:
+        # ── Autenticação SQL Server (usuário + senha) ──────────────
         user     = os.getenv('DB_USER', '').strip()
         password = os.getenv('DB_PASS', '').strip()
-        if not user or not password:
-            raise RuntimeError('DB_USER/DB_PASS não definidos no arquivo .env.')
+        if not user:
+            raise RuntimeError(
+                'DB_USER não definido no .env. '
+                'Defina DB_TRUSTED=yes para autenticação Windows '
+                'ou preencha DB_USER e DB_PASS para autenticação SQL.'
+            )
+        if not password:
+            raise RuntimeError(
+                'DB_PASS não definido no .env. '
+                'Preencha a senha do usuário SQL Server.'
+            )
         parts.append(f"UID={user}")
         parts.append(f"PWD={password}")
 
@@ -92,7 +104,6 @@ def _inicializar_pool() -> queue.Queue:
             try:
                 p.put_nowait(_criar_conexao_raw())
             except Exception as e:
-                # Pool parcial é melhor do que falha total na inicialização
                 print(f"[POOL] Aviso: não foi possível pré-criar conexão: {e}")
         _pool = p
         print(f"[POOL] Inicializado com {_pool.qsize()} conexões.")
@@ -111,11 +122,9 @@ def get_connection() -> pyodbc.Connection:
     try:
         conn = pool.get(timeout=_POOL_TIMEOUT)
     except queue.Empty:
-        # Pool esgotado → cria conexão avulsa (não volta para o pool)
         print("[POOL] Pool esgotado, criando conexão avulsa.")
         return _criar_conexao_raw()
 
-    # Valida se a conexão ainda está viva (reconecta se necessário)
     if not _validar_conexao(conn):
         try:
             conn.close()
@@ -149,7 +158,6 @@ class _PooledConnection:
         try:
             self._pool.put_nowait(self._conn)
         except queue.Full:
-            # Pool cheio → descarta a conexão
             try:
                 self._conn.close()
             except Exception:
