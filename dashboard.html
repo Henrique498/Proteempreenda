@@ -1087,6 +1087,20 @@
               <div id="periodo-big" style="color:var(--dim);font-size:.82rem"></div>
             </div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+            <div style="padding:12px;background:var(--navy-3);border:1px solid var(--border);border-radius:10px">
+              <div style="font-size:.72rem;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Data de início</div>
+              <div id="assinatura-started" style="font-weight:700;font-size:.9rem">—</div>
+            </div>
+            <div style="padding:12px;background:var(--navy-3);border:1px solid var(--border);border-radius:10px">
+              <div style="font-size:.72rem;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Data de fim</div>
+              <div id="assinatura-datafim" style="font-weight:700;font-size:.9rem">—</div>
+            </div>
+            <div style="padding:12px;background:var(--navy-3);border:1px solid var(--border);border-radius:10px;grid-column:1 / -1">
+              <div style="font-size:.72rem;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Próxima renovação / atualização</div>
+              <div id="assinatura-next" style="font-weight:700;font-size:.9rem">—</div>
+            </div>
+          </div>
           <div id="plano-recursos" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
           </div>
           <button onclick="cancelarAssinaturaESair()" style="width:100%;padding:10px;background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.2);border-radius:8px;color:var(--red);font-family:var(--font-body);font-size:.85rem;font-weight:600;cursor:pointer">Cancelar assinatura e sair</button>
@@ -1184,6 +1198,17 @@
       localStorage.setItem('gn_logado', 'true');
       localStorage.setItem('gn_plano', assinatura.plano || localStorage.getItem('gn_plano') || 'premium');
       localStorage.setItem('gn_periodo', assinatura.periodo || localStorage.getItem('gn_periodo') || 'mensal');
+
+      const started = assinatura.startedAt || assinatura.criadoEm || assinatura.dataInicio || null;
+      const dataFim = assinatura.dataFim || assinatura.nextBillingAt || assinatura.trialEndsAt || null;
+      const proxima = assinatura.nextBillingAt || assinatura.dataFim || assinatura.trialEndsAt || null;
+
+      const elStarted = document.getElementById('assinatura-started');
+      const elDataFim = document.getElementById('assinatura-datafim');
+      const elProxima = document.getElementById('assinatura-next');
+      if (elStarted) elStarted.textContent = formatarDataBR(started);
+      if (elDataFim) elDataFim.textContent = formatarDataBR(dataFim);
+      if (elProxima) elProxima.textContent = formatarDataBR(proxima);
     } catch (_) {
       clearAuthSession();
       window.location.href = 'index.html#acesso';
@@ -1206,6 +1231,13 @@
   document.getElementById('sb-periodo').textContent = periodo.charAt(0).toUpperCase() + periodo.slice(1);
   document.getElementById('plano-big').textContent  = 'Plano ' + pNome;
   document.getElementById('periodo-big').textContent = periodo === 'anual' ? 'Cobrança anual' : 'Cobrança mensal';
+
+  function formatarDataBR(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  }
 
   // Recursos por plano
   const recursosPorPlano = {

@@ -67,6 +67,28 @@ def _sql_datetime(dt):
     return str(dt)
 
 
+def _add_period(dt: datetime, periodo: str) -> datetime:
+    if periodo == 'anual':
+        try:
+            return dt.replace(year=dt.year + 1)
+        except ValueError:
+            # 29/02 -> 28/02 no ano seguinte, por exemplo.
+            return dt.replace(month=2, day=28, year=dt.year + 1)
+    # mensal por padrão
+    try:
+        month = dt.month + 1
+        year = dt.year
+        if month > 12:
+            month = 1
+            year += 1
+        day = min(dt.day, [31,
+                           29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+                           31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+        return dt.replace(year=year, month=month, day=day)
+    except ValueError:
+        return dt + timedelta(days=30)
+
+
 def _parse_datetime(v):
     if v is None:
         return None
@@ -117,6 +139,9 @@ def _erro_json(msg: str, detail: str = None, status: int = 500):
 
 def _criar_assinatura_paga(user_id: int, plano: str, periodo: str, metodo: str, valor) -> tuple[bool, object]:
     agora = _sql_datetime(datetime.now(timezone.utc).replace(tzinfo=None))
+    agora_dt = _parse_datetime(agora) or datetime.now(timezone.utc).replace(tzinfo=None)
+    data_fim_dt = _add_period(agora_dt, periodo)
+    data_fim = _sql_datetime(data_fim_dt)
 
     conn = get_connection()
     try:
@@ -138,11 +163,11 @@ def _criar_assinatura_paga(user_id: int, plano: str, periodo: str, metodo: str, 
 
         cur.execute(
             """
-            INSERT INTO dbo.Assinaturas (UsuarioId, PlanoId, Periodo, DataInicio, Status)
+                        INSERT INTO dbo.Assinaturas (UsuarioId, PlanoId, Periodo, DataInicio, DataFim, Status)
             OUTPUT INSERTED.Id
-            VALUES (?, ?, ?, ?, 'ativa')
+                        VALUES (?, ?, ?, ?, ?, 'ativa')
             """,
-            (user_id, plano_id, periodo, agora),
+                        (user_id, plano_id, periodo, agora, data_fim),
         )
         row = cur.fetchone()
         subscription_id = row[0] if row else None
@@ -186,10 +211,27 @@ def assinatura_atual():
         data_fim = _parse_datetime(row[6])
 
         plano_slug = _slug_from_plan_name(plano_nome)
+        agora = datetime.now(timezone.utc).replace(tzinfo=None)
+
+        if data_fim and status == 'ativa' and agora > data_fim:
+            conn = get_connection()
+            try:
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    UPDATE dbo.Assinaturas
+                    SET Status = 'expirada'
+                    WHERE Id = ?
+                    """,
+                    (row_id,),
+                )
+                conn.commit()
+            finally:
+                conn.close()
+            status = 'expirada'
 
         if plano_slug == 'gratuito' and data_fim:
-            hoje = datetime.now(timezone.utc).replace(tzinfo=None)
-            if hoje > data_fim:
+            if agora > data_fim:
                 status = 'expirada'
 
         return jsonify(
@@ -202,7 +244,8 @@ def assinatura_atual():
                     'status': status,
                     'trialEndsAt': _to_iso(data_fim) if plano_slug == 'gratuito' else None,
                     'startedAt': _to_iso(data_inicio),
-                    'nextBillingAt': None,
+                    'nextBillingAt': _to_iso(data_fim) if plano_slug != 'gratuito' else None,
+                    'dataFim': _to_iso(data_fim),
                     'canceledAt': None,
                 }
             }
