@@ -581,7 +581,8 @@
     </div>
   </footer>
 
-  <script src="site-animations.js"></script>
+  <!-- site-animations.js carregado com defer: não bloqueia o render da página -->
+  <script src="site-animations.js" defer></script>
   <script>
     const AUTH_API = 'http://localhost:5000/api/auth';
     const SUBS_API = 'http://localhost:5000/api/subscription';
@@ -650,13 +651,32 @@
       }
     }
 
-    async function redirecionarPosAuth(msgEl) {
+    // FIX: aceita authData opcional — se o backend já retornou hasSubscription/redirectTo
+    // não fazemos um segundo round-trip para /subscription/current.
+    async function redirecionarPosAuth(msgEl, authData = null) {
       const token = localStorage.getItem('gn_token');
       if (!token) {
         window.location.href = 'planos.html';
         return;
       }
 
+      // Se o backend já nos disse para onde ir, usamos essa informação diretamente.
+      if (authData && typeof authData.hasSubscription === 'boolean') {
+        if (authData.hasSubscription) {
+          localStorage.setItem('gn_logado', 'true');
+          if (authData.plano)   localStorage.setItem('gn_plano',   authData.plano);
+          if (authData.periodo) localStorage.setItem('gn_periodo', authData.periodo);
+          setAuthMessage(msgEl, 'Acesso liberado! Redirecionando para o dashboard...', 'ok');
+          setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
+        } else {
+          localStorage.removeItem('gn_logado');
+          setAuthMessage(msgEl, 'Conta pronta. Agora escolha um plano para continuar.', 'ok');
+          setTimeout(() => { window.location.href = 'planos.html'; }, 500);
+        }
+        return;
+      }
+
+      // Fallback: consulta /subscription/current (login legado sem hasSubscription)
       try {
         const assinatura = await buscarAssinaturaAtual(token);
         if (assinatura && ['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
@@ -667,7 +687,6 @@
           setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
           return;
         }
-
         localStorage.removeItem('gn_logado');
         setAuthMessage(msgEl, 'Conta pronta. Agora escolha um plano para continuar.', 'ok');
         setTimeout(() => { window.location.href = 'planos.html'; }, 500);
@@ -860,7 +879,11 @@
             const senha = document.getElementById('login-senha').value;
             const data = await authRequest('/login', { email, senha });
             salvarSessao(data.token);
-            await redirecionarPosAuth(loginMsg);
+            if (data.nome) {
+              localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || 'Usuário');
+            }
+            // Passa data direto: se o backend retornou hasSubscription, não faz 2ª chamada
+            await redirecionarPosAuth(loginMsg, data);
           } catch (err) {
             setAuthMessage(loginMsg, err.message, 'erro');
           }
@@ -872,12 +895,16 @@
           e.preventDefault();
           setAuthMessage(registerMsg, 'Criando conta...');
           try {
-            const nome = document.getElementById('reg-nome').value.trim();
+            const nome  = document.getElementById('reg-nome').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const senha = document.getElementById('reg-senha').value;
-            const data = await authRequest('/register', { nome, email, senha });
+            const data  = await authRequest('/register', { nome, email, senha });
             salvarSessao(data.token);
-            await redirecionarPosAuth(registerMsg);
+            if (data.nome) {
+              localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || nome.split(' ')[0] || 'Usuário');
+            }
+            // hasSubscription=false vem direto na resposta — sem 2ª chamada ao servidor
+            await redirecionarPosAuth(registerMsg, data);
           } catch (err) {
             setAuthMessage(registerMsg, err.message, 'erro');
             if ((err.message || '').includes('assinatura')) {

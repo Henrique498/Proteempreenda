@@ -126,6 +126,40 @@ def _emitir_token(user_id: int) -> str:
     return token
 
 
+def _usuario_tem_assinatura_ativa(user_id: int) -> bool:
+    """
+    Verifica se o usuário possui uma assinatura ativa no banco.
+    Retorna False em caso de erro para não bloquear o fluxo de login.
+    """
+    try:
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT TOP 1 a.Id, p.Nome AS PlanoNome, a.Periodo, a.Status, a.DataFim
+                FROM dbo.Assinaturas a
+                INNER JOIN dbo.Planos p ON p.Id = a.PlanoId
+                WHERE a.UsuarioId = ?
+                  AND a.Status = 'ativa'
+                ORDER BY a.Id DESC
+                """,
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return False, None
+            return True, {
+                'plano':   (row[1] or '').lower(),
+                'periodo': (row[2] or '').lower(),
+                'status':  (row[3] or '').lower(),
+            }
+        finally:
+            conn.close()
+    except Exception:
+        return False, None
+
+
 def _extrair_bearer_token() -> str:
     auth_header = request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
@@ -178,13 +212,19 @@ def require_auth(fn):
 @_rate_limit(max_calls=20, window_seconds=60)
 def register():
     try:
-        data = request.get_json(silent=True) or {}
-        nome = (data.get('nome') or '').strip()
-        email = _normalize_email(data.get('email'))
-        senha = (data.get('senha') or '').strip()
+        data     = request.get_json(silent=True) or {}
+        nome     = (data.get("nome")     or "").strip()
+        email    = _normalize_email(data.get("email"))
+        senha    = (data.get("senha")    or "").strip()
+        telefone = (data.get("telefone") or "").strip() or None
 
         if len(nome) < 3 or not _email_valido(email) or len(senha) < 6:
-            return jsonify({'error': 'Dados inválidos.'}), 400
+            return jsonify({"error": "Dados inválidos."}), 400
+
+        if telefone:
+            digitos = "".join(c for c in telefone if c.isdigit())
+            if len(digitos) < 10 or len(digitos) > 11:
+                return jsonify({"error": "Telefone inválido. Use DDD + número (10 ou 11 dígitos)."}), 400
 
         senha_hash = generate_password_hash(senha)
 
@@ -193,11 +233,11 @@ def register():
             cur = conn.cursor()
             cur.execute(
                 """
-                INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash)
+                INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash, Telefone)
                 OUTPUT INSERTED.Id
-                VALUES (?, ?, ?)
+                VALUES (?, ?, ?, ?)
                 """,
-                (nome, email, senha_hash),
+                (nome, email, senha_hash, telefone),
             )
             user_id = cur.fetchone()[0]
             conn.commit()
@@ -210,7 +250,19 @@ def register():
             conn.close()
 
         token = _emitir_token(user_id)
-        return jsonify({'ok': True, 'token': token, 'ttlHoras': TOKEN_TTL_HORAS}), 201
+
+        # ── FIX: retorna hasSubscription=False diretamente.
+        # Usuário recém-criado nunca tem assinatura, eliminando o
+        # round-trip extra para GET /subscription/current após o registro.
+        return jsonify({
+            'ok':              True,
+            'token':           token,
+            'ttlHoras':        TOKEN_TTL_HORAS,
+            'nome':            nome,
+            'hasSubscription': False,   # novo usuário, sem assinatura
+            'redirectTo':      'planos.html',
+        }), 201
+
     except Exception as e:
         return jsonify({'error': 'Falha ao criar conta.', 'detail': str(e)}), 500
 
@@ -219,7 +271,7 @@ def register():
 @_rate_limit(max_calls=30, window_seconds=60)
 def login():
     try:
-        data = request.get_json(silent=True) or {}
+        data  = request.get_json(silent=True) or {}
         email = _normalize_email(data.get('email'))
         senha = (data.get('senha') or '').strip()
 
@@ -235,7 +287,27 @@ def login():
             return jsonify({'error': 'Credenciais inválidas.'}), 401
 
         token = _emitir_token(user_id)
-        return jsonify({'ok': True, 'token': token, 'ttlHoras': TOKEN_TTL_HORAS}), 200
+
+        # ── FIX: inclui estado de assinatura na resposta do login também,
+        # evitando o segundo round-trip de GET /subscription/current.
+        tem_assinatura, assinatura_info = _usuario_tem_assinatura_ativa(user_id)
+
+        payload = {
+            'ok':              True,
+            'token':           token,
+            'ttlHoras':        TOKEN_TTL_HORAS,
+            'nome':            _nome,
+            'hasSubscription': tem_assinatura,
+        }
+        if tem_assinatura and assinatura_info:
+            payload['plano']   = assinatura_info.get('plano')
+            payload['periodo'] = assinatura_info.get('periodo')
+            payload['redirectTo'] = 'dashboard.html'
+        else:
+            payload['redirectTo'] = 'planos.html'
+
+        return jsonify(payload), 200
+
     except Exception as e:
         return jsonify({'error': 'Falha ao fazer login.', 'detail': str(e)}), 500
 
@@ -244,7 +316,7 @@ def login():
 @_rate_limit(max_calls=10, window_seconds=60)
 def forgot_password():
     try:
-        data = request.get_json(silent=True) or {}
+        data  = request.get_json(silent=True) or {}
         email = _normalize_email(data.get('email'))
 
         _limpar_tokens_reset_expirados()
@@ -253,21 +325,22 @@ def forgot_password():
         if _email_valido(email):
             user = _buscar_usuario_por_email(email)
             if user and bool(user[4]):
-                user_id = int(user[0])
+                user_id     = int(user[0])
                 token_claro = secrets.token_urlsafe(24)
-                token_hash = _token_hash(token_claro)
-                expira_em = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=RESET_TOKEN_TTL_MINUTOS)
+                token_hash  = _token_hash(token_claro)
+                expira_em   = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=RESET_TOKEN_TTL_MINUTOS)
                 _PASSWORD_RESET_TOKENS[token_hash] = {'user_id': user_id, 'expira_em': expira_em}
 
         payload = {
-            'ok': True,
+            'ok':      True,
             'message': 'Se o e-mail existir, um token de recuperação foi gerado.'
         }
         if DEBUG_ENABLED and token_claro:
-            payload['resetToken'] = token_claro
-            payload['ttlMinutos'] = RESET_TOKEN_TTL_MINUTOS
+            payload['resetToken']  = token_claro
+            payload['ttlMinutos']  = RESET_TOKEN_TTL_MINUTOS
 
         return jsonify(payload), 200
+
     except Exception as e:
         return jsonify({'error': 'Falha ao iniciar recuperação de senha.', 'detail': str(e)}), 500
 
@@ -276,7 +349,7 @@ def forgot_password():
 @_rate_limit(max_calls=15, window_seconds=60)
 def reset_password():
     try:
-        data = request.get_json(silent=True) or {}
+        data  = request.get_json(silent=True) or {}
         token = (data.get('token') or '').strip()
         senha = (data.get('senha') or '').strip()
 
@@ -289,7 +362,7 @@ def reset_password():
         if not token_data:
             return jsonify({'error': 'Token inválido ou expirado.'}), 400
 
-        user_id = int(token_data['user_id'])
+        user_id    = int(token_data['user_id'])
         senha_hash = generate_password_hash(senha)
 
         conn = get_connection()
@@ -325,6 +398,7 @@ def reset_password():
 
         _PASSWORD_RESET_TOKENS.pop(token_hash, None)
         return jsonify({'ok': True, 'message': 'Senha redefinida com sucesso.'}), 200
+
     except Exception as e:
         return jsonify({'error': 'Falha ao redefinir senha.', 'detail': str(e)}), 500
 
@@ -337,21 +411,20 @@ def me():
         if not user:
             return jsonify({'error': 'Usuário não encontrado.'}), 404
 
-        user_id = int(user[0]) if user[0] is not None else None
-        nome = str(user[1]) if user[1] is not None else ''
-        email = str(user[2]) if user[2] is not None else ''
-        ativo = bool(user[3]) if user[3] is not None else False
+        user_id  = int(user[0]) if user[0] is not None else None
+        nome     = str(user[1]) if user[1] is not None else ''
+        email    = str(user[2]) if user[2] is not None else ''
+        ativo    = bool(user[3]) if user[3] is not None else False
         criado_em = user[4]
 
-        return jsonify(
-            {
-                'id': user_id,
-                'nome': nome,
-                'email': email,
-                'ativo': ativo,
-                'criadoEm': criado_em.isoformat() if hasattr(criado_em, 'isoformat') else None,
-            }
-        ), 200
+        return jsonify({
+            'id':       user_id,
+            'nome':     nome,
+            'email':    email,
+            'ativo':    ativo,
+            'criadoEm': criado_em.isoformat() if hasattr(criado_em, 'isoformat') else None,
+        }), 200
+
     except Exception as e:
         payload = {'error': 'Falha ao carregar perfil.'}
         if DEBUG_ENABLED:
@@ -362,7 +435,7 @@ def me():
 @auth_bp.post('/logout')
 @require_auth
 def logout():
-    token = _extrair_bearer_token()
+    token      = _extrair_bearer_token()
     token_hash = _token_hash(token)
 
     conn = get_connection()
@@ -383,5 +456,3 @@ def logout():
         conn.close()
 
     return jsonify({'ok': True}), 200
-
-
