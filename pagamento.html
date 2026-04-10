@@ -853,7 +853,32 @@
       }
     }
 
-    async function redirecionarSeJaAssinante(token) {
+    async function buscarPerfilAuth(token) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      try {
+        const resp = await fetch('http://localhost:5000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal
+        });
+        if (!resp.ok) return null;
+        return await resp.json();
+      } catch (_) {
+        return null;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    async function redirecionarSeJaAssinante(token, perfil = null) {
+      const tipo = ((perfil && perfil.tipo) || localStorage.getItem('gn_tipo') || '').toLowerCase();
+      if (tipo === 'admin') {
+        localStorage.setItem('gn_tipo', 'admin');
+        localStorage.setItem('gn_logado', 'true');
+        window.location.href = 'admin.html';
+        return true;
+      }
+
       const assinatura = await buscarAssinaturaAtual(token);
       const status = (assinatura?.status || '').toLowerCase();
       if (assinatura && (status === 'ativa' || status === 'trialing')) {
@@ -871,7 +896,10 @@
         mostrarAuthInline();
         return;
       }
-      const foiParaDashboard = await redirecionarSeJaAssinante(tokenAuth);
+      const perfil = await buscarPerfilAuth(tokenAuth);
+      if (perfil?.tipo) localStorage.setItem('gn_tipo', String(perfil.tipo).toLowerCase());
+      if (perfil?.nome) localStorage.setItem('gn_nome', (perfil.nome || '').split(' ')[0] || 'Usuário');
+      const foiParaDashboard = await redirecionarSeJaAssinante(tokenAuth, perfil);
       if (!foiParaDashboard) liberarPagamento();
     })();
 
@@ -900,10 +928,11 @@
           });
           tokenAuth = data.token;
           localStorage.setItem('gn_token', data.token);
+          if (data.tipo) localStorage.setItem('gn_tipo', String(data.tipo).toLowerCase());
           if (data.nome) {
             localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || 'Usuário');
           }
-          const foiParaDashboard = await redirecionarSeJaAssinante(data.token);
+          const foiParaDashboard = await redirecionarSeJaAssinante(data.token, data);
           if (foiParaDashboard) return;
           liberarPagamento();
           setAuthMessage(loginMsg, 'Autenticado. Agora conclua o pagamento.', 'ok');
@@ -927,8 +956,11 @@
           });
           tokenAuth = data.token;
           localStorage.setItem('gn_token', data.token);
+          if (data.tipo) localStorage.setItem('gn_tipo', String(data.tipo).toLowerCase());
           // FIX: salva o nome do cadastro (ou o retornado pelo backend)
           localStorage.setItem('gn_nome', (data.nome || nomeDigitado).split(' ')[0]);
+          const foiParaDashboard = await redirecionarSeJaAssinante(data.token, data);
+          if (foiParaDashboard) return;
           liberarPagamento();
           setAuthMessage(registerMsg, 'Conta criada. Agora conclua o pagamento.', 'ok');
         } catch (err) {
@@ -1198,20 +1230,7 @@
             localStorage.removeItem('gn_trial_started_at');
             localStorage.removeItem('gn_trial_ends_at');
 
-            // Registra no banco (API local)
-            fetch('http://localhost:5000/api/checkout', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                nome: document.getElementById('nome').value,
-                plano,
-                periodo,
-                metodo,
-                valor: tabelaPrecos[plano]?.[periodo] ?? 24.90
-              })
-            }).catch(() => { });
-
-            // Registra assinatura do usuário autenticado
+            // Registra assinatura/pagamento no fluxo oficial
             fetch('http://localhost:5000/api/subscription/start', {
               method: 'POST',
               headers: {

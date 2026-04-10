@@ -400,6 +400,119 @@
     .auth-msg.erro { color: var(--red); }
     .auth-msg.ok { color: #4ec97a; }
 
+    body.auth-locked {
+      overflow: hidden;
+    }
+
+    .auth-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 9997;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(0,200,255,0.14) 0%, transparent 45%),
+        linear-gradient(160deg, rgba(6,10,19,0.96), rgba(5,8,15,0.98));
+      backdrop-filter: blur(6px);
+    }
+
+    .auth-gate.ativo {
+      display: flex;
+    }
+
+    .auth-gate-card {
+      width: min(960px, 100%);
+      background: rgba(9, 13, 24, 0.94);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-deep);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+    }
+
+    .auth-gate-left,
+    .auth-gate-right {
+      padding: 28px;
+    }
+
+    .auth-gate-left {
+      border-right: 1px solid var(--border);
+    }
+
+    .auth-gate-left h2 {
+      font-family: var(--font-head);
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+
+    .auth-gate-left p {
+      color: var(--white-dim);
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+
+    .auth-gate-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .auth-tab {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px;
+      font-weight: 700;
+      background: transparent;
+      color: var(--white-dim);
+      cursor: pointer;
+    }
+
+    .auth-tab.ativo {
+      background: linear-gradient(135deg, var(--azul-pastel), var(--verde-pastel));
+      color: #0a1628;
+    }
+
+    .auth-pane { display: none; }
+    .auth-pane.ativo { display: block; }
+
+    .auth-form .btn-primario {
+      width: 100%;
+      justify-content: center;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .phone-group {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .phone-group select {
+      width: 100%;
+      background: var(--navy-2);
+      color: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 10px;
+      outline: none;
+    }
+
+    .phone-group select:focus {
+      border-color: var(--azul-pastel);
+      box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+
     @media (max-width: 720px) {
       .toast-logout {
         left: 14px;
@@ -411,10 +524,61 @@
       .auth-grid {
         grid-template-columns: 1fr;
       }
+
+      .auth-gate-card {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-gate-left {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .phone-group {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
+
+  <section class="auth-gate" id="auth-gate" aria-hidden="true">
+    <div class="auth-gate-card" id="acesso">
+      <div class="auth-gate-left">
+        <h2>Entre para continuar</h2>
+        <p>Faça login para entrar direto no seu dashboard. Se ainda não tem conta, cadastre-se em segundos e continue navegando no site.</p>
+        <p style="font-size:.9rem;color:var(--white-dim)">Ao escolher um plano, você só confirma o pagamento.</p>
+      </div>
+      <div class="auth-gate-right">
+        <div class="auth-gate-tabs" role="tablist" aria-label="Acesso">
+          <button type="button" class="auth-tab ativo" data-tab="login">Já tenho conta</button>
+          <button type="button" class="auth-tab" data-tab="cadastro">Criar conta</button>
+        </div>
+
+        <div class="auth-pane ativo" data-pane="login">
+          <form id="gate-form-login" class="auth-form">
+            <input type="email" id="gate-login-email" placeholder="Seu e-mail" required>
+            <input type="password" id="gate-login-senha" placeholder="Sua senha" required minlength="6">
+            <button type="submit" class="btn-primario">Entrar</button>
+            <div id="gate-login-msg" class="auth-msg"></div>
+          </form>
+        </div>
+
+        <div class="auth-pane" data-pane="cadastro">
+          <form id="gate-form-register" class="auth-form">
+            <input type="email" id="gate-reg-email" placeholder="Seu e-mail" required>
+            <div class="phone-group">
+              <select id="gate-reg-country" required></select>
+              <input type="tel" id="gate-reg-telefone" placeholder="Número" required inputmode="tel" autocomplete="tel-national">
+            </div>
+            <input type="password" id="gate-reg-senha" placeholder="Crie uma senha (mín. 6)" required minlength="6">
+            <button type="submit" class="btn-primario">Criar conta</button>
+            <div id="gate-register-msg" class="auth-msg"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div id="toast-logout" class="toast-logout" role="status" aria-live="polite" aria-atomic="true">
     <span class="ico">✓</span>
@@ -651,50 +815,95 @@
       }
     }
 
-    // FIX: aceita authData opcional — se o backend já retornou hasSubscription/redirectTo
-    // não fazemos um segundo round-trip para /subscription/current.
-    async function redirecionarPosAuth(msgEl, authData = null) {
-      const token = localStorage.getItem('gn_token');
-      if (!token) {
-        window.location.href = 'planos.html';
-        return;
+    function abrirGateAuth(tab = 'login') {
+      const gate = document.getElementById('auth-gate');
+      if (!gate) return;
+      gate.classList.add('ativo');
+      gate.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('auth-locked');
+      ativarAbaGate(tab);
+    }
+
+    function fecharGateAuth() {
+      const gate = document.getElementById('auth-gate');
+      if (!gate) return;
+      gate.classList.remove('ativo');
+      gate.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('auth-locked');
+    }
+
+    function ativarAbaGate(tab) {
+      document.querySelectorAll('.auth-tab').forEach((b) => {
+        b.classList.toggle('ativo', b.dataset.tab === tab);
+      });
+      document.querySelectorAll('.auth-pane').forEach((p) => {
+        p.classList.toggle('ativo', p.dataset.pane === tab);
+      });
+    }
+
+    const COUNTRIES = [
+      { code: 'BR', flag: '🇧🇷', name: 'Brasil', dial: '55' },
+      { code: 'US', flag: '🇺🇸', name: 'Estados Unidos', dial: '1' },
+      { code: 'CA', flag: '🇨🇦', name: 'Canadá', dial: '1' },
+      { code: 'PT', flag: '🇵🇹', name: 'Portugal', dial: '351' },
+      { code: 'ES', flag: '🇪🇸', name: 'Espanha', dial: '34' },
+      { code: 'FR', flag: '🇫🇷', name: 'França', dial: '33' },
+      { code: 'DE', flag: '🇩🇪', name: 'Alemanha', dial: '49' },
+      { code: 'IT', flag: '🇮🇹', name: 'Itália', dial: '39' },
+      { code: 'GB', flag: '🇬🇧', name: 'Reino Unido', dial: '44' },
+      { code: 'IE', flag: '🇮🇪', name: 'Irlanda', dial: '353' },
+      { code: 'AR', flag: '🇦🇷', name: 'Argentina', dial: '54' },
+      { code: 'CL', flag: '🇨🇱', name: 'Chile', dial: '56' },
+      { code: 'CO', flag: '🇨🇴', name: 'Colômbia', dial: '57' },
+      { code: 'MX', flag: '🇲🇽', name: 'México', dial: '52' },
+      { code: 'JP', flag: '🇯🇵', name: 'Japão', dial: '81' },
+      { code: 'KR', flag: '🇰🇷', name: 'Coreia do Sul', dial: '82' },
+      { code: 'IN', flag: '🇮🇳', name: 'Índia', dial: '91' },
+      { code: 'AU', flag: '🇦🇺', name: 'Austrália', dial: '61' },
+      { code: 'ZA', flag: '🇿🇦', name: 'África do Sul', dial: '27' }
+    ];
+
+    function onlyDigits(v) {
+      return String(v || '').replace(/\D/g, '');
+    }
+
+    function formatByCountry(digits, countryCode) {
+      const d = onlyDigits(digits);
+      if (!d) return '';
+
+      if (countryCode === 'BR') {
+        if (d.length <= 10) {
+          return d.replace(/(\d{0,2})(\d{0,4})(\d{0,4}).*/, (_, a, b, c) => {
+            let out = '';
+            if (a) out += `(${a}`;
+            if (a.length === 2) out += ') ';
+            if (b) out += b;
+            if (c) out += `-${c}`;
+            return out.trim();
+          });
+        }
+        return d.replace(/(\d{0,2})(\d{0,5})(\d{0,4}).*/, (_, a, b, c) => {
+          let out = '';
+          if (a) out += `(${a}`;
+          if (a.length === 2) out += ') ';
+          if (b) out += b;
+          if (c) out += `-${c}`;
+          return out.trim();
+        });
       }
 
-      // Se o backend já nos disse para onde ir, usamos essa informação diretamente.
-      if (authData && typeof authData.hasSubscription === 'boolean') {
-        if (authData.hasSubscription) {
-          localStorage.setItem('gn_logado', 'true');
-          if (authData.plano)   localStorage.setItem('gn_plano',   authData.plano);
-          if (authData.periodo) localStorage.setItem('gn_periodo', authData.periodo);
-          setAuthMessage(msgEl, 'Acesso liberado! Redirecionando para o dashboard...', 'ok');
-          setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
-        } else {
-          localStorage.removeItem('gn_logado');
-          setAuthMessage(msgEl, 'Conta pronta. Agora escolha um plano para continuar.', 'ok');
-          setTimeout(() => { window.location.href = 'planos.html'; }, 500);
-        }
-        return;
+      if (countryCode === 'US' || countryCode === 'CA') {
+        return d.replace(/(\d{0,3})(\d{0,3})(\d{0,4}).*/, (_, a, b, c) => {
+          let out = '';
+          if (a) out += `(${a}`;
+          if (a.length === 3) out += ') ';
+          if (b) out += b;
+          if (c) out += `-${c}`;
+          return out.trim();
+        });
       }
 
-      // Fallback: consulta /subscription/current (login legado sem hasSubscription)
-      try {
-        const assinatura = await buscarAssinaturaAtual(token);
-        if (assinatura && ['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
-          localStorage.setItem('gn_logado', 'true');
-          localStorage.setItem('gn_plano', assinatura.plano || 'premium');
-          localStorage.setItem('gn_periodo', assinatura.periodo || 'mensal');
-          setAuthMessage(msgEl, 'Acesso liberado! Redirecionando para o dashboard...', 'ok');
-          setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
-          return;
-        }
-        localStorage.removeItem('gn_logado');
-        setAuthMessage(msgEl, 'Conta pronta. Agora escolha um plano para continuar.', 'ok');
-        setTimeout(() => { window.location.href = 'planos.html'; }, 500);
-      } catch (_) {
-        localStorage.removeItem('gn_logado');
-        setAuthMessage(msgEl, 'Conta pronta. Agora escolha um plano para continuar.', 'ok');
-        setTimeout(() => { window.location.href = 'planos.html'; }, 500);
-      }
+      return d.replace(/(\d{1,3})(?=(\d{3})+(?!\d))/g, '$1 ').trim();
     }
 
     async function atualizarEstadoAuth() {
@@ -704,8 +913,17 @@
 
       try {
         const perfil = await authRequest('/me', null, token);
+        const tipo = (perfil.tipo || 'usuario').toLowerCase();
+        localStorage.setItem('gn_tipo', tipo);
         localStorage.setItem('gn_nome', (perfil.nome || '').split(' ')[0] || 'Usuário');
         if (navLogin) {
+          if (tipo === 'admin') {
+            localStorage.setItem('gn_logado', 'true');
+            navLogin.textContent = 'Minha área';
+            navLogin.href = 'admin.html';
+            return;
+          }
+
           try {
             const assinatura = await buscarAssinaturaAtual(token);
             if (assinatura && ['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
@@ -725,6 +943,7 @@
       } catch (_) {
         localStorage.removeItem('gn_token');
         localStorage.removeItem('gn_logado');
+        localStorage.removeItem('gn_tipo');
       }
     }
 
@@ -865,25 +1084,59 @@
       setTimeout(() => splash.remove(), 420);
     }
     document.addEventListener('DOMContentLoaded', () => {
-      const formLogin = document.getElementById('form-login');
-      const formRegister = document.getElementById('form-register');
-      const loginMsg = document.getElementById('login-msg');
-      const registerMsg = document.getElementById('register-msg');
+      const formLogin = document.getElementById('gate-form-login');
+      const formRegister = document.getElementById('gate-form-register');
+      const loginMsg = document.getElementById('gate-login-msg');
+      const registerMsg = document.getElementById('gate-register-msg');
+      const countrySelect = document.getElementById('gate-reg-country');
+      const telefoneInput = document.getElementById('gate-reg-telefone');
+
+      if (countrySelect) {
+        countrySelect.innerHTML = COUNTRIES.map((c) => (
+          `<option value="${c.dial}" data-code="${c.code}">${c.flag} ${c.name} (+${c.dial})</option>`
+        )).join('');
+        countrySelect.value = '55';
+      }
+
+      function formatarTelefoneNoInput() {
+        if (!telefoneInput || !countrySelect) return;
+        const countryCode = (countrySelect.selectedOptions[0]?.dataset.code || 'BR').toUpperCase();
+        telefoneInput.value = formatByCountry(telefoneInput.value, countryCode);
+      }
+
+      if (telefoneInput) {
+        telefoneInput.addEventListener('input', formatarTelefoneNoInput);
+      }
+      if (countrySelect) {
+        countrySelect.addEventListener('change', formatarTelefoneNoInput);
+      }
+
+      document.querySelectorAll('.auth-tab').forEach((btn) => {
+        btn.addEventListener('click', () => ativarAbaGate(btn.dataset.tab));
+      });
+
+      abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
 
       if (formLogin) {
         formLogin.addEventListener('submit', async (e) => {
           e.preventDefault();
           setAuthMessage(loginMsg, 'Entrando...');
           try {
-            const email = document.getElementById('login-email').value.trim();
-            const senha = document.getElementById('login-senha').value;
+            const email = document.getElementById('gate-login-email').value.trim();
+            const senha = document.getElementById('gate-login-senha').value;
             const data = await authRequest('/login', { email, senha });
             salvarSessao(data.token);
             if (data.nome) {
               localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || 'Usuário');
             }
-            // Passa data direto: se o backend retornou hasSubscription, não faz 2ª chamada
-            await redirecionarPosAuth(loginMsg, data);
+            const tipo = (data.tipo || 'usuario').toLowerCase();
+            localStorage.setItem('gn_tipo', tipo);
+            localStorage.setItem('gn_logado', 'true');
+            if (tipo === 'admin') {
+              window.location.href = 'admin.html';
+              return;
+            }
+            window.location.href = 'dashboard.html';
           } catch (err) {
             setAuthMessage(loginMsg, err.message, 'erro');
           }
@@ -895,21 +1148,30 @@
           e.preventDefault();
           setAuthMessage(registerMsg, 'Criando conta...');
           try {
-            const nome  = document.getElementById('reg-nome').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const senha = document.getElementById('reg-senha').value;
-            const data  = await authRequest('/register', { nome, email, senha });
-            salvarSessao(data.token);
-            if (data.nome) {
-              localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || nome.split(' ')[0] || 'Usuário');
+            const email = document.getElementById('gate-reg-email').value.trim();
+            const telefoneLocal = document.getElementById('gate-reg-telefone').value.trim();
+            const ddi = document.getElementById('gate-reg-country').value;
+            const senha = document.getElementById('gate-reg-senha').value;
+            const prefixo = (email.split('@')[0] || 'usuario').replace(/[^a-zA-ZÀ-ÿ0-9]/g, ' ').trim();
+            const nome = (prefixo || 'Novo Usuario').slice(0, 40);
+            const telefoneNumeros = onlyDigits(telefoneLocal);
+            if (telefoneNumeros.length < 6) {
+              setAuthMessage(registerMsg, 'Digite um telefone válido.', 'erro');
+              return;
             }
-            // hasSubscription=false vem direto na resposta — sem 2ª chamada ao servidor
-            await redirecionarPosAuth(registerMsg, data);
+            const telefone = `+${ddi}${telefoneNumeros}`;
+            const data  = await authRequest('/register', { nome, email, senha, telefone });
+            salvarSessao(data.token);
+            localStorage.setItem('gn_nome', (data.nome || nome).split(' ')[0] || 'Usuário');
+            localStorage.setItem('gn_tipo', (data.tipo || 'usuario').toLowerCase());
+            localStorage.setItem('gn_logado', 'true');
+            setAuthMessage(registerMsg, 'Conta criada com sucesso. Bem-vindo!', 'ok');
+            setTimeout(() => {
+              fecharGateAuth();
+              setAuthMessage(registerMsg, '');
+            }, 450);
           } catch (err) {
             setAuthMessage(registerMsg, err.message, 'erro');
-            if ((err.message || '').includes('assinatura')) {
-              setTimeout(() => { window.location.href = 'planos.html'; }, 700);
-            }
           }
         });
       }

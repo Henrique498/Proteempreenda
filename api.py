@@ -1,12 +1,13 @@
 # api.py — Proteempreenda
 # Flask API com SQL Server — usa conexao.py como módulo central
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from dotenv import load_dotenv
 from conexao import executar
 from auth import auth_bp, require_auth
 from subscription import subscription_bp
+from werkzeug.security import generate_password_hash
 import os
 import secrets
 
@@ -71,6 +72,22 @@ def _is_admin_request() -> bool:
     return request.headers.get('X-Admin-Key', '') == ADMIN_API_KEY
 
 
+def _is_admin_user(user_id: int) -> bool:
+    try:
+        row = executar(
+            "SELECT TOP 1 Tipo, Ativo FROM dbo.Usuarios WHERE Id = ?",
+            (user_id,),
+            fetch=True
+        )
+        if not row:
+            return False
+        tipo = str(row[0].get('Tipo') or '').strip().lower()
+        ativo = bool(row[0].get('Ativo'))
+        return ativo and tipo == 'admin'
+    except Exception:
+        return False
+
+
 def _validar_plano_payload(data):
     nome = (data.get('nome') or '').strip().lower()
     descricao = (data.get('descricao') or '').strip()
@@ -101,32 +118,15 @@ def _validar_plano_payload(data):
 
 # ============================================================
 #  ROTA: POST /api/checkout
-#  Registra um novo pagamento na tabela dbo.[User]
+#  Endpoint legado (compatibilidade)
+#  O fluxo oficial de cobrança/assinatura é /api/subscription/start
 # ============================================================
 @app.route('/api/checkout', methods=['POST'])
 def checkout():
-    data    = request.get_json(silent=True) or {}
-    nome    = (data.get('nome')    or '').strip()
-    plano   = (data.get('plano')   or '').strip()
-    periodo = (data.get('periodo') or '').strip()
-    metodo  = (data.get('metodo')  or '').strip()
-    valor   = data.get('valor')
-
-    if not nome or not plano or not periodo or not metodo or valor is None:
-        return jsonify({"error": "Dados inválidos. Preencha todos os campos."}), 400
-
-    try:
-        executar(
-            """
-            INSERT INTO dbo.[User] (Nome, Plano, Periodo, Metodo, Valor)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (nome, plano, periodo, metodo, float(valor))
-        )
-        return jsonify({"ok": True, "mensagem": "Assinatura registrada com sucesso!"}), 200
-
-    except Exception as e:
-        return _api_error('Falha ao registrar checkout.', e)
+    return jsonify({
+        "ok": True,
+        "mensagem": "Checkout legado ignorado. Use /api/subscription/start para gravar assinatura e pagamento."
+    }), 200
 
 
 # ============================================================
@@ -137,12 +137,132 @@ def checkout():
 def listar_usuarios():
     try:
         resultado = executar(
-            "SELECT Id, Nome, Email, Ativo, CriadoEm FROM dbo.Usuarios ORDER BY CriadoEm DESC",
+            "SELECT Id, Nome, Email, Telefone, Tipo, Ativo, CriadoEm, AtualizadoEm FROM dbo.Usuarios ORDER BY CriadoEm DESC",
             fetch=True
         )
         return jsonify(resultado), 200
     except Exception as e:
         return _api_error('Falha ao listar usuários.', e)
+
+
+@app.route('/api/admin/usuarios', methods=['GET'])
+@require_auth
+def admin_listar_usuarios():
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+
+    try:
+        resultado = executar(
+            "SELECT Id, Nome, Email, Telefone, Tipo, Ativo, CriadoEm, AtualizadoEm FROM dbo.Usuarios ORDER BY CriadoEm DESC",
+            fetch=True
+        )
+        return jsonify(resultado), 200
+    except Exception as e:
+        return _api_error('Falha ao listar usuários (admin).', e)
+
+
+@app.route('/api/admin/usuarios', methods=['POST'])
+@require_auth
+def admin_criar_usuario():
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+
+    data = request.get_json(silent=True) or {}
+    nome = (data.get('nome') or '').strip()
+    email = (data.get('email') or '').strip().lower()
+    senha = (data.get('senha') or '').strip()
+    telefone = (data.get('telefone') or '').strip() or None
+    tipo = (data.get('tipo') or 'usuario').strip().lower()
+
+    if len(nome) < 3 or '@' not in email or len(senha) < 6:
+        return jsonify({'error': 'Dados inválidos.'}), 400
+    if tipo not in ('usuario', 'admin'):
+        return jsonify({'error': 'Tipo inválido. Use usuario ou admin.'}), 400
+
+    try:
+        senha_hash = generate_password_hash(senha)
+        executar(
+            """
+            INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash, Telefone, Tipo, Ativo)
+            VALUES (?, ?, ?, ?, ?, 1)
+            """,
+            (nome, email, senha_hash, telefone, tipo)
+        )
+        return jsonify({'ok': True}), 201
+    except Exception as e:
+        msg = str(e)
+        if '2601' in msg or '2627' in msg or 'UQ_Usuarios_Email' in msg:
+            return jsonify({'error': 'E-mail já cadastrado.'}), 409
+        return _api_error('Falha ao criar usuário (admin).', e)
+
+
+@app.route('/api/admin/usuarios/<int:user_id>', methods=['PUT'])
+@require_auth
+def admin_atualizar_usuario(user_id: int):
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+
+    data = request.get_json(silent=True) or {}
+    nome = data.get('nome')
+    telefone = data.get('telefone')
+    ativo = data.get('ativo')
+    tipo = data.get('tipo')
+
+    try:
+        atual = executar(
+            "SELECT TOP 1 Nome, Telefone, Tipo, Ativo FROM dbo.Usuarios WHERE Id = ?",
+            (user_id,),
+            fetch=True
+        )
+        if not atual:
+            return jsonify({'error': 'Usuário não encontrado.'}), 404
+
+        atual = atual[0]
+        nome_final = (nome.strip() if isinstance(nome, str) and nome.strip() else atual.get('Nome') or '')
+        telefone_final = telefone.strip() if isinstance(telefone, str) else atual.get('Telefone')
+        if telefone_final == '':
+            telefone_final = None
+        tipo_final = (tipo.strip().lower() if isinstance(tipo, str) and tipo.strip() else str(atual.get('Tipo') or 'usuario').lower())
+        if tipo_final not in ('usuario', 'admin'):
+            return jsonify({'error': 'Tipo inválido. Use usuario ou admin.'}), 400
+        ativo_final = 1 if bool(ativo) else 0 if ativo is not None else (1 if bool(atual.get('Ativo')) else 0)
+
+        executar(
+            """
+            UPDATE dbo.Usuarios
+            SET Nome = ?,
+                Telefone = ?,
+                Tipo = ?,
+                Ativo = ?,
+                AtualizadoEm = SYSUTCDATETIME()
+            WHERE Id = ?
+            """,
+            (nome_final, telefone_final, tipo_final, ativo_final, user_id)
+        )
+        return jsonify({'ok': True}), 200
+    except Exception as e:
+        return _api_error('Falha ao atualizar usuário (admin).', e)
+
+
+@app.route('/api/admin/usuarios/<int:user_id>', methods=['DELETE'])
+@require_auth
+def admin_desativar_usuario(user_id: int):
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+
+    try:
+        executar(
+            """
+            UPDATE dbo.Usuarios
+            SET Ativo = 0,
+                AtualizadoEm = SYSUTCDATETIME()
+            WHERE Id = ?
+            """,
+            (user_id,)
+        )
+        return jsonify({'ok': True}), 200
+    except Exception as e:
+        return _api_error('Falha ao desativar usuário (admin).', e)
 
 
 # ============================================================
@@ -160,9 +280,26 @@ def listar_planos():
         return _api_error('Falha ao listar planos.', e)
 
 
+@app.route('/api/admin/planos', methods=['GET'])
+@require_auth
+def admin_listar_planos():
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+
+    try:
+        resultado = executar(
+            "SELECT Id, Nome, Descricao, ValorMensal, ValorAnual, Ativo, CriadoEm FROM dbo.Planos ORDER BY Id",
+            fetch=True
+        )
+        return jsonify(resultado), 200
+    except Exception as e:
+        return _api_error('Falha ao listar planos (admin).', e)
+
+
 @app.route('/api/planos', methods=['POST'])
+@require_auth
 def criar_plano():
-    if not _is_admin_request():
+    if not _is_admin_user(g.user_id):
         return jsonify({'error': 'Acesso negado.'}), 403
 
     payload, erro = _validar_plano_payload(request.get_json(silent=True) or {})
@@ -189,8 +326,9 @@ def criar_plano():
 
 
 @app.route('/api/planos/<int:plano_id>', methods=['PUT'])
+@require_auth
 def atualizar_plano(plano_id: int):
-    if not _is_admin_request():
+    if not _is_admin_user(g.user_id):
         return jsonify({'error': 'Acesso negado.'}), 403
 
     payload, erro = _validar_plano_payload(request.get_json(silent=True) or {})
@@ -223,12 +361,13 @@ def atualizar_plano(plano_id: int):
 
 
 @app.route('/api/planos/<int:plano_id>', methods=['DELETE'])
+@require_auth
 def remover_plano(plano_id: int):
-    if not _is_admin_request():
+    if not _is_admin_user(g.user_id):
         return jsonify({'error': 'Acesso negado.'}), 403
 
     try:
-        executar("DELETE FROM dbo.Planos WHERE Id = ?", (plano_id,))
+        executar("UPDATE dbo.Planos SET Ativo = 0 WHERE Id = ?", (plano_id,))
         return jsonify({'ok': True}), 200
     except Exception as e:
         return _api_error('Falha ao remover plano.', e)
@@ -271,12 +410,105 @@ def dashboard():
 def historico():
     try:
         resultado = executar(
-            "SELECT * FROM dbo.[User] ORDER BY CreatedAt DESC",
+            """
+            SELECT
+                AssinaturaId,
+                Plano,
+                Periodo,
+                StatusAssinatura,
+                DataInicio,
+                DataFim,
+                Valor,
+                Metodo,
+                StatusPagamento,
+                DataPagamento
+            FROM dbo.vw_Dashboard
+            WHERE UsuarioId = ?
+            ORDER BY DataInicio DESC
+            """,
+            (g.user_id,),
             fetch=True
         )
         return jsonify(resultado), 200
     except Exception as e:
         return _api_error('Falha ao carregar histórico.', e)
+
+
+# ============================================================
+#  ROTAS: CONTATOS CONFIÁVEIS DO DASHBOARD
+# ============================================================
+@app.route('/api/contatos', methods=['GET'])
+@require_auth
+def listar_contatos():
+    try:
+        resultado = executar(
+            """
+            SELECT Id, Nome, Relacao, PaisCodigo, DDI, Numero, NumeroFormatado, CriadoEm
+            FROM dbo.ContatosConfiaveis
+            WHERE UsuarioId = ? AND Ativo = 1
+            ORDER BY CriadoEm DESC, Id DESC
+            """,
+            (g.user_id,),
+            fetch=True
+        )
+        return jsonify(resultado), 200
+    except Exception as e:
+        return _api_error('Falha ao listar contatos.', e)
+
+
+@app.route('/api/contatos', methods=['POST'])
+@require_auth
+def criar_contato():
+    data = request.get_json(silent=True) or {}
+    nome = (data.get('nome') or '').strip()
+    relacao = (data.get('relacao') or '').strip()
+    pais_codigo = (data.get('pais') or '').strip().upper()[:2] or None
+    ddi = (data.get('ddi') or '').strip()
+    numero = (data.get('numero') or '').strip()
+    numero_fmt = (data.get('numeroFmt') or '').strip() or None
+
+    if len(nome) < 2 or not relacao or not numero:
+        return jsonify({'error': 'Dados inválidos.'}), 400
+
+    digitos = ''.join(c for c in numero if c.isdigit())
+    if len(digitos) < 8 or len(digitos) > 18:
+        return jsonify({'error': 'Número inválido.'}), 400
+
+    if ddi:
+        ddi_digitos = ''.join(c for c in ddi if c.isdigit())
+        ddi = ddi_digitos if ddi_digitos else None
+
+    try:
+        executar(
+            """
+            INSERT INTO dbo.ContatosConfiaveis
+                (UsuarioId, Nome, Relacao, PaisCodigo, DDI, Numero, NumeroFormatado, Ativo)
+            VALUES
+                (?, ?, ?, ?, ?, ?, ?, 1)
+            """,
+            (g.user_id, nome, relacao, pais_codigo, ddi, numero, numero_fmt)
+        )
+        return jsonify({'ok': True}), 201
+    except Exception as e:
+        return _api_error('Falha ao criar contato.', e)
+
+
+@app.route('/api/contatos/<int:contato_id>', methods=['DELETE'])
+@require_auth
+def excluir_contato(contato_id: int):
+    try:
+        executar(
+            """
+            UPDATE dbo.ContatosConfiaveis
+            SET Ativo = 0,
+                AtualizadoEm = SYSUTCDATETIME()
+            WHERE Id = ? AND UsuarioId = ?
+            """,
+            (contato_id, g.user_id)
+        )
+        return jsonify({'ok': True}), 200
+    except Exception as e:
+        return _api_error('Falha ao excluir contato.', e)
 
 
 if __name__ == '__main__':

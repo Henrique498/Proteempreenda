@@ -77,7 +77,7 @@ def _buscar_usuario_por_email(email: str):
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT Id, Nome, Email, SenhaHash, Ativo
+            SELECT Id, Nome, Email, SenhaHash, Ativo, Tipo
             FROM dbo.Usuarios
             WHERE Email = ?
             """,
@@ -94,7 +94,7 @@ def _buscar_usuario_por_id(user_id: int):
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT Id, Nome, Email, Ativo, CriadoEm
+            SELECT Id, Nome, Email, Ativo, CriadoEm, Tipo
             FROM dbo.Usuarios
             WHERE Id = ?
             """,
@@ -216,15 +216,14 @@ def register():
         nome     = (data.get("nome")     or "").strip()
         email    = _normalize_email(data.get("email"))
         senha    = (data.get("senha")    or "").strip()
-        telefone = (data.get("telefone") or "").strip() or None
+        telefone = (data.get("telefone") or "").strip()
 
-        if len(nome) < 3 or not _email_valido(email) or len(senha) < 6:
+        if len(nome) < 3 or not _email_valido(email) or len(senha) < 6 or not telefone:
             return jsonify({"error": "Dados inválidos."}), 400
 
-        if telefone:
-            digitos = "".join(c for c in telefone if c.isdigit())
-            if len(digitos) < 10 or len(digitos) > 11:
-                return jsonify({"error": "Telefone inválido. Use DDD + número (10 ou 11 dígitos)."}), 400
+        digitos = "".join(c for c in telefone if c.isdigit())
+        if len(digitos) < 8 or len(digitos) > 15:
+            return jsonify({"error": "Telefone inválido. Use formato internacional com código do país."}), 400
 
         senha_hash = generate_password_hash(senha)
 
@@ -233,9 +232,9 @@ def register():
             cur = conn.cursor()
             cur.execute(
                 """
-                INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash, Telefone)
+                INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash, Telefone, Tipo)
                 OUTPUT INSERTED.Id
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, 'usuario')
                 """,
                 (nome, email, senha_hash, telefone),
             )
@@ -259,6 +258,7 @@ def register():
             'token':           token,
             'ttlHoras':        TOKEN_TTL_HORAS,
             'nome':            nome,
+            'tipo':            'usuario',
             'hasSubscription': False,   # novo usuário, sem assinatura
             'redirectTo':      'planos.html',
         }), 201
@@ -279,7 +279,7 @@ def login():
         if not user:
             return jsonify({'error': 'Credenciais inválidas.'}), 401
 
-        user_id, _nome, _email, senha_hash, ativo = user
+        user_id, _nome, _email, senha_hash, ativo, tipo = user
         if not ativo:
             return jsonify({'error': 'Usuário inativo.'}), 403
 
@@ -297,8 +297,14 @@ def login():
             'token':           token,
             'ttlHoras':        TOKEN_TTL_HORAS,
             'nome':            _nome,
+            'tipo':            (tipo or 'usuario').lower(),
             'hasSubscription': tem_assinatura,
         }
+        if payload['tipo'] == 'admin':
+            payload['hasSubscription'] = True
+            payload['redirectTo'] = 'admin.html'
+            return jsonify(payload), 200
+
         if tem_assinatura and assinatura_info:
             payload['plano']   = assinatura_info.get('plano')
             payload['periodo'] = assinatura_info.get('periodo')
@@ -416,12 +422,14 @@ def me():
         email    = str(user[2]) if user[2] is not None else ''
         ativo    = bool(user[3]) if user[3] is not None else False
         criado_em = user[4]
+        tipo = str(user[5]).lower() if user[5] is not None else 'usuario'
 
         return jsonify({
             'id':       user_id,
             'nome':     nome,
             'email':    email,
             'ativo':    ativo,
+            'tipo':     tipo,
             'criadoEm': criado_em.isoformat() if hasattr(criado_em, 'isoformat') else None,
         }), 200
 
