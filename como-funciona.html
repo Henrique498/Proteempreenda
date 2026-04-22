@@ -2,9 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <script src="shared-theme.js"></script>
+  <!-- Script inline: aplica tema ANTES de renderizar — evita flash -->
+  <script src="site-animations.js"></script>
+  <script>
+    (function() {
+      const t = localStorage.getItem('theme') || 'dark';
+      if (t === 'light') document.documentElement.classList.add('light-mode');
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Descubra como o GuardianNet usa IA para proteger crianças online. Veja o passo a passo da detecção de riscos em tempo real.">
   <title>GuardianNet — Como Funciona</title>
   <link rel="stylesheet" href="guardiannet.css">
   <style>
@@ -107,13 +113,11 @@
 </head>
 <body>
 
-  <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
-
   <header id="header">
     <div class="container">
-      <nav class="nav-inner" role="navigation" aria-label="Navegação principal">
-        <a href="index.html" class="logo" aria-label="GuardianNet — Voltar ao início">
-          <img src="logo.png" alt="GuardianNet" class="logo-icon" width="52" height="52">
+      <nav class="nav-inner">
+        <a href="index.html" class="logo">
+          <img src="logo.png" alt="GuardianNet" class="logo-icon">
           Guardian<span>Net</span>
         </a>
         <ul class="nav-links" id="nav-links">
@@ -123,18 +127,18 @@
           <li><a href="sobre.html">Sobre</a></li>
           <li><a href="planos.html" class="nav-cta">Começar Grátis</a></li>
         </ul>
-        <button class="theme-toggle" id="theme-toggle-btn" onclick="GnTheme.toggle()" aria-label="Alternar tema claro/escuro">
-          <span id="theme-icon" aria-hidden="true">🌙</span>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+          <span id="theme-icon">🌙</span>
         </button>
-        <button class="menu-toggle" id="menu-toggle" onclick="toggleMenu()" aria-label="Abrir menu" aria-expanded="false">
+        <div class="menu-toggle" onclick="toggleMenu()">
           <span></span><span></span><span></span>
-        </button>
+        </div>
       </nav>
     </div>
   </header>
 
 
-  <section class="page-hero" id="main-content">
+  <section class="page-hero">
     <div class="container">
       <span class="tag-secao animar">Tecnologia</span>
       <h1 class="titulo-secao hero-title-xl animar-2">
@@ -270,21 +274,32 @@
   </footer>
 
 
-  <script src="shared-components.js"></script>
-  <script src="site-animations.js"></script>
   <script>
-    // ── Header scroll ───────────────────────────────────────
-    window.addEventListener('scroll', function() {
+    // ── Header scroll: muda cor conforme tema ──────────────────────
+    window.addEventListener('scroll', () => {
       document.getElementById('header').classList.toggle('scrolled', window.scrollY > 40);
     });
 
-    // ── Menu mobile ────────────────────────────────────────
+    // ── Menu mobile ────────────────────────────────────────────────
     function toggleMenu() {
-      var nav = document.getElementById('nav-links');
-      var btn = document.getElementById('menu-toggle');
-      nav.classList.toggle('aberto');
-      if (btn) btn.setAttribute('aria-expanded', nav.classList.contains('aberto') ? 'true' : 'false');
+      document.getElementById('nav-links').classList.toggle('aberto');
     }
+
+    // ── Tema light/dark ───────────────────────────────────────────
+    function toggleTheme() {
+      const html    = document.documentElement;
+      const icon    = document.getElementById('theme-icon');
+      const isLight = html.classList.toggle('light-mode');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      icon.textContent = isLight ? '☀️' : '🌙';
+    }
+
+    // Aplica ícone correto ao carregar (tema já foi aplicado no <head>)
+    (function() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      const icon  = document.getElementById('theme-icon');
+      if (icon) icon.textContent = saved === 'light' ? '☀️' : '🌙';
+    })();
   </script>
 
 </body>

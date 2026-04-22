@@ -542,6 +542,44 @@
 </head>
 <body>
 
+  <section class="auth-gate" id="auth-gate" aria-hidden="true">
+    <div class="auth-gate-card" id="acesso">
+      <div class="auth-gate-left">
+        <h2>Entre para continuar</h2>
+        <p>Faça login para entrar direto no seu dashboard. Se ainda não tem conta, cadastre-se em segundos e continue navegando no site.</p>
+        <p style="font-size:.9rem;color:var(--white-dim)">Ao escolher um plano, você só confirma o pagamento.</p>
+      </div>
+      <div class="auth-gate-right">
+        <div class="auth-gate-tabs" role="tablist" aria-label="Acesso">
+          <button type="button" class="auth-tab ativo" data-tab="login">Já tenho conta</button>
+          <button type="button" class="auth-tab" data-tab="cadastro">Criar conta</button>
+        </div>
+
+        <div class="auth-pane ativo" data-pane="login">
+          <form id="gate-form-login" class="auth-form">
+            <input type="email" id="gate-login-email" placeholder="Seu e-mail" required>
+            <input type="password" id="gate-login-senha" placeholder="Sua senha" required minlength="6">
+            <button type="submit" class="btn-primario">Entrar</button>
+            <div id="gate-login-msg" class="auth-msg"></div>
+          </form>
+        </div>
+
+        <div class="auth-pane" data-pane="cadastro">
+          <form id="gate-form-register" class="auth-form">
+            <input type="email" id="gate-reg-email" placeholder="Seu e-mail" required>
+            <div class="phone-group">
+              <select id="gate-reg-country" required></select>
+              <input type="tel" id="gate-reg-telefone" placeholder="Número" required inputmode="tel" autocomplete="tel-national">
+            </div>
+            <input type="password" id="gate-reg-senha" placeholder="Crie uma senha (mín. 6)" required minlength="6">
+            <button type="submit" class="btn-primario">Criar conta</button>
+            <div id="gate-register-msg" class="auth-msg"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div id="toast-logout" class="toast-logout" role="status" aria-live="polite" aria-atomic="true">
     <span class="ico">✓</span>
     <span class="txt">Você saiu da conta com sucesso.</span>
@@ -549,15 +587,15 @@
 
   <div id="splash-loading" class="splash-loading" aria-hidden="true">
     <div id="splash-lottie" class="splash-lottie">
-      <img id="splash-fallback" class="splash-lottie-fallback" src="logo.png" alt="GuardianNet" width="120" height="120">
+      <img id="splash-fallback" class="splash-lottie-fallback" src="logo.png" alt="GuardianNet">
     </div>
   </div>
 
   <header id="header">
     <div class="container">
-      <nav class="nav-inner" role="navigation" aria-label="Navegação principal">
-        <a href="index.html" class="logo" aria-label="GuardianNet — Voltar ao início">
-          <img src="logo.png" alt="GuardianNet Logo" class="logo-icon" width="52" height="52">
+      <nav class="nav-inner">
+        <a href="index.html" class="logo">
+          <img src="logo.png" alt="GuardianNet Logo" class="logo-icon">
           Guardian<span>Net</span>
         </a>
         <ul class="nav-links" id="nav-links">
@@ -567,10 +605,10 @@
           <li><a href="sobre.html">Sobre</a></li>
           <li><a href="planos.html" class="nav-cta">Começar Grátis</a></li>
         </ul>
-        <button class="theme-toggle" id="theme-toggle-btn" onclick="GnTheme.toggle()" aria-label="Alternar entre modo claro e escuro">
-          <span id="theme-icon" aria-hidden="true">🌙</span>
+        <button class="theme-toggle" onclick="toggleTheme()">
+          <span id="theme-icon">🌙</span>
         </button>
-        <button class="menu-toggle" id="menu-toggle" onclick="toggleMenu()" aria-label="Abrir menu de navegação" aria-expanded="false"><span></span><span></span><span></span></button>
+        <div class="menu-toggle" onclick="toggleMenu()"><span></span><span></span><span></span></div>
       </nav>
     </div>
   </header>
@@ -579,10 +617,9 @@
     <canvas id="canvas-particulas"></canvas>
     <div class="hero-orbe"></div>
     <div class="container">
-      <div id="main-content">
       <div class="hero-conteudo">
         <div>
-          <div class="hero-badge animar"><span class="dot" aria-hidden="true"></span>Proteção em tempo real com IA</div>
+          <div class="hero-badge animar"><span class="dot"></span>Proteção em tempo real com IA</div>
           <h1 class="hero-titulo animar-2">
             Proteja seu filho
             <span class="linha-cyan">no mundo digital</span>
@@ -708,21 +745,9 @@
     </div>
   </footer>
 
-  <script src="site-animations.js"></script>
+  <!-- site-animations.js carregado com defer: não bloqueia o render da página -->
+  <script src="site-animations.js" defer></script>
   <script>
-    // Detectar cliques na logo para voltar ao início sem splash
-    document.addEventListener('DOMContentLoaded', async () => {
-      const logos = document.querySelectorAll('.logo');
-      logos.forEach(logo => {
-        logo.addEventListener('click', (e) => {
-          // Se o href for index.html, marcar que está voltando ao início
-          if (logo.href && logo.href.includes('index.html')) {
-            localStorage.setItem('gn_returning_home', '1');
-          }
-        });
-      });
-    }, { once: true });
-
     const AUTH_API = 'http://localhost:5000/api/auth';
     const SUBS_API = 'http://localhost:5000/api/subscription';
 
@@ -926,20 +951,7 @@
     window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 40));
 
     function toggleMenu() {
-      var nav = document.getElementById('nav-links');
-      var btn = document.getElementById('menu-toggle');
-      nav.classList.toggle('aberto');
-      if (btn) {
-        var isOpen = nav.classList.contains('aberto');
-        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      }
-    }
-
-    function iniciarSplashAnimacao() {
-      if (!window.lottie) return Promise.resolve();
-      return new Promise(function(resolve) {
-        if (window.lottie) resolve();
-      });
+      document.getElementById('nav-links').classList.toggle('aberto');
     }
 
     const canvas = document.getElementById('canvas-particulas');
@@ -973,6 +985,48 @@
     } else {
       ctx.clearRect(0,0,canvas.width,canvas.height);
     }
+
+    const html = document.documentElement;
+    const themeIcon = document.getElementById('theme-icon');
+    const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+
+    function temaSistemaAtual() {
+      return systemThemeQuery.matches ? 'light' : 'dark';
+    }
+
+    function aplicarTema(theme, persistir = false) {
+      html.classList.toggle('light-mode', theme === 'light');
+      if (themeIcon) themeIcon.textContent = theme === 'light' ? '☀️' : '🌙';
+      if (persistir) {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('theme_manual', '1');
+      }
+    }
+
+    // Theme toggle (Light/Dark mode)
+    function toggleTheme() {
+      const temaAtual = html.classList.contains('light-mode') ? 'light' : 'dark';
+      const novoTema = temaAtual === 'light' ? 'dark' : 'light';
+      aplicarTema(novoTema, true);
+      iniciarSplashAnimacao();
+    }
+
+    // Tema inicial: sistema operacional por padrão;
+    // só usa preferência salva se usuário já escolheu manualmente.
+    const temaSalvo = localStorage.getItem('theme');
+    const temaManual = localStorage.getItem('theme_manual') === '1';
+    const temaInicial =
+      temaManual && (temaSalvo === 'light' || temaSalvo === 'dark')
+        ? temaSalvo
+        : temaSistemaAtual();
+    aplicarTema(temaInicial, false);
+
+    // Se não houver escolha manual, acompanha o sistema em tempo real
+    systemThemeQuery.addEventListener('change', (event) => {
+      if (localStorage.getItem('theme_manual') === '1') return;
+      aplicarTema(event.matches ? 'light' : 'dark', false);
+      iniciarSplashAnimacao();
+    });
 
     // Splash rápido de entrada
     const splash = document.getElementById('splash-loading');
@@ -1029,7 +1083,7 @@
       document.body.style.overflow = '';
       setTimeout(() => splash.remove(), 420);
     }
-    document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener('DOMContentLoaded', () => {
       const formLogin = document.getElementById('gate-form-login');
       const formRegister = document.getElementById('gate-form-register');
       const loginMsg = document.getElementById('gate-login-msg');
@@ -1060,6 +1114,8 @@
       document.querySelectorAll('.auth-tab').forEach((btn) => {
         btn.addEventListener('click', () => ativarAbaGate(btn.dataset.tab));
       });
+
+      abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
 
       if (formLogin) {
         formLogin.addEventListener('submit', async (e) => {
@@ -1120,25 +1176,10 @@
         });
       }
 
-      await atualizarEstadoAuth();
+      atualizarEstadoAuth();
 
-      const returningHome = localStorage.getItem('gn_returning_home') === '1';
-      const token = localStorage.getItem('gn_token');
-
-      if (returningHome) {
-        localStorage.removeItem('gn_returning_home');
-      }
-
-      // Só não pede login quando acabou de voltar para a home a partir do site/dashboard
-      // Em abertura direta do index (nova entrada), pede login/cadastro normalmente.
-      if (token && returningHome) {
-        fecharGateAuth();
-      } else {
-        abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
-      }
-
-      if (window.__gnCurtainActive || returningHome) {
-        // Se a curtain Lottie está ativa ou voltando ao início, não usar splash duplicado
+      if (window.__gnCurtainActive) {
+        // Se a curtain Lottie está ativa, não usar splash duplicado
         if (splash) {
           splash.classList.add('hidden');
           setTimeout(() => splash.remove(), 20);

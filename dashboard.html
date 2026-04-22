@@ -2,10 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <script src="shared-theme.js"></script>
+  <script>
+    (function() {
+      const t = localStorage.getItem('theme') || 'dark';
+      if (t === 'light') document.documentElement.classList.add('light-mode');
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex">
-  <meta name="description" content="Dashboard GuardianNet — Monitore alertas e proteja seus filhos em tempo real.">
   <title>GuardianNet — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -76,11 +79,6 @@
       grid-template-columns: var(--sidebar-w) 1fr;
       grid-template-rows: var(--topbar-h) 1fr;
       height: 100vh;
-      transition: grid-template-columns .2s ease;
-    }
-
-    .app.sidebar-collapsed {
-      grid-template-columns: 0 1fr;
     }
 
     /* ══════════════════════════════════════
@@ -94,13 +92,6 @@
       flex-direction: column;
       padding: 20px 0;
       overflow-y: auto;
-      transition: transform .2s ease, opacity .2s ease;
-    }
-
-    .app.sidebar-collapsed .sidebar {
-      transform: translateX(-104%);
-      opacity: 0;
-      pointer-events: none;
     }
 
     .sb-logo {
@@ -122,7 +113,7 @@
     }
 
     :root.light-mode .sb-logo img {
-      filter: saturate(0.8) contrast(1.1) brightness(0.85);
+      filter: invert(1) hue-rotate(180deg) brightness(0.8);
     }
 
     .sb-logo-nome {
@@ -242,23 +233,13 @@
     }
 
     .topbar-menu {
-      display: inline-flex;
+      display: none;
       width: auto;
-      height: 34px;
-      border-radius: 8px;
-      padding: 0 12px;
-      font-size: 0.85rem;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 0.78rem;
       font-weight: 700;
       gap: 6px;
-      background: var(--navy);
-      border: 1px solid var(--border);
-      color: var(--white);
-      cursor: pointer;
-      transition: background .18s;
-    }
-
-    .topbar-menu:hover {
-      background: rgba(157,217,248,0.1);
     }
 
     .topbar-right { display: flex; align-items: center; gap: 10px; }
@@ -286,14 +267,6 @@
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; font-size: 0.85rem; color: var(--white);
       transition: background .18s;
-    }
-
-    .topbar-btn.topbar-menu {
-      width: auto;
-      border-radius: 8px;
-      padding: 0 12px;
-      gap: 6px;
-      justify-content: center;
     }
 
     .topbar-btn:hover { background: var(--border); }
@@ -339,13 +312,6 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-    }
-
-    /* Animações de transição de páginas */
-    .main > div {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      opacity: 1;
-      transform: translateY(0);
     }
 
     .drawer-backdrop {
@@ -798,16 +764,16 @@
   ══════════════════════════════════ -->
   <header class="topbar">
     <div class="topbar-left">
-      
+      <button class="topbar-btn topbar-menu" onclick="toggleSidebarMobile()" title="Abrir menu">☰ Menu</button>
+      <div class="topbar-titulo" id="topbar-titulo">Dashboard</div>
     </div>
     <div class="topbar-right">
       <div class="search-box">
         <span style="color:var(--dim)">🔍</span>
         <input type="text" placeholder="Buscar alertas, contatos...">
       </div>
-      <button type="button" class="topbar-btn" onclick="toggleTheme()" id="theme-btn" title="Tema">🌙</button>
-      <button type="button" class="topbar-btn" onclick="voltarParaSite()" title="Voltar ao site principal">← Início</button>
-      <button type="button" class="topbar-btn topbar-logout" onclick="logout()" title="Sair da conta">🚪 Sair</button>
+      <button class="topbar-btn" onclick="toggleTheme()" id="theme-btn" title="Tema">🌙</button>
+      <button class="topbar-btn topbar-logout" onclick="logout()" title="Sair da conta">🚪 Sair</button>
       <div class="user-pill">
         <div class="user-av" id="user-av">U</div>
         <span class="user-name" id="user-name">Usuário</span>
@@ -1340,13 +1306,31 @@
 
   renderRecursosPlan();
 
+  /* Fix logo claro */
+  function fixLogo() {
+    const img = document.getElementById('sb-img');
+    if (!img) return;
+    img.style.filter = document.documentElement.classList.contains('light-mode')
+      ? 'invert(1) hue-rotate(180deg) brightness(.75)' : 'none';
+  }
+  fixLogo();
+
   /* ════════════════════════════════════
-     TEMA (usa módulo compartilhado)
+     TEMA
   ════════════════════════════════════ */
   function toggleTheme() {
-    GnTheme.toggle();
+    const isLight = document.documentElement.classList.toggle('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    document.getElementById('theme-btn').textContent = isLight ? '☀️' : '🌙';
+    fixLogo();
     setTimeout(desenharGraficos, 50);
   }
+
+  (function() {
+    const s = localStorage.getItem('theme') || 'dark';
+    const b = document.getElementById('theme-btn');
+    if (b) b.textContent = s === 'light' ? '☀️' : '🌙';
+  })();
 
   /* ════════════════════════════════════
      NAVEGAÇÃO
@@ -1355,113 +1339,35 @@
   const titulos = { overview:'Dashboard', alertas:'Alertas', contatos:'Contatos Confiáveis', relatorios:'Relatórios', plano:'Meu Plano' };
 
   function toggleSidebarMobile(force) {
-    const app = document.querySelector('.app');
     const sidebar = document.querySelector('.sidebar');
     const backdrop = document.getElementById('drawer-backdrop');
-    if (!sidebar || !backdrop || !app) return;
-
-    const isMobile = window.matchMedia('(max-width: 900px)').matches;
-
-    if (!isMobile) {
-      const collapsed = typeof force === 'boolean' ? !force : !app.classList.contains('sidebar-collapsed');
-      app.classList.toggle('sidebar-collapsed', collapsed);
-      backdrop.classList.remove('aberto');
-      document.body.style.overflow = '';
-      return;
-    }
+    if (!sidebar || !backdrop) return;
 
     const abrir = typeof force === 'boolean' ? force : !sidebar.classList.contains('aberto');
     sidebar.classList.toggle('aberto', abrir);
     backdrop.classList.toggle('aberto', abrir);
-    if (abrir) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
   }
 
   function mudarPag(id, el) {
-    // Valida se a página existe
-    if (!pags.includes(id)) return;
-
-    // Esconde todas as páginas e mostra a selecionada com suavidade
     pags.forEach(p => {
-      const pagEl = document.getElementById('pg-' + p);
-      if (pagEl) {
-        if (p === id) {
-          pagEl.style.display = '';
-          // Adiciona animação de entrada
-          requestAnimationFrame(() => {
-            pagEl.style.opacity = '1';
-            pagEl.style.transform = 'translateY(0)';
-          });
-        } else {
-          pagEl.style.opacity = '0';
-          pagEl.style.transform = 'translateY(8px)';
-          setTimeout(() => {
-            pagEl.style.display = 'none';
-          }, 300);
-        }
-      }
+      const el = document.getElementById('pg-' + p);
+      if (el) el.style.display = p === id ? '' : 'none';
     });
-
-    // Atualiza o título da topbar
     document.getElementById('topbar-titulo').textContent = titulos[id] || id;
-
-    // Marca o item do menu como ativo
     if (el) {
       document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('ativo'));
       el.classList.add('ativo');
-    } else {
-      // Se não passou o elemento, encontra o item correspondente
-      document.querySelectorAll('.sb-item').forEach(i => {
-        const isAtivo = i.getAttribute('onclick') && i.getAttribute('onclick').includes(`'${id}'`);
-        i.classList.toggle('ativo', isAtivo);
-      });
     }
-
-    // Esconde o badge de alertas quando abre a página de alertas
     if (id === 'alertas') {
       const b = document.getElementById('sb-badge');
       if (b) b.style.display = 'none';
     }
+    if (id === 'relatorios') setTimeout(desenharGraficoRelatorio, 60);
 
-    // Desenha o gráfico quando abre a página de relatórios
-    if (id === 'relatorios') {
-      setTimeout(desenharGraficoRelatorio, 60);
-    }
-
-    // Fecha o menu mobile se estiver aberto
     if (window.matchMedia('(max-width: 900px)').matches) {
       toggleSidebarMobile(false);
     }
-
-    // Faz scroll para o topo
-    const main = document.querySelector('.main');
-    if (main) {
-      main.scrollTop = 0;
-    }
   }
-
-  // Adiciona suporte a navegação por teclado
-  document.addEventListener('keydown', (e) => {
-    // Ctrl/Cmd + número para navegar (1=overview, 2=alertas, 3=contatos, 4=relatorios, 5=plano)
-    if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '5') {
-      e.preventDefault();
-      const idx = parseInt(e.key) - 1;
-      if (idx < pags.length) {
-        const pageId = pags[idx];
-        const item = document.querySelector(`[onclick*="'${pageId}'"]`);
-        if (item) mudarPag(pageId, item);
-      }
-    }
-  });
-
-  // Inicializa as páginas na primeira carga
-  document.addEventListener('DOMContentLoaded', () => {
-    // Carrega a página de overview por padrão
-    mudarPag('overview', document.querySelector('.sb-item.ativo'));
-  }, { once: true });
 
   /* ════════════════════════════════════
      CONTATOS
@@ -1921,12 +1827,6 @@
       fecharConfirmModal(false);
     }
   });
-
-  function voltarParaSite() {
-    // Marca que está voltando para o site principal sem splash
-    localStorage.setItem('gn_returning_home', '1');
-    window.location.href = 'index.html';
-  }
 
   async function logout() {
     if (!(await confirmarAcao('Deseja sair da conta?', 'Sair da conta'))) return;

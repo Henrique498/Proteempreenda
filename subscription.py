@@ -386,3 +386,5 @@ def cancelar_assinatura():
         return jsonify({'ok': True}), 200
     except Exception as e:
         return _erro_json('Falha ao cancelar assinatura.', str(e), 500)
+
+
