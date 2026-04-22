@@ -31,6 +31,7 @@
       align-items: start;
     }
 
+    /* ── AUTENTICAÇÃO INLINE ── */
     .auth-inline {
       width: 100%;
       max-width: 100%;
@@ -41,38 +42,22 @@
       align-items: center;
       justify-content: center;
     }
-
-    .auth-inline.ativo {
-      display: flex;
-    }
-
-    .auth-inline .container {
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
+    .auth-inline.ativo { display: flex; }
+    .auth-inline .container { width: 100%; max-width: 900px; margin: 0 auto; }
     .auth-inline-card {
       background: var(--navy-2);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 28px;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
     }
-
     .auth-inline-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
       margin-top: 18px;
     }
-
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
+    .auth-form { display: flex; flex-direction: column; gap: 12px; }
     .auth-form input {
       width: 100%;
       background: var(--navy-3);
@@ -84,18 +69,11 @@
       color: var(--white);
       outline: none;
     }
-
     .auth-form input:focus {
       border-color: var(--azul-pastel);
       box-shadow: 0 0 0 3px var(--azul-dim);
     }
-
-    .auth-msg {
-      min-height: 18px;
-      font-size: 0.82rem;
-      color: var(--white-dim);
-    }
-
+    .auth-msg { min-height: 18px; font-size: 0.82rem; color: var(--white-dim); }
     .auth-link {
       align-self: flex-start;
       border: 0;
@@ -107,40 +85,104 @@
       text-decoration: underline;
       text-underline-offset: 2px;
     }
+    .auth-msg.erro { color: var(--red); }
+    .auth-msg.ok   { color: #4ec97a; }
 
-    .auth-msg.erro {
-      color: var(--red);
+    /* ── VERIFICAÇÃO DE E-MAIL SIMULADA ── */
+    .email-verify-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(7,11,20,0.95);
+      backdrop-filter: blur(12px);
+      z-index: 8888;
+      align-items: center;
+      justify-content: center;
     }
-
-    .auth-msg.ok {
-      color: #4ec97a;
+    .email-verify-overlay.ativo { display: flex; }
+    .email-verify-card {
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      animation: fadeUp 0.4s ease both;
     }
+    .email-verify-icon { font-size: 3rem; margin-bottom: 16px; }
+    .email-verify-titulo {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .email-verify-desc { color: var(--white-dim); font-size: 0.9rem; line-height: 1.7; margin-bottom: 24px; }
+    .email-code-inputs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .email-code-inputs input {
+      width: 52px;
+      height: 56px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 800;
+      font-family: var(--font-head);
+      background: var(--navy-3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--white);
+      outline: none;
+    }
+    .email-code-inputs input:focus {
+      border-color: var(--azul-pastel);
+      box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+    .email-verify-hint {
+      font-size: 0.8rem;
+      color: var(--white-dim);
+      margin-bottom: 16px;
+    }
+    .email-verify-hint strong { color: var(--azul-pastel); }
+    .btn-verify {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--azul-pastel), var(--verde-pastel));
+      color: #0a1628;
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 800;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .btn-reenviar {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--white-dim);
+      border-radius: 100px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .email-verify-msg { font-size: 0.85rem; margin-top: 12px; min-height: 20px; }
+    .email-verify-msg.ok   { color: #4ec97a; }
+    .email-verify-msg.erro { color: var(--red); }
 
-    /* ── FORMULÁRIO ── */
+    /* ── FORMULÁRIO DE PAGAMENTO ── */
     .form-card {
       background: var(--navy-2);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 40px;
     }
-
-    .form-titulo {
-      font-family: var(--font-head);
-      font-size: 1.5rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .form-subtitulo {
-      color: var(--white-dim);
-      font-size: 0.9rem;
-      margin-bottom: 32px;
-    }
-
-    .form-grupo {
-      margin-bottom: 20px;
-    }
-
+    .form-titulo { font-family: var(--font-head); font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+    .form-subtitulo { color: var(--white-dim); font-size: 0.9rem; margin-bottom: 32px; }
+    .form-grupo { margin-bottom: 20px; }
     .form-grupo label {
       display: block;
       font-size: 0.85rem;
@@ -149,7 +191,6 @@
       margin-bottom: 8px;
       letter-spacing: 0.5px;
     }
-
     .form-grupo input,
     .form-grupo select {
       width: 100%;
@@ -163,88 +204,139 @@
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-
-    .form-grupo input::placeholder {
-      color: var(--white-dim);
-      opacity: 0.5;
-    }
-
-    .form-grupo select option {
-      color: var(--white);
-      background: var(--navy-3);
-    }
-
-    .form-grupo input:focus {
-      border-color: var(--azul-pastel);
-      box-shadow: 0 0 0 3px var(--azul-dim);
-    }
-
+    .form-grupo input::placeholder { color: var(--white-dim); opacity: 0.5; }
+    .form-grupo select option { color: var(--white); background: var(--navy-3); }
+    .form-grupo input:focus,
     .form-grupo select:focus {
       border-color: var(--azul-pastel);
       box-shadow: 0 0 0 3px var(--azul-dim);
       outline: none;
     }
+    .form-grupo.invalido input,
+    .form-grupo.invalido select { border-color: var(--red); }
+    .msg-erro { font-size: 0.78rem; color: var(--red); margin-top: 6px; display: none; }
+    .form-grupo.invalido .msg-erro { display: block; }
 
-    .form-grupo input.erro {
-      border-color: var(--red);
-      box-shadow: 0 0 0 3px rgba(255, 59, 92, 0.15);
-    }
-
-    .msg-erro {
-      font-size: 0.78rem;
-      color: var(--red);
-      margin-top: 6px;
-      display: none;
-    }
-
-    .form-grupo.invalido .msg-erro {
-      display: block;
-    }
-
-    .form-grupo.invalido input {
-      border-color: var(--red);
-    }
-
-    .form-grupo.invalido select {
-      border-color: var(--red);
-    }
-
-    .detalhes-cobranca {
-      display: none;
-    }
-
-    .detalhes-cobranca.ativo {
-      display: block;
-    }
-
-    .valor-rapido {
-      margin: 8px 0 12px;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(157, 217, 248, 0.05);
-    }
-
-    .valor-rapido li {
-      font-size: 0.82rem;
-      color: var(--white-dim);
-      margin-left: 18px;
-      line-height: 1.45;
-    }
-
-    .form-linha {
+    /* Tabs de método de pagamento */
+    .metodo-tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
     }
+    .metodo-tab {
+      background: var(--navy-3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--white-dim);
+    }
+    .metodo-tab .tab-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+    .metodo-tab.ativo {
+      border-color: var(--azul-pastel);
+      background: var(--azul-dim);
+      color: var(--white);
+    }
+    .metodo-tab:hover:not(.ativo) { border-color: rgba(157,217,248,0.4); }
 
-    /* Bandeiras do cartão */
-    .bandeiras {
+    /* Painéis de método */
+    .metodo-painel { display: none; }
+    .metodo-painel.ativo { display: block; }
+
+    /* PIX */
+    .pix-container {
+      text-align: center;
+      padding: 20px 0;
+    }
+    .pix-qr {
+      width: 200px;
+      height: 200px;
+      background: #fff;
+      border-radius: 14px;
+      margin: 0 auto 16px;
       display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .pix-qr svg { width: 100%; height: 100%; }
+    .pix-chave {
+      background: var(--navy-3);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: var(--azul-pastel);
+      word-break: break-all;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .pix-chave:hover { background: var(--azul-dim); }
+    .pix-timer {
+      font-size: 0.9rem;
+      color: var(--white-dim);
+      margin-bottom: 16px;
+    }
+    .pix-timer strong { color: var(--red); font-family: var(--font-head); }
+    .pix-instrucoes { font-size: 0.82rem; color: var(--white-dim); line-height: 1.8; text-align: left; }
+    .pix-instrucoes li { margin-bottom: 4px; }
+
+    /* Boleto */
+    .boleto-container { padding: 10px 0; }
+    .boleto-card {
+      background: var(--navy-3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .boleto-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .boleto-banco { font-family: var(--font-head); font-weight: 800; color: var(--azul-pastel); }
+    .boleto-tipo { font-size: 0.75rem; color: var(--white-dim); }
+    .boleto-codigo {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--white);
+      word-break: break-all;
+      letter-spacing: 1px;
+      background: var(--navy-2);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    .boleto-vencimento { font-size: 0.82rem; color: var(--white-dim); }
+    .boleto-vencimento strong { color: var(--yellow); }
+    .boleto-aviso {
+      background: rgba(243,156,18,0.08);
+      border: 1px solid rgba(243,156,18,0.25);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 0.82rem;
+      color: rgba(243,156,18,0.9);
+      line-height: 1.6;
     }
 
+    /* Cartão de crédito */
+    .detalhes-cobranca { display: none; }
+    .detalhes-cobranca.ativo { display: block; }
+    .bandeiras { display: flex; gap: 8px; margin-bottom: 20px; }
     .bandeira {
       background: var(--navy-3);
       border: 1px solid var(--border);
@@ -254,13 +346,45 @@
       opacity: 0.4;
       transition: opacity 0.2s;
     }
-
-    .bandeira.ativa {
-      opacity: 1;
-      border-color: var(--azul-pastel);
+    .bandeira.ativa { opacity: 1; border-color: var(--azul-pastel); }
+    .cartao-visual {
+      background: linear-gradient(135deg, #1a2a4a, #0d1a35);
+      border: 1px solid rgba(157,217,248,0.2);
+      border-radius: 18px;
+      padding: 28px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 1.6/1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
+    .cartao-visual::before {
+      content:'';
+      position: absolute;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(157,217,248,0.1) 0%, transparent 70%);
+      top: -50px; right: -50px;
+    }
+    .cartao-chip { width: 44px; height: 32px; background: linear-gradient(135deg, #d4a843, #f0c060); border-radius: 6px; }
+    .cartao-numero { font-family: 'Courier New', monospace; font-size: 1.2rem; font-weight: 700; letter-spacing: 3px; color: rgba(240,244,255,0.9); }
+    .cartao-info { display: flex; justify-content: space-between; align-items: flex-end; }
+    .cartao-label { font-size: 0.65rem; color: rgba(240,244,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+    .cartao-valor { font-size: 0.9rem; font-weight: 600; color: rgba(240,244,255,0.9); }
+    .form-linha { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-    /* Botão de pagar */
+    .valor-rapido {
+      margin: 8px 0 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(157,217,248,0.05);
+    }
+    .valor-rapido li { font-size: 0.82rem; color: var(--white-dim); margin-left: 18px; line-height: 1.45; }
+
+    /* Botão pagar */
     .btn-pagar {
       width: 100%;
       padding: 16px;
@@ -280,18 +404,8 @@
       gap: 10px;
       -webkit-text-fill-color: #0a1628;
     }
-
-    .btn-pagar:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px var(--azul-glow);
-    }
-
-    .btn-pagar:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
+    .btn-pagar:hover { transform: translateY(-2px); box-shadow: 0 12px 32px var(--azul-glow); }
+    .btn-pagar:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     .seguro-info {
       display: flex;
       align-items: center;
@@ -302,67 +416,6 @@
       color: var(--white-dim);
     }
 
-    /* ── CARD VISUAL DO CARTÃO ── */
-    .cartao-visual {
-      background: linear-gradient(135deg, #1a2a4a, #0d1a35);
-      border: 1px solid rgba(157, 217, 248, 0.2);
-      border-radius: 18px;
-      padding: 28px;
-      margin-bottom: 20px;
-      position: relative;
-      overflow: hidden;
-      aspect-ratio: 1.6/1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .cartao-visual::before {
-      content: '';
-      position: absolute;
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(157, 217, 248, 0.1) 0%, transparent 70%);
-      top: -50px;
-      right: -50px;
-    }
-
-    .cartao-chip {
-      width: 44px;
-      height: 32px;
-      background: linear-gradient(135deg, #d4a843, #f0c060);
-      border-radius: 6px;
-    }
-
-    .cartao-numero {
-      font-family: 'Courier New', monospace;
-      font-size: 1.2rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: rgba(240, 244, 255, 0.9);
-    }
-
-    .cartao-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-
-    .cartao-label {
-      font-size: 0.65rem;
-      color: rgba(240, 244, 255, 0.5);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 3px;
-    }
-
-    .cartao-valor {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: rgba(240, 244, 255, 0.9);
-    }
-
     /* ── RESUMO DO PLANO ── */
     .resumo-card {
       background: var(--navy-2);
@@ -370,17 +423,7 @@
       border-radius: var(--radius-lg);
       padding: 32px;
     }
-
-    .resumo-titulo {
-      font-family: var(--font-head);
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: var(--white-dim);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
+    .resumo-titulo { font-family: var(--font-head); font-size: 1rem; font-weight: 700; margin-bottom: 20px; color: var(--white-dim); text-transform: uppercase; letter-spacing: 1px; }
     .resumo-plano-nome {
       font-family: var(--font-head);
       font-size: 1.5rem;
@@ -391,40 +434,12 @@
       background-clip: text;
       margin-bottom: 4px;
     }
-
-    .resumo-desc {
-      font-size: 0.85rem;
-      color: var(--white-dim);
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-
-    .resumo-linha {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.88rem;
-    }
-
-    .resumo-linha:last-of-type {
-      border-bottom: none;
-    }
-
-    .resumo-linha .label {
-      color: var(--white-dim);
-    }
-
-    .resumo-linha .valor {
-      font-weight: 600;
-    }
-
-    .resumo-linha.total .label {
-      font-weight: 700;
-      color: var(--white);
-    }
-
+    .resumo-desc { font-size: 0.85rem; color: var(--white-dim); margin-bottom: 24px; line-height: 1.6; }
+    .resumo-linha { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+    .resumo-linha:last-of-type { border-bottom: none; }
+    .resumo-linha .label { color: var(--white-dim); }
+    .resumo-linha .valor { font-weight: 600; }
+    .resumo-linha.total .label { font-weight: 700; color: var(--white); }
     .resumo-linha.total .valor {
       font-family: var(--font-head);
       font-size: 1.2rem;
@@ -434,33 +449,16 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-
-    .resumo-features {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .resumo-feature {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--white-dim);
-    }
-
-    .resumo-feature span {
-      color: #4ec97a;
-      font-weight: 700;
-    }
+    .resumo-features { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .resumo-feature { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--white-dim); }
+    .resumo-feature span { color: #4ec97a; font-weight: 700; }
 
     /* ── OVERLAY DE PROCESSANDO ── */
     .overlay-processando {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(7, 11, 20, 0.92);
+      background: rgba(7,11,20,0.92);
       backdrop-filter: blur(10px);
       z-index: 9999;
       flex-direction: column;
@@ -468,96 +466,57 @@
       justify-content: center;
       gap: 24px;
     }
-
-    .overlay-processando.ativo {
-      display: flex;
-    }
-
-    .spinner {
-      width: 60px;
-      height: 60px;
-      border: 3px solid var(--border);
-      border-top-color: var(--azul-pastel);
-      border-radius: 50%;
-      animation: girar 0.8s linear infinite;
-    }
-
-    .overlay-texto {
-      font-family: var(--font-head);
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--white);
-    }
-
-    .overlay-subtexto {
-      font-size: 0.9rem;
-      color: var(--white-dim);
-    }
-
-    /* Sucesso */
-    .overlay-sucesso {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      text-align: center;
-    }
-
-    .overlay-sucesso.ativo {
-      display: flex;
-    }
-
-    .overlay-processando-inner.ativo {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .check-circle {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: rgba(78, 201, 122, 0.15);
-      border: 2px solid #4ec97a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      animation: fadeUp 0.5s ease;
-    }
+    .overlay-processando.ativo { display: flex; }
+    .spinner { width: 60px; height: 60px; border: 3px solid var(--border); border-top-color: var(--azul-pastel); border-radius: 50%; animation: girar 0.8s linear infinite; }
+    .overlay-texto { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; color: var(--white); }
+    .overlay-subtexto { font-size: 0.9rem; color: var(--white-dim); }
+    .check-circle { width: 80px; height: 80px; border-radius: 50%; background: rgba(78,201,122,0.15); border: 2px solid #4ec97a; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; animation: fadeUp 0.5s ease; }
 
     @media (max-width: 768px) {
-      .auth-inline {
-        padding: 88px 16px 36px;
-        min-height: auto;
-      }
-
-      .auth-inline-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .pagamento-container {
-        grid-template-columns: 1fr;
-      }
-
-      .form-linha {
-        grid-template-columns: 1fr;
-      }
+      .auth-inline { padding: 88px 16px 36px; min-height: auto; }
+      .auth-inline-grid { grid-template-columns: 1fr; }
+      .pagamento-container { grid-template-columns: 1fr; }
+      .form-linha { grid-template-columns: 1fr; }
+      .metodo-tabs { grid-template-columns: repeat(3,1fr); }
     }
   </style>
 </head>
 
 <body>
 
+  <!-- ── Overlay verificação de e-mail ───────────────── -->
+  <div class="email-verify-overlay" id="email-verify-overlay">
+    <div class="email-verify-card">
+      <div class="email-verify-icon">📧</div>
+      <div class="email-verify-titulo">Verifique seu e-mail</div>
+      <p class="email-verify-desc">
+        Enviamos um código de 6 dígitos para <strong id="verify-email-addr"></strong>.<br>
+        Digite o código abaixo para confirmar sua conta.
+      </p>
+      <div class="email-verify-hint">
+        💡 <strong>Simulação:</strong> o código é <strong id="verify-code-hint"></strong>
+      </div>
+      <div class="email-code-inputs" id="verify-inputs">
+        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+      </div>
+      <button class="btn-verify" id="btn-verify-email">✅ Confirmar código</button>
+      <button class="btn-reenviar" id="btn-reenviar-email">Reenviar código</button>
+      <div class="email-verify-msg" id="verify-msg"></div>
+    </div>
+  </div>
+
+  <!-- ── Autenticação inline ─────────────────────────── -->
   <section class="auth-inline" id="auth-inline">
     <div class="container">
       <div class="auth-inline-card">
         <span class="tag-secao">Acesso</span>
         <h2 class="titulo-secao" style="margin-bottom:10px">Entre ou crie sua conta</h2>
-        <p class="subtitulo-secao">Faça login/cadastro aqui para continuar com o pagamento e liberar o dashboard depois.
-        </p>
-
+        <p class="subtitulo-secao">Faça login ou cadastro para continuar com o pagamento.</p>
         <div class="auth-inline-grid">
           <div>
             <h3 style="font-family:var(--font-head);margin-bottom:12px">Entrar</h3>
@@ -569,15 +528,13 @@
               <div id="login-msg" class="auth-msg"></div>
             </form>
           </div>
-
           <div>
             <h3 style="font-family:var(--font-head);margin-bottom:12px">Criar conta</h3>
             <form id="form-register" class="auth-form">
-              <input type="text" id="reg-nome" placeholder="Nome completo" required minlength="3">
-              <input type="email" id="reg-email" placeholder="Seu e-mail" required>
-              <input type="password" id="reg-senha" placeholder="Crie uma senha" required minlength="6">
-              <input type="tel" id="reg-telefone" placeholder="Telefone (DDD + Número)" required maxlength="15"
-                oninput="formatarTelefone(this)">
+              <input type="text"     id="reg-nome"     placeholder="Nome completo"              required minlength="3">
+              <input type="email"    id="reg-email"    placeholder="Seu e-mail"                 required>
+              <input type="password" id="reg-senha"    placeholder="Crie uma senha"             required minlength="6">
+              <input type="tel"      id="reg-telefone" placeholder="Telefone (DDD + Número)"    required maxlength="15" oninput="formatarTelefone(this)">
               <button type="submit" class="btn-primario">Criar conta</button>
               <div id="register-msg" class="auth-msg"></div>
             </form>
@@ -587,7 +544,7 @@
     </div>
   </section>
 
-  <!-- Header -->
+  <!-- ── Header ──────────────────────────────────────── -->
   <header id="header" class="scrolled">
     <div class="container">
       <nav class="nav-inner">
@@ -609,117 +566,208 @@
     </div>
   </header>
 
-  <!-- Overlay de processando -->
+  <!-- ── Overlay processando ────────────────────────── -->
   <div class="overlay-processando" id="overlay">
-    <div id="overlay-inner" class="overlay-inner-stack">
+    <div id="overlay-inner">
       <div class="spinner"></div>
       <div class="overlay-texto" id="overlay-texto">Processando pagamento...</div>
       <div class="overlay-subtexto" id="overlay-sub">Aguarde, estamos verificando seus dados</div>
     </div>
   </div>
 
-  <!-- Conteúdo principal -->
+  <!-- ── Conteúdo principal ─────────────────────────── -->
   <div class="pagamento-wrapper">
     <div class="pagamento-container">
 
       <!-- FORMULÁRIO -->
       <div class="form-card">
         <div class="form-titulo">Dados do pagamento</div>
-        <div class="form-subtitulo">Teste de 30 dias no plano gratuito. Você está assinando um plano pago.</div>
+        <div class="form-subtitulo">Escolha a forma de pagamento e finalize sua assinatura.</div>
 
-        <!-- Campos -->
+        <!-- Nome -->
         <div class="form-grupo" id="grupo-nome">
           <label>Nome completo</label>
-          <input type="text" id="nome" placeholder="Como está no cartão" oninput="validarCampo('nome')">
+          <input type="text" id="nome" placeholder="Seu nome completo" oninput="validarCampo('nome')">
           <div class="msg-erro">Por favor, informe seu nome completo</div>
         </div>
 
-        <div class="form-grupo" id="grupo-metodo">
-          <label>Método de pagamento</label>
-          <select id="metodo">
-            <option value="">Selecione</option>
-            <option value="cartao">Cartão de crédito</option>
-            <option value="pix">PIX</option>
-          </select>
-          <div class="msg-erro">Selecione um método de pagamento</div>
+        <!-- Tabs de método -->
+        <div style="margin-bottom:8px">
+          <label style="font-size:.85rem;font-weight:600;color:var(--white-dim);letter-spacing:.5px">Método de pagamento</label>
+        </div>
+        <div class="metodo-tabs">
+          <div class="metodo-tab ativo" id="tab-cartao" onclick="selecionarMetodo('cartao')">
+            <span class="tab-icon">💳</span>Cartão
+          </div>
+          <div class="metodo-tab" id="tab-pix" onclick="selecionarMetodo('pix')">
+            <span class="tab-icon">⚡</span>PIX
+          </div>
+          <div class="metodo-tab" id="tab-boleto" onclick="selecionarMetodo('boleto')">
+            <span class="tab-icon">📋</span>Boleto
+          </div>
         </div>
 
-        <div class="form-grupo" id="grupo-termos">
-          <label><input type="checkbox" id="termos"> Confirmo que quero continuar com esta assinatura</label>
+        <!-- Painel: Cartão de Crédito -->
+        <div class="metodo-painel ativo" id="painel-cartao">
+          <div class="detalhes-cobranca ativo">
+            <div class="bandeiras">
+              <div class="bandeira" id="band-visa">💳 Visa</div>
+              <div class="bandeira" id="band-master">💳 Master</div>
+              <div class="bandeira" id="band-elo">💳 Elo</div>
+            </div>
+            <div class="cartao-visual">
+              <div class="cartao-chip"></div>
+              <div class="cartao-numero" id="prev-numero">•••• •••• •••• ••••</div>
+              <div class="cartao-info">
+                <div>
+                  <div class="cartao-label">Nome no cartão</div>
+                  <div class="cartao-valor" id="prev-nome">SEU NOME</div>
+                </div>
+                <div>
+                  <div class="cartao-label">Validade</div>
+                  <div class="cartao-valor" id="prev-validade">MM/AA</div>
+                </div>
+                <div>
+                  <div class="cartao-label">CVV</div>
+                  <div class="cartao-valor" id="prev-cvv">•••</div>
+                </div>
+              </div>
+            </div>
+            <div class="form-grupo" id="grupo-numero">
+              <label>Número do cartão</label>
+              <input type="text" id="numero" placeholder="0000 0000 0000 0000" maxlength="19"
+                oninput="formatarNumero(this); validarCampo('numero')">
+              <div class="msg-erro">Número inválido — use 16 dígitos</div>
+            </div>
+            <div class="form-linha">
+              <div class="form-grupo" id="grupo-validade">
+                <label>Validade</label>
+                <input type="text" id="validade" placeholder="MM/AA" maxlength="5"
+                  oninput="formatarValidade(this); validarCampo('validade')">
+                <div class="msg-erro">Data inválida</div>
+              </div>
+              <div class="form-grupo" id="grupo-cvv">
+                <label>CVV</label>
+                <input type="text" id="cvv" placeholder="•••" maxlength="3" oninput="validarCampo('cvv')">
+                <div class="msg-erro">CVV inválido</div>
+              </div>
+            </div>
+            <div class="form-grupo" id="grupo-cpf">
+              <label>CPF do titular</label>
+              <input type="text" id="cpf" placeholder="000.000.000-00" maxlength="14"
+                oninput="formatarCPF(this); validarCampo('cpf')">
+              <div class="msg-erro">CPF inválido</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Painel: PIX -->
+        <div class="metodo-painel" id="painel-pix">
+          <div class="pix-container">
+            <div class="pix-qr" id="pix-qr">
+              <!-- QR gerado via SVG -->
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Bordas do QR -->
+                <rect x="5"  y="5"  width="30" height="30" fill="none" stroke="#000" stroke-width="2.5"/>
+                <rect x="10" y="10" width="20" height="20" fill="#000"/>
+                <rect x="65" y="5"  width="30" height="30" fill="none" stroke="#000" stroke-width="2.5"/>
+                <rect x="70" y="10" width="20" height="20" fill="#000"/>
+                <rect x="5"  y="65" width="30" height="30" fill="none" stroke="#000" stroke-width="2.5"/>
+                <rect x="10" y="70" width="20" height="20" fill="#000"/>
+                <!-- Dados internos simulados -->
+                <rect x="40" y="5"  width="5"  height="5"  fill="#000"/>
+                <rect x="50" y="5"  width="5"  height="5"  fill="#000"/>
+                <rect x="45" y="15" width="10" height="5"  fill="#000"/>
+                <rect x="40" y="25" width="5"  height="10" fill="#000"/>
+                <rect x="50" y="25" width="5"  height="5"  fill="#000"/>
+                <rect x="5"  y="40" width="10" height="5"  fill="#000"/>
+                <rect x="20" y="40" width="10" height="5"  fill="#000"/>
+                <rect x="35" y="40" width="5"  height="10" fill="#000"/>
+                <rect x="45" y="40" width="15" height="5"  fill="#000"/>
+                <rect x="65" y="40" width="5"  height="10" fill="#000"/>
+                <rect x="75" y="40" width="5"  height="5"  fill="#000"/>
+                <rect x="85" y="40" width="10" height="5"  fill="#000"/>
+                <rect x="5"  y="50" width="5"  height="5"  fill="#000"/>
+                <rect x="15" y="50" width="15" height="5"  fill="#000"/>
+                <rect x="40" y="50" width="5"  height="5"  fill="#000"/>
+                <rect x="50" y="50" width="5"  height="10" fill="#000"/>
+                <rect x="60" y="50" width="10" height="5"  fill="#000"/>
+                <rect x="80" y="50" width="15" height="5"  fill="#000"/>
+                <rect x="40" y="60" width="10" height="5"  fill="#000"/>
+                <rect x="55" y="60" width="5"  height="5"  fill="#000"/>
+                <rect x="65" y="60" width="15" height="5"  fill="#000"/>
+                <rect x="85" y="60" width="10" height="5"  fill="#000"/>
+                <rect x="40" y="70" width="5"  height="5"  fill="#000"/>
+                <rect x="50" y="70" width="10" height="5"  fill="#000"/>
+                <rect x="65" y="75" width="5"  height="10" fill="#000"/>
+                <rect x="75" y="70" width="5"  height="5"  fill="#000"/>
+                <rect x="85" y="70" width="10" height="10" fill="#000"/>
+                <rect x="40" y="80" width="15" height="5"  fill="#000"/>
+                <rect x="60" y="80" width="5"  height="5"  fill="#000"/>
+                <rect x="75" y="80" width="15" height="5"  fill="#000"/>
+                <rect x="40" y="90" width="5"  height="5"  fill="#000"/>
+                <rect x="50" y="90" width="10" height="5"  fill="#000"/>
+                <rect x="80" y="90" width="10" height="5"  fill="#000"/>
+              </svg>
+            </div>
+            <div class="pix-chave" id="pix-chave" onclick="copiarPix()" title="Clique para copiar">
+              00020126580014BR.GOV.BCB.PIX0136guardiannet@pix.guardiannet.com.br5204000053039865802BR5920GuardianNet Tecnologia6009Sao Paulo62070503***6304ABCD
+            </div>
+            <div class="pix-timer">⏱ Expira em <strong id="pix-countdown">09:58</strong></div>
+            <ol class="pix-instrucoes">
+              <li>Abra o app do seu banco e acesse o PIX</li>
+              <li>Escolha "Pagar com QR Code" ou "Copia e Cola"</li>
+              <li>Cole o código acima ou escaneie o QR</li>
+              <li>Confirme o valor de <strong id="pix-valor-display">R$ 24,90</strong></li>
+              <li>O acesso é liberado automaticamente após confirmação</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Painel: Boleto -->
+        <div class="metodo-painel" id="painel-boleto">
+          <div class="boleto-container">
+            <div class="boleto-card">
+              <div class="boleto-header">
+                <div class="boleto-banco">GuardianNet Bank</div>
+                <div class="boleto-tipo">BOLETO BANCÁRIO · SIMULADO</div>
+              </div>
+              <div class="boleto-codigo" id="boleto-codigo" onclick="copiarBoleto()" title="Clique para copiar">
+                34191.75124 35423.673162 02999.605164 3 97920000024900
+              </div>
+              <div class="boleto-vencimento">
+                Vencimento: <strong id="boleto-vencimento">Calculando...</strong>
+              </div>
+            </div>
+            <div class="boleto-aviso">
+              ⚠️ <strong>Atenção:</strong> Boletos levam até 3 dias úteis para compensar.
+              O acesso ao GuardianNet será liberado após confirmação do pagamento.
+              Em ambiente de demonstração, a aprovação é instantânea ao clicar em "Confirmar".
+            </div>
+          </div>
+        </div>
+
+        <!-- Termos -->
+        <div class="form-grupo" id="grupo-termos" style="margin-top:20px">
+          <label>
+            <input type="checkbox" id="termos">
+            Confirmo que quero assinar e li os termos de uso
+          </label>
           <div class="msg-erro">Confirme para continuar</div>
         </div>
-
-        <div class="detalhes-cobranca" id="detalhes-cobranca">
-          <!-- Bandeiras -->
-          <div class="bandeiras">
-            <div class="bandeira" id="band-visa">💳 Visa</div>
-            <div class="bandeira" id="band-master">💳 Master</div>
-            <div class="bandeira" id="band-elo">💳 Elo</div>
-          </div>
-
-          <!-- Preview do cartão -->
-          <div class="cartao-visual">
-            <div class="cartao-chip"></div>
-            <div class="cartao-numero" id="prev-numero">•••• •••• •••• ••••</div>
-            <div class="cartao-info">
-              <div>
-                <div class="cartao-label">Nome no cartão</div>
-                <div class="cartao-valor" id="prev-nome">SEU NOME</div>
-              </div>
-              <div>
-                <div class="cartao-label">Validade</div>
-                <div class="cartao-valor" id="prev-validade">MM/AA</div>
-              </div>
-              <div>
-                <div class="cartao-label">CVV</div>
-                <div class="cartao-valor" id="prev-cvv">•••</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-grupo" id="grupo-numero">
-            <label>Número do cartão</label>
-            <input type="text" id="numero" placeholder="0000 0000 0000 0000" maxlength="19"
-              oninput="formatarNumero(this); validarCampo('numero')">
-            <div class="msg-erro">Número inválido — use 16 dígitos</div>
-          </div>
-
-          <div class="form-linha">
-            <div class="form-grupo" id="grupo-validade">
-              <label>Validade</label>
-              <input type="text" id="validade" placeholder="MM/AA" maxlength="5"
-                oninput="formatarValidade(this); validarCampo('validade')">
-              <div class="msg-erro">Data inválida</div>
-            </div>
-            <div class="form-grupo" id="grupo-cvv">
-              <label>CVV</label>
-              <input type="text" id="cvv" placeholder="•••" maxlength="3" oninput="validarCampo('cvv')">
-              <div class="msg-erro">CVV inválido</div>
-            </div>
-          </div>
-
-          <div class="form-grupo" id="grupo-cpf">
-            <label>CPF do titular</label>
-            <input type="text" id="cpf" placeholder="000.000.000-00" maxlength="14"
-              oninput="formatarCPF(this); validarCampo('cpf')">
-            <div class="msg-erro">CPF inválido</div>
-          </div>
-        </div>
-
-
 
         <ul class="valor-rapido">
           <li>Sem fidelidade: cancele quando quiser.</li>
           <li>Acesso liberado na hora após confirmação.</li>
-          <li>Pagamento seguro e dados protegidos.</li>
+          <li>Dados simulados — nenhum pagamento real é processado.</li>
         </ul>
 
         <button class="btn-pagar" id="btn-pagar" onclick="processar()">
-          Continuar
+          🔒 Pagar com segurança
         </button>
 
         <div class="seguro-info">
-          🔐 Pagamento simulado · Seus dados não são armazenados
+          🔐 Ambiente de demonstração · Nenhum dado real é processado
         </div>
       </div>
 
@@ -728,10 +776,7 @@
         <div class="resumo-card">
           <div class="resumo-titulo">Resumo do pedido</div>
           <div class="resumo-plano-nome" id="resumo-plano-nome">Premium</div>
-          <div class="resumo-desc" id="resumo-plano-desc">
-            Proteção completa para toda a família com IA avançada.
-          </div>
-
+          <div class="resumo-desc" id="resumo-plano-desc">Proteção completa para toda a família com IA avançada.</div>
           <div class="resumo-linha">
             <span class="label">Plano</span>
             <span class="valor" id="resumo-plano">Premium Mensal</span>
@@ -748,7 +793,6 @@
             <span class="label">Total</span>
             <span class="valor" id="resumo-total">R$ 24,90</span>
           </div>
-
           <div class="resumo-features">
             <div class="resumo-feature"><span>✓</span> Cancele quando quiser</div>
             <div class="resumo-feature"><span>✓</span> Acesso imediato após pagamento</div>
@@ -760,132 +804,217 @@
     </div>
   </div>
 
-
   <script src="site-animations.js"></script>
+  <script src="shared-components.js"></script>
   <script>
-    // ── Aplica ícone do tema ──────────────────────────────────────
+    // ── Tema ─────────────────────────────────────────────────────────────
     (function() {
       const icon = document.getElementById('theme-icon');
       const saved = localStorage.getItem('theme') || 'dark';
       if (icon) icon.textContent = saved === 'light' ? '☀️' : '🌙';
     })();
-
     function toggleTheme() {
-      const html    = document.documentElement;
-      const icon    = document.getElementById('theme-icon');
+      const html = document.documentElement;
+      const icon = document.getElementById('theme-icon');
       const isLight = html.classList.toggle('light-mode');
       localStorage.setItem('theme', isLight ? 'light' : 'dark');
       icon.textContent = isLight ? '☀️' : '🌙';
     }
+    function toggleMenu() { document.getElementById('nav-links').classList.toggle('aberto'); }
 
-    function toggleMenu() {
-      document.getElementById('nav-links').classList.toggle('aberto');
+    // ── Plano/período da URL ─────────────────────────────────────────────
+    const params   = new URLSearchParams(window.location.search);
+    const plano    = params.get('plano')   || localStorage.getItem('gn_plano')   || 'premium';
+    const periodo  = params.get('periodo') || localStorage.getItem('gn_periodo') || 'mensal';
+    let tokenAuth  = localStorage.getItem('gn_token');
+    let metodoAtual = 'cartao';
+
+    const tabelaPrecos = {
+      basico:  { mensal: 9.90,  anual: 7.92  },
+      premium: { mensal: 24.90, anual: 19.92 },
+      escola:  { mensal: 149.00, anual: 119.20 }
+    };
+    function formatarBRL(v) { return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+    const valorTotal = tabelaPrecos[plano]?.[periodo] ?? 24.90;
+
+    // ── Preenche resumo ──────────────────────────────────────────────────
+    document.getElementById('resumo-plano-nome').textContent = plano.charAt(0).toUpperCase()+plano.slice(1);
+    document.getElementById('resumo-plano').textContent = plano.charAt(0).toUpperCase()+plano.slice(1)+' '+periodo.charAt(0).toUpperCase()+periodo.slice(1);
+    document.getElementById('resumo-periodo').textContent = periodo === 'anual' ? '12 meses (valor mensal)' : '1 mês';
+    document.getElementById('resumo-total').textContent = formatarBRL(valorTotal);
+    document.getElementById('pix-valor-display').textContent = formatarBRL(valorTotal);
+    const descontoMensal = periodo === 'anual' ? formatarBRL((tabelaPrecos[plano]?.mensal - valorTotal)) + '/mês (20%)' : '—';
+    document.getElementById('resumo-desconto').textContent = descontoMensal;
+    if (plano === 'escola') document.getElementById('resumo-plano-desc').textContent = 'Licença institucional para toda a comunidade escolar.';
+
+    // ── Boleto: calcula vencimento (3 dias úteis) ────────────────────────
+    (function() {
+      const d = new Date();
+      let dias = 0;
+      while (dias < 3) {
+        d.setDate(d.getDate() + 1);
+        if (d.getDay() !== 0 && d.getDay() !== 6) dias++;
+      }
+      document.getElementById('boleto-vencimento').textContent = d.toLocaleDateString('pt-BR');
+    })();
+
+    // ── PIX timer ────────────────────────────────────────────────────────
+    let pixSeconds = 598;
+    const pixInterval = setInterval(() => {
+      pixSeconds--;
+      if (pixSeconds <= 0) { clearInterval(pixInterval); document.getElementById('pix-countdown').textContent = 'Expirado'; return; }
+      const m = Math.floor(pixSeconds/60).toString().padStart(2,'0');
+      const s = (pixSeconds%60).toString().padStart(2,'0');
+      document.getElementById('pix-countdown').textContent = `${m}:${s}`;
+    }, 1000);
+
+    // ── Copiar PIX ───────────────────────────────────────────────────────
+    function copiarPix() {
+      const txt = document.getElementById('pix-chave').textContent.trim();
+      navigator.clipboard?.writeText(txt).then(() => {
+        GnToast.success('Código PIX copiado!');
+      }).catch(() => GnToast.info('Copie o código manualmente.'));
+    }
+    function copiarBoleto() {
+      const txt = document.getElementById('boleto-codigo').textContent.trim();
+      navigator.clipboard?.writeText(txt).then(() => {
+        GnToast.success('Código do boleto copiado!');
+      }).catch(() => GnToast.info('Copie o código manualmente.'));
     }
 
-    // ── Lê plano da URL ──────────────────────────────────────────
-    // Ex: pagamento.html?plano=premium&periodo=anual
-    const params = new URLSearchParams(window.location.search);
-    const plano = params.get('plano') || localStorage.getItem('gn_plano') || 'premium';
-    const periodo = params.get('periodo') || localStorage.getItem('gn_periodo') || 'mensal';
-    let tokenAuth = localStorage.getItem('gn_token');
-    let etapaPagamento = 1;
+    // ── Tabs de método ────────────────────────────────────────────────────
+    function selecionarMetodo(metodo) {
+      metodoAtual = metodo;
+      ['cartao','pix','boleto'].forEach(m => {
+        document.getElementById('tab-'+m).classList.toggle('ativo', m === metodo);
+        document.getElementById('painel-'+m).classList.toggle('ativo', m === metodo);
+      });
+      const btn = document.getElementById('btn-pagar');
+      if (metodo === 'pix')    btn.textContent = '✅ Já realizei o pagamento PIX';
+      else if (metodo === 'boleto') btn.textContent = '📋 Confirmar pagamento (simulação)';
+      else btn.textContent = '🔒 Pagar com segurança';
+    }
 
+    // ── Preview do cartão ─────────────────────────────────────────────────
+    document.getElementById('nome').addEventListener('input', function() {
+      const v = this.value.toUpperCase() || 'SEU NOME';
+      document.getElementById('prev-nome').textContent = v.slice(0,22);
+    });
+    document.getElementById('validade') && document.getElementById('validade').addEventListener('input', function() {
+      document.getElementById('prev-validade').textContent = this.value || 'MM/AA';
+    });
+    document.getElementById('cvv') && document.getElementById('cvv').addEventListener('input', function() {
+      document.getElementById('prev-cvv').textContent = '•'.repeat(this.value.length) || '•••';
+    });
+
+    // ── Formatações ───────────────────────────────────────────────────────
+    function formatarNumero(input) {
+      let v = input.value.replace(/\D/g,'').slice(0,16);
+      v = v.match(/.{1,4}/g)?.join(' ') || v;
+      input.value = v;
+      document.getElementById('prev-numero').textContent = v ? v.padEnd(19,'•') : '•••• •••• •••• ••••';
+      const digits = v.replace(/\s/g,'');
+      document.getElementById('band-visa').classList.toggle('ativa', digits.startsWith('4'));
+      document.getElementById('band-master').classList.toggle('ativa', /^5[1-5]/.test(digits));
+      document.getElementById('band-elo').classList.toggle('ativa', /^(636368|438935|504175|451416)/.test(digits));
+    }
+    function formatarValidade(input) {
+      let v = input.value.replace(/\D/g,'').slice(0,4);
+      if (v.length >= 3) v = v.slice(0,2)+'/'+v.slice(2);
+      input.value = v;
+    }
+    function formatarCPF(input) {
+      let v = input.value.replace(/\D/g,'').slice(0,11);
+      if (v.length > 9) v = v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
+      else if (v.length > 6) v = v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
+      else if (v.length > 3) v = v.slice(0,3)+'.'+v.slice(3);
+      input.value = v;
+    }
+    function formatarTelefone(input) {
+      let v = input.value.replace(/\D/g,'');
+      if (v.length > 11) v = v.slice(0,11);
+      if (v.length > 10)      v = v.replace(/^(\d{2})(\d{5})(\d{4}).*/,'($1) $2-$3');
+      else if (v.length > 6)  v = v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3');
+      else if (v.length > 2)  v = v.replace(/^(\d{2})(\d{0,5})/,'($1) $2');
+      else if (v.length > 0)  v = v.replace(/^(\d*)/,'($1');
+      input.value = v;
+    }
+
+    // ── Validações ────────────────────────────────────────────────────────
+    function validarCampo(campo) {
+      const grupo = document.getElementById('grupo-'+campo);
+      if (!grupo) return true;
+      const input = document.getElementById(campo);
+      if (!input) return true;
+      const v = input.value.trim();
+      let ok = false;
+      switch(campo) {
+        case 'nome':     ok = v.split(' ').length >= 2 && v.length >= 5; break;
+        case 'numero':   ok = v.replace(/\s/g,'').length === 16; break;
+        case 'validade': ok = /^\d{2}\/\d{2}$/.test(v); break;
+        case 'cvv':      ok = /^\d{3}$/.test(v); break;
+        case 'cpf':      ok = v.replace(/\D/g,'').length === 11; break;
+      }
+      grupo.classList.toggle('invalido', !ok && v.length > 0);
+      return ok;
+    }
+    function validarCartao() {
+      const campos = ['numero','validade','cvv','cpf'];
+      let ok = true;
+      campos.forEach(c => {
+        if (!validarCampo(c)) {
+          document.getElementById('grupo-'+c)?.classList.add('invalido');
+          ok = false;
+        }
+      });
+      return ok;
+    }
+
+    // ── Fluxo de autenticação ─────────────────────────────────────────────
     const authInline = document.getElementById('auth-inline');
     const pagamentoWrapper = document.querySelector('.pagamento-wrapper');
-
-    function setAuthMessage(el, text, type = '') {
-      if (!el) return;
-      el.className = 'auth-msg' + (type ? ` ${type}` : '');
-      el.textContent = text || '';
-    }
+    function setAuthMessage(el, text, type='') { if(!el) return; el.className='auth-msg'+(type?` ${type}`:''); el.textContent=text||''; }
 
     function authRequest(path, payload) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-
       return fetch(`http://localhost:5000/api/auth${path}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      }).then(async (resp) => {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload), signal:controller.signal
+      }).then(async resp => {
         clearTimeout(timeoutId);
         const data = await resp.json();
-        if (!resp.ok) {
-          const msg = data.detail ? `${data.error || 'Erro de autenticação'} ${data.detail}` : (data.error || 'Erro de autenticação');
-          throw new Error(msg);
-        }
+        if (!resp.ok) { const msg = data.detail ? `${data.error||'Erro'} ${data.detail}` : (data.error||'Erro'); throw new Error(msg); }
         return data;
-      }).catch((err) => {
-        clearTimeout(timeoutId);
-        if (err && err.name === 'AbortError') {
-          throw new Error('A API demorou para responder. Verifique o servidor e a conexão com o banco.');
-        }
-        throw err;
-      });
+      }).catch(err => { clearTimeout(timeoutId); if(err&&err.name==='AbortError') throw new Error('A API demorou para responder.'); throw err; });
     }
 
-    function mostrarAuthInline() {
-      if (authInline) authInline.classList.add('ativo');
-      if (pagamentoWrapper) pagamentoWrapper.style.display = 'none';
-    }
-
-    function liberarPagamento() {
-      if (authInline) authInline.classList.remove('ativo');
-      if (pagamentoWrapper) pagamentoWrapper.style.display = 'flex';
-      localStorage.setItem('gn_logado', 'true');
-    }
+    function mostrarAuthInline() { if(authInline) authInline.classList.add('ativo'); if(pagamentoWrapper) pagamentoWrapper.style.display='none'; }
+    function liberarPagamento()  { if(authInline) authInline.classList.remove('ativo'); if(pagamentoWrapper) pagamentoWrapper.style.display='flex'; localStorage.setItem('gn_logado','true'); }
 
     async function buscarAssinaturaAtual(token) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        const resp = await fetch('http://localhost:5000/api/subscription/current', {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal
-        });
+        const resp = await fetch('http://localhost:5000/api/subscription/current',{headers:{Authorization:`Bearer ${token}`}});
         if (!resp.ok) return null;
-        const data = await resp.json();
-        return data?.assinatura || null;
-      } catch (_) {
-        return null;
-      } finally {
-        clearTimeout(timeoutId);
-      }
+        return (await resp.json())?.assinatura || null;
+      } catch(_) { return null; }
     }
-
     async function buscarPerfilAuth(token) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        const resp = await fetch('http://localhost:5000/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal
-        });
+        const resp = await fetch('http://localhost:5000/api/auth/me',{headers:{Authorization:`Bearer ${token}`}});
         if (!resp.ok) return null;
         return await resp.json();
-      } catch (_) {
-        return null;
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      } catch(_) { return null; }
     }
-
-    async function redirecionarSeJaAssinante(token, perfil = null) {
-      const tipo = ((perfil && perfil.tipo) || localStorage.getItem('gn_tipo') || '').toLowerCase();
-      if (tipo === 'admin') {
-        localStorage.setItem('gn_tipo', 'admin');
-        localStorage.setItem('gn_logado', 'true');
-        window.location.href = 'admin.html';
-        return true;
-      }
-
+    async function redirecionarSeJaAssinante(token, perfil=null) {
+      const tipo = ((perfil&&perfil.tipo)||localStorage.getItem('gn_tipo')||'').toLowerCase();
+      if (tipo === 'admin') { localStorage.setItem('gn_tipo','admin'); localStorage.setItem('gn_logado','true'); window.location.href='admin.html'; return true; }
       const assinatura = await buscarAssinaturaAtual(token);
-      const status = (assinatura?.status || '').toLowerCase();
-      if (assinatura && (status === 'ativa' || status === 'trialing')) {
-        localStorage.setItem('gn_logado', 'true');
-        localStorage.setItem('gn_plano', assinatura.plano || (params.get('plano') || 'premium'));
-        localStorage.setItem('gn_periodo', assinatura.periodo || (params.get('periodo') || 'mensal'));
+      const status = (assinatura?.status||'').toLowerCase();
+      if (assinatura && (status==='ativa'||status==='trialing')) {
+        localStorage.setItem('gn_logado','true');
+        localStorage.setItem('gn_plano',assinatura.plano||(params.get('plano')||'premium'));
+        localStorage.setItem('gn_periodo',assinatura.periodo||(params.get('periodo')||'mensal'));
         window.location.href = 'dashboard.html';
         return true;
       }
@@ -893,383 +1022,184 @@
     }
 
     (async () => {
-      if (!tokenAuth) {
-        mostrarAuthInline();
-        return;
-      }
+      if (!tokenAuth) { mostrarAuthInline(); return; }
       const perfil = await buscarPerfilAuth(tokenAuth);
       if (perfil?.tipo) localStorage.setItem('gn_tipo', String(perfil.tipo).toLowerCase());
-      if (perfil?.nome) localStorage.setItem('gn_nome', (perfil.nome || '').split(' ')[0] || 'Usuário');
+      if (perfil?.nome) localStorage.setItem('gn_nome', (perfil.nome||'').split(' ')[0]||'Usuário');
       const foiParaDashboard = await redirecionarSeJaAssinante(tokenAuth, perfil);
       if (!foiParaDashboard) liberarPagamento();
     })();
 
-    const loginForm = document.getElementById('form-login');
-    const registerForm = document.getElementById('form-register');
-    const forgotPasswordBtn = document.getElementById('btn-forgot-password');
-    const loginMsg = document.getElementById('login-msg');
+    // ── Verificação de e-mail simulada ────────────────────────────────────
+    let _verifyCode = '';
+    let _verifyCallback = null;
+    const verifyOverlay = document.getElementById('email-verify-overlay');
+    const verifyInputs  = Array.from(document.querySelectorAll('#verify-inputs input'));
+    const verifyMsg     = document.getElementById('verify-msg');
+
+    // Navegação entre inputs
+    verifyInputs.forEach((inp, idx) => {
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g,'').slice(-1);
+        if (inp.value && idx < verifyInputs.length-1) verifyInputs[idx+1].focus();
+      });
+      inp.addEventListener('keydown', e => { if(e.key==='Backspace'&&!inp.value&&idx>0) verifyInputs[idx-1].focus(); });
+    });
+
+    function mostrarVerificacaoEmail(email, callback) {
+      _verifyCode = Math.floor(100000 + Math.random()*900000).toString();
+      _verifyCallback = callback;
+      document.getElementById('verify-email-addr').textContent = email;
+      document.getElementById('verify-code-hint').textContent = _verifyCode;
+      verifyInputs.forEach(i => i.value='');
+      verifyMsg.textContent = '';
+      verifyMsg.className = 'email-verify-msg';
+      verifyOverlay.classList.add('ativo');
+      setTimeout(() => verifyInputs[0].focus(), 300);
+    }
+
+    document.getElementById('btn-verify-email').addEventListener('click', () => {
+      const digitado = verifyInputs.map(i=>i.value).join('');
+      if (digitado.length < 6) { verifyMsg.textContent='Digite os 6 dígitos.'; verifyMsg.className='email-verify-msg erro'; return; }
+      if (digitado !== _verifyCode) { verifyMsg.textContent='Código incorreto. Tente novamente.'; verifyMsg.className='email-verify-msg erro'; return; }
+      verifyMsg.textContent='✅ E-mail verificado!'; verifyMsg.className='email-verify-msg ok';
+      setTimeout(() => {
+        verifyOverlay.classList.remove('ativo');
+        if (_verifyCallback) _verifyCallback();
+      }, 800);
+    });
+
+    document.getElementById('btn-reenviar-email').addEventListener('click', () => {
+      _verifyCode = Math.floor(100000 + Math.random()*900000).toString();
+      document.getElementById('verify-code-hint').textContent = _verifyCode;
+      verifyInputs.forEach(i => i.value='');
+      verifyMsg.textContent = '📨 Novo código enviado!'; verifyMsg.className='email-verify-msg ok';
+      setTimeout(() => { verifyMsg.textContent=''; }, 3000);
+    });
+
+    // ── Login ─────────────────────────────────────────────────────────────
+    const loginMsg    = document.getElementById('login-msg');
     const registerMsg = document.getElementById('register-msg');
 
-    async function iniciarRecuperacaoSenha() {
-      window.location.href = 'redefinir-senha.html';
-    }
+    document.getElementById('btn-forgot-password').addEventListener('click', () => { window.location.href='redefinir-senha.html'; });
 
-    if (forgotPasswordBtn) {
-      forgotPasswordBtn.addEventListener('click', iniciarRecuperacaoSenha);
-    }
+    document.getElementById('form-login').addEventListener('submit', async e => {
+      e.preventDefault();
+      setAuthMessage(loginMsg,'Entrando...');
+      try {
+        const data = await authRequest('/login',{email:document.getElementById('login-email').value.trim(),senha:document.getElementById('login-senha').value});
+        tokenAuth = data.token;
+        localStorage.setItem('gn_token',data.token);
+        if (data.tipo) localStorage.setItem('gn_tipo',String(data.tipo).toLowerCase());
+        if (data.nome) localStorage.setItem('gn_nome',(data.nome||'').split(' ')[0]||'Usuário');
+        const foiParaDashboard = await redirecionarSeJaAssinante(data.token, data);
+        if (foiParaDashboard) return;
+        liberarPagamento();
+        setAuthMessage(loginMsg,'Autenticado! Conclua o pagamento.','ok');
+      } catch(err) { setAuthMessage(loginMsg, err.message,'erro'); }
+    });
 
-    if (loginForm) {
-      loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        setAuthMessage(loginMsg, 'Entrando...');
+    document.getElementById('form-register').addEventListener('submit', async e => {
+      e.preventDefault();
+      const nomeDigitado = document.getElementById('reg-nome').value.trim();
+      const emailDigitado = document.getElementById('reg-email').value.trim();
+      setAuthMessage(registerMsg,'Verificando e-mail...');
+
+      // Mostra verificação de e-mail simulada antes de registrar
+      mostrarVerificacaoEmail(emailDigitado, async () => {
+        setAuthMessage(registerMsg,'Criando conta...');
         try {
-          const data = await authRequest('/login', {
-            email: document.getElementById('login-email').value.trim(),
-            senha: document.getElementById('login-senha').value
+          const data = await authRequest('/register',{
+            nome:nomeDigitado, email:emailDigitado,
+            senha:document.getElementById('reg-senha').value,
+            telefone:document.getElementById('reg-telefone').value.trim()
           });
           tokenAuth = data.token;
-          localStorage.setItem('gn_token', data.token);
-          if (data.tipo) localStorage.setItem('gn_tipo', String(data.tipo).toLowerCase());
-          if (data.nome) {
-            localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || 'Usuário');
-          }
+          localStorage.setItem('gn_token',data.token);
+          if (data.tipo) localStorage.setItem('gn_tipo',String(data.tipo).toLowerCase());
+          localStorage.setItem('gn_nome',(data.nome||nomeDigitado).split(' ')[0]);
           const foiParaDashboard = await redirecionarSeJaAssinante(data.token, data);
           if (foiParaDashboard) return;
           liberarPagamento();
-          setAuthMessage(loginMsg, 'Autenticado. Agora conclua o pagamento.', 'ok');
-        } catch (err) {
-          setAuthMessage(loginMsg, err.message, 'erro');
-        }
+          setAuthMessage(registerMsg,'Conta criada! Conclua o pagamento.','ok');
+          GnToast.success('E-mail verificado e conta criada com sucesso!');
+        } catch(err) { setAuthMessage(registerMsg, err.message,'erro'); }
       });
-    }
-
-    if (registerForm) {
-      registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        setAuthMessage(registerMsg, 'Criando conta...');
-        try {
-          const nomeDigitado = document.getElementById('reg-nome').value.trim();
-          const data = await authRequest('/register', {
-            nome:     nomeDigitado,
-            email:    document.getElementById('reg-email').value.trim(),
-            senha:    document.getElementById('reg-senha').value,
-            telefone: document.getElementById('reg-telefone').value.trim()
-          });
-          tokenAuth = data.token;
-          localStorage.setItem('gn_token', data.token);
-          if (data.tipo) localStorage.setItem('gn_tipo', String(data.tipo).toLowerCase());
-          // FIX: salva o nome do cadastro (ou o retornado pelo backend)
-          localStorage.setItem('gn_nome', (data.nome || nomeDigitado).split(' ')[0]);
-          const foiParaDashboard = await redirecionarSeJaAssinante(data.token, data);
-          if (foiParaDashboard) return;
-          liberarPagamento();
-          setAuthMessage(registerMsg, 'Conta criada. Agora conclua o pagamento.', 'ok');
-        } catch (err) {
-          setAuthMessage(registerMsg, err.message, 'erro');
-        }
-      });
-    }
-
-    function esconderDetalhesCobranca() {
-      document.getElementById('detalhes-cobranca').classList.remove('ativo');
-    }
-
-    function mostrarDetalhesCobranca() {
-      document.getElementById('detalhes-cobranca').classList.add('ativo');
-    }
-
-    // Tabela de preços
-    // anual = valor mensal equivalente no plano anual (20% OFF)
-    const tabelaPrecos = {
-      basico: { mensal: 9.90, anual: 7.92 },
-      premium: { mensal: 24.90, anual: 19.92 },
-      escola: { mensal: 149.00, anual: 119.20 }
-    };
-
-    function formatarBRL(valor) {
-      return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    const descontos = {
-      basico: {
-        mensal: '—',
-        anual: `${formatarBRL(tabelaPrecos.basico.mensal - tabelaPrecos.basico.anual)}/mês (20%)`
-      },
-      premium: {
-        mensal: '—',
-        anual: `${formatarBRL(tabelaPrecos.premium.mensal - tabelaPrecos.premium.anual)}/mês (20%)`
-      },
-      escola: {
-        mensal: '—',
-        anual: `${formatarBRL(tabelaPrecos.escola.mensal - tabelaPrecos.escola.anual)}/mês (20%)`
-      }
-    };
-
-    const periodos = { mensal: '1 mês', anual: '12 meses (valor mensal no anual)' };
-
-    // Preenche resumo
-    document.getElementById('resumo-plano-nome').textContent =
-      plano.charAt(0).toUpperCase() + plano.slice(1);
-    document.getElementById('resumo-plano').textContent =
-      plano.charAt(0).toUpperCase() + plano.slice(1) + ' ' +
-      periodo.charAt(0).toUpperCase() + periodo.slice(1);
-    document.getElementById('resumo-periodo').textContent = periodos[periodo];
-    document.getElementById('resumo-total').textContent = formatarBRL(tabelaPrecos[plano]?.[periodo] ?? 24.90);
-    document.getElementById('resumo-desconto').textContent = descontos[plano]?.[periodo] || '—';
-
-    if (plano === 'escola') {
-      document.getElementById('resumo-plano-desc').textContent =
-        'Licença institucional para toda a comunidade escolar.';
-    }
-
-    // ── Preview do cartão em tempo real ─────────────────────────
-    document.getElementById('nome').addEventListener('input', function () {
-      const v = this.value.toUpperCase() || 'SEU NOME';
-      document.getElementById('prev-nome').textContent = v.slice(0, 22);
     });
 
-    document.getElementById('validade').addEventListener('input', function () {
-      document.getElementById('prev-validade').textContent = this.value || 'MM/AA';
-    });
-
-    document.getElementById('cvv').addEventListener('input', function () {
-      document.getElementById('prev-cvv').textContent = '•'.repeat(this.value.length) || '•••';
-    });
-
-    // ── Formatações ──────────────────────────────────────────────
-    function formatarNumero(input) {
-      let v = input.value.replace(/\D/g, '').slice(0, 16);
-      // Formata em grupos de 4
-      v = v.match(/.{1,4}/g)?.join(' ') || v;
-      input.value = v;
-
-      // Preview
-      const display = v.padEnd(19, '•').replace(/[^• ]/g, (c, i) => i < 12 ? '•' : c);
-      document.getElementById('prev-numero').textContent =
-        v ? v.padEnd(19, '•') : '•••• •••• •••• ••••';
-
-      // Detecta bandeira pelo primeiro dígito
-      const digits = v.replace(/\s/g, '');
-      document.getElementById('band-visa').classList.toggle('ativa', digits.startsWith('4'));
-      document.getElementById('band-master').classList.toggle('ativa', /^5[1-5]/.test(digits));
-      document.getElementById('band-elo').classList.toggle('ativa', /^(636368|438935|504175|451416)/.test(digits));
-    }
-
-    function formatarValidade(input) {
-      let v = input.value.replace(/\D/g, '').slice(0, 4);
-      if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
-      input.value = v;
-    }
-
-    function formatarCPF(input) {
-      let v = input.value.replace(/\D/g, '').slice(0, 11);
-      if (v.length > 9) v = v.slice(0, 3) + '.' + v.slice(3, 6) + '.' + v.slice(6, 9) + '-' + v.slice(9);
-      else if (v.length > 6) v = v.slice(0, 3) + '.' + v.slice(3, 6) + '.' + v.slice(6);
-      else if (v.length > 3) v = v.slice(0, 3) + '.' + v.slice(3);
-      input.value = v;
-    }
-
-    function formatarTelefone(input) {
-      let v = input.value.replace(/\D/g, ""); // Remove tudo que não é dígito
-
-      if (v.length > 11) v = v.slice(0, 11); // Limita a 11 dígitos (DDD + 9 números)
-
-      if (v.length > 10) {
-        // Formato (XX) XXXXX-XXXX (Celular)
-        v = v.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1) $2-$3");
-      } else if (v.length > 6) {
-        // Formato (XX) XXXX-XXXX (Fixo)
-        v = v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
-      } else if (v.length > 2) {
-        // Formato (XX) XXXX...
-        v = v.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
-      } else if (v.length > 0) {
-        // Formato (XX...
-        v = v.replace(/^(\d*)/, "($1");
-      }
-
-      input.value = v;
-    }
-
-    // ── Validações ───────────────────────────────────────────────
-    function validarCampo(campo) {
-      const grupo = document.getElementById('grupo-' + campo);
-      const input = document.getElementById(campo);
-      const v = input.value.trim();
-      let ok = false;
-
-      switch (campo) {
-        case 'nome': ok = v.split(' ').length >= 2 && v.length >= 5; break;
-        case 'numero': ok = v.replace(/\s/g, '').length === 16; break;
-        case 'validade': ok = /^\d{2}\/\d{2}$/.test(v); break;
-        case 'cvv': ok = /^\d{3}$/.test(v); break;
-        case 'cpf': ok = v.replace(/\D/g, '').length === 11; break;
-      }
-
-      grupo.classList.toggle('invalido', !ok && v.length > 0);
-      return ok;
-    }
-
-    function validarTudo() {
-      const campos = ['numero', 'validade', 'cvv', 'cpf'];
-      let tudo_ok = true;
-      campos.forEach(c => {
-        const ok = validarCampo(c);
-        if (!ok) {
-          // Força mostrar erro mesmo sem input
-          const grupo = document.getElementById('grupo-' + c);
-          grupo.classList.add('invalido');
-          tudo_ok = false;
-        }
-      });
-      return tudo_ok;
-    }
-
-    function validarEtapaInicial() {
-      let ok = true;
-
+    // ── Processar pagamento ───────────────────────────────────────────────
+    function processar() {
       const nomeOk = validarCampo('nome');
-      if (!nomeOk) {
-        document.getElementById('grupo-nome').classList.add('invalido');
-        ok = false;
-      }
-
-      const metodo = document.getElementById('metodo');
-      const grupoMetodo = document.getElementById('grupo-metodo');
-      const metodoOk = !!metodo.value;
-      grupoMetodo.classList.toggle('invalido', !metodoOk);
-      if (!metodoOk) ok = false;
+      if (!nomeOk) { document.getElementById('grupo-nome').classList.add('invalido'); GnToast.error('Informe seu nome completo.'); return; }
 
       const termos = document.getElementById('termos');
-      const grupoTermos = document.getElementById('grupo-termos');
-      const termosOk = termos.checked;
-      grupoTermos.classList.toggle('invalido', !termosOk);
-      if (!termosOk) ok = false;
-
-      return ok;
-    }
-
-    function liberarEtapaFinal() {
-      mostrarDetalhesCobranca();
-      document.getElementById('btn-pagar').textContent = '🔒 Pagar com segurança';
-      etapaPagamento = 2;
-    }
-
-    // Permite trocar entre PIX e Cartão mesmo após avançar
-    document.getElementById('metodo').addEventListener('change', function () {
-      if (etapaPagamento !== 2) return;
-
-      const btn = document.getElementById('btn-pagar');
-      if (this.value === 'pix') {
-        esconderDetalhesCobranca();
-        btn.textContent = '✅ Confirmar pagamento';
-      } else if (this.value === 'cartao') {
-        mostrarDetalhesCobranca();
-        btn.textContent = '🔒 Pagar com segurança';
-      }
-    });
-
-    // ── Processar pagamento ──────────────────────────────────────
-    function processar() {
-      if (etapaPagamento === 1) {
-        if (!validarEtapaInicial()) {
-          var firstErr = document.querySelector('.invalido');
-          if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          GnToast.error('Preencha todos os campos obrigatórios.');
-          return;
-        }
-
-        const metodo = document.getElementById('metodo').value;
-        if (metodo === 'pix') {
-          etapaPagamento = 2;
-          document.getElementById('btn-pagar').textContent = '✅ Confirmar pagamento';
-          GnToast.info('Método PIX selecionado. Confirme para gerar o código.', { duration: 4000 });
-        } else {
-          liberarEtapaFinal();
-        }
+      if (!termos.checked) {
+        document.getElementById('grupo-termos').classList.add('invalido');
+        GnToast.error('Confirme os termos para continuar.');
         return;
       }
+      document.getElementById('grupo-termos').classList.remove('invalido');
 
-      const metodo = document.getElementById('metodo').value;
-      if (metodo !== 'pix' && !validarTudo()) {
-        var firstErr = document.querySelector('.invalido');
-        if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (metodoAtual === 'cartao' && !validarCartao()) {
         GnToast.error('Verifique os dados do cartão.');
         return;
       }
 
-      const overlay = document.getElementById('overlay');
-      const textoEl = document.getElementById('overlay-texto');
-      const subEl = document.getElementById('overlay-sub');
+      const overlay   = document.getElementById('overlay');
+      const textoEl   = document.getElementById('overlay-texto');
+      const subEl     = document.getElementById('overlay-sub');
+      const innerEl   = document.getElementById('overlay-inner');
+      const btnPagar  = document.getElementById('btn-pagar');
 
-      // Mostra overlay de processando
       overlay.classList.add('ativo');
-      document.getElementById('btn-pagar').disabled = true;
+      btnPagar.disabled = true;
 
-      // Simula etapas de processamento
-      const etapas = [
-        { t: 800, texto: 'Verificando dados...', sub: 'Validando informações do cartão' },
-        { t: 1800, texto: 'Comunicando com o banco...', sub: 'Aguardando autorização' },
-        { t: 3000, texto: 'Autorizando pagamento...', sub: 'Quase lá!' },
-        { t: 4000, texto: null }  // null = mostrar sucesso
-      ];
+      const mensagensPorMetodo = {
+        cartao: [
+          { t:800,  texto:'Verificando dados...', sub:'Validando informações do cartão' },
+          { t:1800, texto:'Comunicando com o banco...', sub:'Aguardando autorização' },
+          { t:3000, texto:'Autorizando pagamento...', sub:'Quase lá!' },
+          { t:4200, texto:null }
+        ],
+        pix: [
+          { t:600,  texto:'Verificando pagamento PIX...', sub:'Consultando o Banco Central' },
+          { t:1800, texto:'Pagamento identificado...', sub:'Confirmando transferência' },
+          { t:3000, texto:null }
+        ],
+        boleto: [
+          { t:600,  texto:'Simulando compensação...', sub:'Em produção: leva até 3 dias úteis' },
+          { t:2000, texto:'Aprovando pagamento...', sub:'Liberando acesso...' },
+          { t:3400, texto:null }
+        ]
+      };
 
-      etapas.forEach(({ t, texto, sub }) => {
+      const etapas = mensagensPorMetodo[metodoAtual] || mensagensPorMetodo.cartao;
+
+      etapas.forEach(({t, texto, sub}) => {
         setTimeout(() => {
           if (texto === null) {
-            // Mostra tela de sucesso
-            document.getElementById('overlay-inner').innerHTML = `
+            innerEl.innerHTML = `
               <div class="check-circle">✅</div>
               <div class="overlay-texto">Pagamento aprovado!</div>
-              <div class="overlay-subtexto">Bem-vindo ao GuardianNet ${plano.charAt(0).toUpperCase() + plano.slice(1)}</div>
+              <div class="overlay-subtexto">Bem-vindo ao GuardianNet ${plano.charAt(0).toUpperCase()+plano.slice(1)}</div>
             `;
-
-            // Salva no localStorage
             localStorage.setItem('gn_plano', plano);
             localStorage.setItem('gn_periodo', periodo);
-            // FIX: nunca sobrescreve o nome do usuário com o nome do cartão.
-            // O gn_nome só é definido aqui se ainda não existir (usuário não logado previamente).
-            if (!localStorage.getItem('gn_nome')) {
-              localStorage.setItem('gn_nome', document.getElementById('nome').value.split(' ')[0]);
-            }
+            if (!localStorage.getItem('gn_nome')) localStorage.setItem('gn_nome', document.getElementById('nome').value.split(' ')[0]);
             localStorage.removeItem('gn_trial_started_at');
             localStorage.removeItem('gn_trial_ends_at');
 
-            // Registra assinatura/pagamento no fluxo oficial
             fetch('http://localhost:5000/api/subscription/start', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${localStorage.getItem('gn_token') || tokenAuth || ''}`
-              },
-              body: JSON.stringify({
-                plano,
-                periodo,
-                metodo,
-                valor: tabelaPrecos[plano]?.[periodo] ?? 24.90
-              })
-            })
-              .then((r) => {
-                if (r.ok) {
-                  localStorage.setItem('gn_logado', 'true');
-                  setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                  }, 1500);
-                } else {
-                  localStorage.removeItem('gn_logado');
-                  alert('Pagamento concluído, mas não foi possível ativar o plano. Tente novamente.');
-                  window.location.href = 'planos.html';
-                }
-              })
-              .catch(() => {
-                localStorage.removeItem('gn_logado');
-                alert('Pagamento concluído, mas houve erro ao ativar assinatura.');
-                window.location.href = 'planos.html';
-              });
-
+              method:'POST',
+              headers:{'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('gn_token')||tokenAuth||''}`},
+              body:JSON.stringify({plano, periodo, metodo:metodoAtual, valor:valorTotal})
+            }).then(r => {
+              if (r.ok) { localStorage.setItem('gn_logado','true'); setTimeout(() => { window.location.href='dashboard.html'; }, 1500); }
+              else { localStorage.removeItem('gn_logado'); alert('Pagamento concluído, mas não foi possível ativar o plano. Tente novamente.'); window.location.href='planos.html'; }
+            }).catch(() => { localStorage.removeItem('gn_logado'); alert('Pagamento concluído, mas houve erro ao ativar assinatura.'); window.location.href='planos.html'; });
           } else {
             textoEl.textContent = texto;
-            subEl.textContent = sub;
+            subEl.textContent   = sub;
           }
         }, t);
       });
@@ -1277,5 +1207,4 @@
   </script>
 
 </body>
-
 </html>
