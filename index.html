@@ -748,6 +748,19 @@
   <!-- site-animations.js carregado com defer: não bloqueia o render da página -->
   <script src="site-animations.js" defer></script>
   <script>
+    // Detectar cliques na logo para voltar ao início sem splash
+    document.addEventListener('DOMContentLoaded', async () => {
+      const logos = document.querySelectorAll('.logo');
+      logos.forEach(logo => {
+        logo.addEventListener('click', (e) => {
+          // Se o href for index.html, marcar que está voltando ao início
+          if (logo.href && logo.href.includes('index.html')) {
+            localStorage.setItem('gn_returning_home', '1');
+          }
+        });
+      });
+    }, { once: true });
+
     const AUTH_API = 'http://localhost:5000/api/auth';
     const SUBS_API = 'http://localhost:5000/api/subscription';
 
@@ -1083,7 +1096,7 @@
       document.body.style.overflow = '';
       setTimeout(() => splash.remove(), 420);
     }
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const formLogin = document.getElementById('gate-form-login');
       const formRegister = document.getElementById('gate-form-register');
       const loginMsg = document.getElementById('gate-login-msg');
@@ -1114,8 +1127,6 @@
       document.querySelectorAll('.auth-tab').forEach((btn) => {
         btn.addEventListener('click', () => ativarAbaGate(btn.dataset.tab));
       });
-
-      abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
 
       if (formLogin) {
         formLogin.addEventListener('submit', async (e) => {
@@ -1176,10 +1187,25 @@
         });
       }
 
-      atualizarEstadoAuth();
+      await atualizarEstadoAuth();
 
-      if (window.__gnCurtainActive) {
-        // Se a curtain Lottie está ativa, não usar splash duplicado
+      const returningHome = localStorage.getItem('gn_returning_home') === '1';
+      const token = localStorage.getItem('gn_token');
+
+      if (returningHome) {
+        localStorage.removeItem('gn_returning_home');
+      }
+
+      // Só não pede login quando acabou de voltar para a home a partir do site/dashboard
+      // Em abertura direta do index (nova entrada), pede login/cadastro normalmente.
+      if (token && returningHome) {
+        fecharGateAuth();
+      } else {
+        abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
+      }
+
+      if (window.__gnCurtainActive || returningHome) {
+        // Se a curtain Lottie está ativa ou voltando ao início, não usar splash duplicado
         if (splash) {
           splash.classList.add('hidden');
           setTimeout(() => splash.remove(), 20);
