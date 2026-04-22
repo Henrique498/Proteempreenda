@@ -76,6 +76,11 @@
       grid-template-columns: var(--sidebar-w) 1fr;
       grid-template-rows: var(--topbar-h) 1fr;
       height: 100vh;
+      transition: grid-template-columns .2s ease;
+    }
+
+    .app.sidebar-collapsed {
+      grid-template-columns: 0 1fr;
     }
 
     /* ══════════════════════════════════════
@@ -89,6 +94,13 @@
       flex-direction: column;
       padding: 20px 0;
       overflow-y: auto;
+      transition: transform .2s ease, opacity .2s ease;
+    }
+
+    .app.sidebar-collapsed .sidebar {
+      transform: translateX(-104%);
+      opacity: 0;
+      pointer-events: none;
     }
 
     .sb-logo {
@@ -230,13 +242,23 @@
     }
 
     .topbar-menu {
-      display: none;
+      display: inline-flex;
       width: auto;
-      border-radius: 999px;
-      padding: 0 10px;
-      font-size: 0.78rem;
+      height: 34px;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 0.85rem;
       font-weight: 700;
       gap: 6px;
+      background: var(--navy);
+      border: 1px solid var(--border);
+      color: var(--white);
+      cursor: pointer;
+      transition: background .18s;
+    }
+
+    .topbar-menu:hover {
+      background: rgba(157,217,248,0.1);
     }
 
     .topbar-right { display: flex; align-items: center; gap: 10px; }
@@ -264,6 +286,14 @@
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; font-size: 0.85rem; color: var(--white);
       transition: background .18s;
+    }
+
+    .topbar-btn.topbar-menu {
+      width: auto;
+      border-radius: 8px;
+      padding: 0 12px;
+      gap: 6px;
+      justify-content: center;
     }
 
     .topbar-btn:hover { background: var(--border); }
@@ -311,6 +341,13 @@
       gap: 16px;
     }
 
+    /* Animações de transição de páginas */
+    .main > div {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     .drawer-backdrop {
       position: fixed;
       inset: 0;
@@ -352,9 +389,22 @@
     .stat-green { background: rgba(176,229,170,0.08); border-color: rgba(176,229,170,0.3); }
     .stat-dark  { background: var(--navy-3); border-color: rgba(157,217,248,0.2); }
 
-    :root.light-mode .stat-dark { background: #1a2a4a; border-color: rgba(157,217,248,0.3); }
-    :root.light-mode .stat-dark .stat-label,
-    :root.light-mode .stat-dark .stat-val { color: #f0f4ff; }
+    :root.light-mode .stat-cyan {
+      background: linear-gradient(135deg, #ffffff 0%, rgba(58,138,191,0.14) 100%);
+      border-color: rgba(58,138,191,0.28);
+    }
+
+    :root.light-mode .stat-green {
+      background: linear-gradient(135deg, #ffffff 0%, rgba(74,154,88,0.14) 100%);
+      border-color: rgba(74,154,88,0.28);
+    }
+
+    :root.light-mode .stat-dark {
+      background: var(--card-bg);
+      border-color: rgba(58,138,191,0.28);
+    }
+    :root.light-mode .stat-dark .stat-label { color: var(--dim); }
+    :root.light-mode .stat-dark .stat-val { color: var(--cyan); }
 
     .stat-label {
       font-size: 0.72rem; font-weight: 600;
@@ -637,6 +687,67 @@
       .stats-row { grid-template-columns: 1fr 1fr; }
       .grid-3, .grid-2 { grid-template-columns: 1fr; }
     }
+
+      .gn-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: rgba(3, 8, 18, 0.68);
+        z-index: 150;
+        backdrop-filter: blur(3px);
+      }
+
+      .gn-modal-backdrop.ativo { display: flex; }
+
+      .gn-modal-card {
+        width: min(100%, 420px);
+        background: var(--navy-2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .gn-modal-title {
+        font-family: var(--font-head);
+        font-size: 1rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+
+      .gn-modal-text {
+        color: var(--dim);
+        font-size: 0.9rem;
+        margin-bottom: 16px;
+      }
+
+      .gn-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .gn-modal-btn {
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--navy-3);
+        color: var(--white);
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+
+      .gn-modal-btn.ok {
+        border: none;
+        color: #0a1628;
+        background: linear-gradient(135deg, var(--cyan), var(--green));
+        font-family: var(--font-head);
+        font-weight: 700;
+      }
   </style>
 </head>
 <body>
@@ -678,10 +789,6 @@
       <div class="sb-plano-sub" id="sb-periodo">Mensal</div>
     </div>
 
-    <button class="sb-logout" onclick="logout()">
-      <span>🚪</span> Sair da conta
-    </button>
-
   </aside>
 
   <div class="drawer-backdrop" id="drawer-backdrop" onclick="toggleSidebarMobile(false)"></div>
@@ -691,20 +798,19 @@
   ══════════════════════════════════ -->
   <header class="topbar">
     <div class="topbar-left">
-      <button class="topbar-btn topbar-menu" onclick="toggleSidebarMobile()" title="Abrir menu">☰ Menu</button>
-      <div class="topbar-titulo" id="topbar-titulo">Dashboard</div>
+      
     </div>
     <div class="topbar-right">
       <div class="search-box">
         <span style="color:var(--dim)">🔍</span>
         <input type="text" placeholder="Buscar alertas, contatos...">
       </div>
-      <button class="topbar-btn" onclick="toggleTheme()" id="theme-btn" title="Tema">🌙</button>
-      <button class="topbar-btn topbar-logout" onclick="logout()" title="Sair da conta">🚪 Sair</button>
+      <button type="button" class="topbar-btn" onclick="toggleTheme()" id="theme-btn" title="Tema">🌙</button>
+      <button type="button" class="topbar-btn" onclick="voltarParaSite()" title="Voltar ao site principal">← Início</button>
+      <button type="button" class="topbar-btn topbar-logout" onclick="logout()" title="Sair da conta">🚪 Sair</button>
       <div class="user-pill">
         <div class="user-av" id="user-av">U</div>
         <span class="user-name" id="user-name">Usuário</span>
-        <span style="color:var(--dim);font-size:.75rem;margin-left:2px">▾</span>
       </div>
     </div>
   </header>
@@ -980,7 +1086,8 @@
         <div class="panel">
           <div class="panel-head"><div class="panel-titulo">➕ Adicionar contato</div></div>
           <input id="ct-nome" placeholder="Nome completo" style="width:100%;background:var(--navy-3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-family:var(--font-body);font-size:.85rem;color:var(--white);outline:none;margin-bottom:10px">
-          <input id="ct-numero" placeholder="Número (11999999999)" style="width:100%;background:var(--navy-3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-family:var(--font-body);font-size:.85rem;color:var(--white);outline:none;margin-bottom:10px">
+          <select id="ct-pais" style="width:100%;background:var(--navy-3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-family:var(--font-body);font-size:.85rem;color:var(--white);outline:none;margin-bottom:10px;cursor:pointer"></select>
+          <input id="ct-numero" placeholder="Número" inputmode="tel" autocomplete="tel-national" style="width:100%;background:var(--navy-3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-family:var(--font-body);font-size:.85rem;color:var(--white);outline:none;margin-bottom:10px">
           <select id="ct-relacao" style="width:100%;background:var(--navy-3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-family:var(--font-body);font-size:.85rem;color:var(--white);outline:none;margin-bottom:14px;cursor:pointer">
             <option value="">Selecione a relação...</option>
             <option>Familiar</option><option>Amigo</option><option>Professor</option>
@@ -1023,9 +1130,23 @@
               <div id="periodo-big" style="color:var(--dim);font-size:.82rem"></div>
             </div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+            <div style="padding:12px;background:var(--navy-3);border:1px solid var(--border);border-radius:10px">
+              <div style="font-size:.72rem;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Data de início</div>
+              <div id="assinatura-started" style="font-weight:700;font-size:.9rem">—</div>
+            </div>
+            <div style="padding:12px;background:var(--navy-3);border:1px solid var(--border);border-radius:10px">
+              <div style="font-size:.72rem;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Data de fim</div>
+              <div id="assinatura-datafim" style="font-weight:700;font-size:.9rem">—</div>
+            </div>
+            <div style="padding:12px;background:var(--navy-3);border:1px solid var(--border);border-radius:10px;grid-column:1 / -1">
+              <div style="font-size:.72rem;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Próxima renovação / atualização</div>
+              <div id="assinatura-next" style="font-weight:700;font-size:.9rem">—</div>
+            </div>
+          </div>
           <div id="plano-recursos" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
           </div>
-          <button onclick="logout()" style="width:100%;padding:10px;background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.2);border-radius:8px;color:var(--red);font-family:var(--font-body);font-size:.85rem;font-weight:600;cursor:pointer">Cancelar assinatura e sair</button>
+          <button onclick="cancelarAssinaturaESair()" style="width:100%;padding:10px;background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.2);border-radius:8px;color:var(--red);font-family:var(--font-body);font-size:.85rem;font-weight:600;cursor:pointer">Cancelar assinatura e sair</button>
         </div>
         <div class="panel">
           <div class="panel-titulo" style="margin-bottom:14px">📞 Suporte</div>
@@ -1040,8 +1161,22 @@
   </main>
 </div><!-- /app -->
 
+  <div class="gn-modal-backdrop" id="confirm-modal" aria-hidden="true">
+    <div class="gn-modal-card" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+      <div class="gn-modal-title" id="confirm-modal-title">Confirmação</div>
+      <div class="gn-modal-text" id="confirm-modal-text">Deseja continuar?</div>
+      <div class="gn-modal-actions">
+        <button class="gn-modal-btn" id="confirm-modal-cancel" type="button">Cancelar</button>
+        <button class="gn-modal-btn ok" id="confirm-modal-ok" type="button">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
 
 <script>
+  const AUTH_API = 'http://localhost:5000/api/auth';
+  const SUBS_API = 'http://localhost:5000/api/subscription';
+
   /* ════════════════════════════════════
      PROTEÇÃO DE ROTA
   ════════════════════════════════════ */
@@ -1058,8 +1193,10 @@
     return Date.now() > expiraEm;
   }
 
-  if (!localStorage.getItem('gn_logado')) {
-    window.location.href = 'planos.html';
+  const gnToken = localStorage.getItem('gn_token');
+
+  if (!gnToken) {
+    window.location.href = 'index.html#acesso';
   }
 
   if (trialGratuitoExpirou()) {
@@ -1070,6 +1207,58 @@
     localStorage.removeItem('gn_trial_ends_at');
     window.location.href = 'planos.html?trial=expirado';
   }
+
+  async function validarSessaoServidor() {
+    const token = localStorage.getItem('gn_token');
+    if (!token) {
+      window.location.href = 'index.html#acesso';
+      return;
+    }
+
+    try {
+      const resp = await fetch(`${AUTH_API}/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error('Sessão inválida');
+      const me = await resp.json();
+      if (me?.nome) {
+        localStorage.setItem('gn_nome', (me.nome || '').split(' ')[0] || 'Usuário');
+      }
+
+      const respSubs = await fetch(`${SUBS_API}/current`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!respSubs.ok) throw new Error('Falha ao validar plano');
+      const subsData = await respSubs.json();
+      const assinatura = subsData?.assinatura;
+
+      if (!assinatura || !['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
+        localStorage.removeItem('gn_logado');
+        window.location.href = 'planos.html';
+        return;
+      }
+
+      localStorage.setItem('gn_logado', 'true');
+      localStorage.setItem('gn_plano', assinatura.plano || localStorage.getItem('gn_plano') || 'premium');
+      localStorage.setItem('gn_periodo', assinatura.periodo || localStorage.getItem('gn_periodo') || 'mensal');
+
+      const started = assinatura.startedAt || assinatura.criadoEm || assinatura.dataInicio || null;
+      const dataFim = assinatura.dataFim || assinatura.nextBillingAt || assinatura.trialEndsAt || null;
+      const proxima = assinatura.nextBillingAt || assinatura.dataFim || assinatura.trialEndsAt || null;
+
+      const elStarted = document.getElementById('assinatura-started');
+      const elDataFim = document.getElementById('assinatura-datafim');
+      const elProxima = document.getElementById('assinatura-next');
+      if (elStarted) elStarted.textContent = formatarDataBR(started);
+      if (elDataFim) elDataFim.textContent = formatarDataBR(dataFim);
+      if (elProxima) elProxima.textContent = formatarDataBR(proxima);
+    } catch (_) {
+      clearAuthSession();
+      window.location.href = 'index.html#acesso';
+    }
+  }
+
+  validarSessaoServidor();
 
   /* ════════════════════════════════════
      DADOS DO USUÁRIO
@@ -1085,6 +1274,13 @@
   document.getElementById('sb-periodo').textContent = periodo.charAt(0).toUpperCase() + periodo.slice(1);
   document.getElementById('plano-big').textContent  = 'Plano ' + pNome;
   document.getElementById('periodo-big').textContent = periodo === 'anual' ? 'Cobrança anual' : 'Cobrança mensal';
+
+  function formatarDataBR(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  }
 
   // Recursos por plano
   const recursosPorPlano = {
@@ -1159,43 +1355,287 @@
   const titulos = { overview:'Dashboard', alertas:'Alertas', contatos:'Contatos Confiáveis', relatorios:'Relatórios', plano:'Meu Plano' };
 
   function toggleSidebarMobile(force) {
+    const app = document.querySelector('.app');
     const sidebar = document.querySelector('.sidebar');
     const backdrop = document.getElementById('drawer-backdrop');
-    if (!sidebar || !backdrop) return;
+    if (!sidebar || !backdrop || !app) return;
+
+    const isMobile = window.matchMedia('(max-width: 900px)').matches;
+
+    if (!isMobile) {
+      const collapsed = typeof force === 'boolean' ? !force : !app.classList.contains('sidebar-collapsed');
+      app.classList.toggle('sidebar-collapsed', collapsed);
+      backdrop.classList.remove('aberto');
+      document.body.style.overflow = '';
+      return;
+    }
 
     const abrir = typeof force === 'boolean' ? force : !sidebar.classList.contains('aberto');
     sidebar.classList.toggle('aberto', abrir);
     backdrop.classList.toggle('aberto', abrir);
+    if (abrir) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
   }
 
   function mudarPag(id, el) {
+    // Valida se a página existe
+    if (!pags.includes(id)) return;
+
+    // Esconde todas as páginas e mostra a selecionada com suavidade
     pags.forEach(p => {
-      const el = document.getElementById('pg-' + p);
-      if (el) el.style.display = p === id ? '' : 'none';
+      const pagEl = document.getElementById('pg-' + p);
+      if (pagEl) {
+        if (p === id) {
+          pagEl.style.display = '';
+          // Adiciona animação de entrada
+          requestAnimationFrame(() => {
+            pagEl.style.opacity = '1';
+            pagEl.style.transform = 'translateY(0)';
+          });
+        } else {
+          pagEl.style.opacity = '0';
+          pagEl.style.transform = 'translateY(8px)';
+          setTimeout(() => {
+            pagEl.style.display = 'none';
+          }, 300);
+        }
+      }
     });
+
+    // Atualiza o título da topbar
     document.getElementById('topbar-titulo').textContent = titulos[id] || id;
+
+    // Marca o item do menu como ativo
     if (el) {
       document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('ativo'));
       el.classList.add('ativo');
+    } else {
+      // Se não passou o elemento, encontra o item correspondente
+      document.querySelectorAll('.sb-item').forEach(i => {
+        const isAtivo = i.getAttribute('onclick') && i.getAttribute('onclick').includes(`'${id}'`);
+        i.classList.toggle('ativo', isAtivo);
+      });
     }
+
+    // Esconde o badge de alertas quando abre a página de alertas
     if (id === 'alertas') {
       const b = document.getElementById('sb-badge');
       if (b) b.style.display = 'none';
     }
-    if (id === 'relatorios') setTimeout(desenharGraficoRelatorio, 60);
 
+    // Desenha o gráfico quando abre a página de relatórios
+    if (id === 'relatorios') {
+      setTimeout(desenharGraficoRelatorio, 60);
+    }
+
+    // Fecha o menu mobile se estiver aberto
     if (window.matchMedia('(max-width: 900px)').matches) {
       toggleSidebarMobile(false);
     }
+
+    // Faz scroll para o topo
+    const main = document.querySelector('.main');
+    if (main) {
+      main.scrollTop = 0;
+    }
   }
+
+  // Adiciona suporte a navegação por teclado
+  document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + número para navegar (1=overview, 2=alertas, 3=contatos, 4=relatorios, 5=plano)
+    if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '5') {
+      e.preventDefault();
+      const idx = parseInt(e.key) - 1;
+      if (idx < pags.length) {
+        const pageId = pags[idx];
+        const item = document.querySelector(`[onclick*="'${pageId}'"]`);
+        if (item) mudarPag(pageId, item);
+      }
+    }
+  });
+
+  // Inicializa as páginas na primeira carga
+  document.addEventListener('DOMContentLoaded', () => {
+    // Carrega a página de overview por padrão
+    mudarPag('overview', document.querySelector('.sb-item.ativo'));
+  }, { once: true });
 
   /* ════════════════════════════════════
      CONTATOS
   ════════════════════════════════════ */
   const icones = { Familiar:'👨‍👩‍👧', Amigo:'👫', Professor:'📚', Escola:'🏫', Médico:'🏥', Outro:'👤' };
+  let contatosCache = [];
+  const paisesContato = [
+    { code: 'BR', flag: '🇧🇷', name: 'Brasil', ddi: '55' },
+    { code: 'US', flag: '🇺🇸', name: 'Estados Unidos', ddi: '1' },
+    { code: 'CA', flag: '🇨🇦', name: 'Canadá', ddi: '1' },
+    { code: 'PT', flag: '🇵🇹', name: 'Portugal', ddi: '351' },
+    { code: 'ES', flag: '🇪🇸', name: 'Espanha', ddi: '34' },
+    { code: 'FR', flag: '🇫🇷', name: 'França', ddi: '33' },
+    { code: 'DE', flag: '🇩🇪', name: 'Alemanha', ddi: '49' },
+    { code: 'GB', flag: '🇬🇧', name: 'Reino Unido', ddi: '44' },
+    { code: 'AR', flag: '🇦🇷', name: 'Argentina', ddi: '54' },
+    { code: 'MX', flag: '🇲🇽', name: 'México', ddi: '52' },
+    { code: 'JP', flag: '🇯🇵', name: 'Japão', ddi: '81' }
+  ];
 
-  function renderContatos() {
-    const lista = JSON.parse(localStorage.getItem('gn_contatos') || '[]');
+  function somenteDigitos(v) {
+    return String(v || '').replace(/\D/g, '');
+  }
+
+  function formatarNumeroPorPais(digits, countryCode) {
+    const d = somenteDigitos(digits);
+    if (!d) return '';
+
+    if (countryCode === 'BR') {
+      if (d.length <= 10) {
+        return d.replace(/(\d{0,2})(\d{0,4})(\d{0,4}).*/, (_, a, b, c) => {
+          let out = '';
+          if (a) out += `(${a}`;
+          if (a.length === 2) out += ') ';
+          if (b) out += b;
+          if (c) out += `-${c}`;
+          return out.trim();
+        });
+      }
+      return d.replace(/(\d{0,2})(\d{0,5})(\d{0,4}).*/, (_, a, b, c) => {
+        let out = '';
+        if (a) out += `(${a}`;
+        if (a.length === 2) out += ') ';
+        if (b) out += b;
+        if (c) out += `-${c}`;
+        return out.trim();
+      });
+    }
+
+    if (countryCode === 'US' || countryCode === 'CA') {
+      return d.replace(/(\d{0,3})(\d{0,3})(\d{0,4}).*/, (_, a, b, c) => {
+        let out = '';
+        if (a) out += `(${a}`;
+        if (a.length === 3) out += ') ';
+        if (b) out += b;
+        if (c) out += `-${c}`;
+        return out.trim();
+      });
+    }
+
+    return d.replace(/(\d{1,3})(?=(\d{3})+(?!\d))/g, '$1 ').trim();
+  }
+
+  function initContatoPhoneUI() {
+    const sel = document.getElementById('ct-pais');
+    const inp = document.getElementById('ct-numero');
+    if (!sel || !inp) return;
+
+    sel.innerHTML = paisesContato.map((p) => (
+      `<option value="${p.ddi}" data-code="${p.code}">${p.flag} ${p.name} (+${p.ddi})</option>`
+    )).join('');
+    sel.value = '55';
+
+    const contarDigitosAte = (texto, pos) => {
+      let n = 0;
+      for (let i = 0; i < Math.max(0, Math.min(pos, texto.length)); i++) {
+        if (/\d/.test(texto[i])) n++;
+      }
+      return n;
+    };
+
+    const posicionarCursorPorIndiceDigito = (input, idxDigito) => {
+      if (idxDigito <= 0) {
+        input.setSelectionRange(0, 0);
+        return;
+      }
+      let n = 0;
+      for (let i = 0; i < input.value.length; i++) {
+        if (/\d/.test(input.value[i])) n++;
+        if (n >= idxDigito) {
+          input.setSelectionRange(i + 1, i + 1);
+          return;
+        }
+      }
+      const fim = input.value.length;
+      input.setSelectionRange(fim, fim);
+    };
+
+    const removerDigitoNoIndice = (digits, idx) => {
+      if (idx < 0 || idx >= digits.length) return digits;
+      return digits.slice(0, idx) + digits.slice(idx + 1);
+    };
+
+    const formatar = () => {
+      const code = (sel.selectedOptions[0]?.dataset.code || 'BR').toUpperCase();
+      const pos = inp.selectionStart ?? inp.value.length;
+      const idxDigito = contarDigitosAte(inp.value, pos);
+      inp.value = formatarNumeroPorPais(inp.value, code);
+      posicionarCursorPorIndiceDigito(inp, idxDigito);
+    };
+
+    inp.addEventListener('keydown', (e) => {
+      if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+      if (inp.selectionStart !== inp.selectionEnd) return;
+
+      const code = (sel.selectedOptions[0]?.dataset.code || 'BR').toUpperCase();
+      const val = inp.value;
+      const digits = somenteDigitos(val);
+      if (!digits.length) return;
+
+      const pos = inp.selectionStart ?? 0;
+
+      if (e.key === 'Backspace') {
+        if (pos <= 0) return;
+        if (/\d/.test(val[pos - 1])) return; // comportamento padrão
+
+        e.preventDefault();
+        const idxAntes = contarDigitosAte(val, pos);
+        const removeIdx = idxAntes - 1;
+        const novos = removerDigitoNoIndice(digits, removeIdx);
+        inp.value = formatarNumeroPorPais(novos, code);
+        posicionarCursorPorIndiceDigito(inp, Math.max(0, idxAntes - 1));
+      }
+
+      if (e.key === 'Delete') {
+        if (pos >= val.length) return;
+        if (/\d/.test(val[pos])) return; // comportamento padrão
+
+        e.preventDefault();
+        const idxAntes = contarDigitosAte(val, pos);
+        const novos = removerDigitoNoIndice(digits, idxAntes);
+        inp.value = formatarNumeroPorPais(novos, code);
+        posicionarCursorPorIndiceDigito(inp, idxAntes);
+      }
+    });
+
+    inp.addEventListener('input', formatar);
+    sel.addEventListener('change', formatar);
+  }
+
+  async function buscarContatosApi() {
+    const token = localStorage.getItem('gn_token');
+    if (!token) return [];
+    const resp = await fetch('http://localhost:5000/api/contatos', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.error || 'Falha ao carregar contatos.');
+    }
+    const data = await resp.json().catch(() => []);
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function renderContatos() {
+    let lista = [];
+    try {
+      lista = await buscarContatosApi();
+      contatosCache = lista;
+    } catch (_) {
+      contatosCache = [];
+      lista = [];
+    }
+
     document.getElementById('st-contatos').textContent = lista.length;
     const el = document.getElementById('lista-contatos');
     if (!el) return;
@@ -1203,31 +1643,89 @@
       el.innerHTML = '<div style="color:var(--dim);font-size:.85rem">Nenhum contato ainda.</div>';
       return;
     }
-    el.innerHTML = lista.map(c => `
+    el.innerHTML = lista.map((c, idx) => `
       <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--navy-3);border-radius:9px;border:1px solid var(--border)">
-        <div style="font-size:1.2rem">${icones[c.relacao]||'👤'}</div>
+        <div style="font-size:1.2rem">${icones[c.Relacao || c.relacao]||'👤'}</div>
         <div>
-          <div style="font-weight:600;font-size:.85rem">${c.nome}</div>
-          <div style="font-size:.72rem;color:var(--dim)">${c.relacao} · ${c.numero}</div>
+          <div style="font-weight:600;font-size:.85rem">${c.Nome || c.nome}</div>
+          <div style="font-size:.72rem;color:var(--dim)">${c.Relacao || c.relacao} · ${c.NumeroFormatado || c.numeroFmt || c.Numero || c.numero}</div>
         </div>
         <span style="margin-left:auto;font-size:.72rem;color:var(--green);font-weight:700">✓ Confiável</span>
+        <button onclick="excluirContato(${idx})" style="border:1px solid rgba(255,59,92,0.32);background:rgba(255,59,92,0.08);color:var(--red);border-radius:7px;padding:5px 8px;font-size:.72rem;font-weight:700;cursor:pointer">Excluir</button>
       </div>`).join('');
   }
 
-  function addContato() {
+  async function excluirContato(idx) {
+    if (idx < 0 || idx >= contatosCache.length) return;
+    const contato = contatosCache[idx];
+    const contatoId = contato.Id || contato.id;
+    if (!contatoId) return;
+    if (!(await confirmarAcao(`Excluir o contato ${contato.Nome || contato.nome}?`, 'Excluir contato'))) return;
+
+    const token = localStorage.getItem('gn_token');
+    if (!token) return;
+
+    const resp = await fetch(`http://localhost:5000/api/contatos/${contatoId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      alert(data.error || 'Não foi possível excluir o contato.');
+      return;
+    }
+    await renderContatos();
+  }
+
+  async function addContato() {
     const nome    = document.getElementById('ct-nome').value.trim();
     const numero  = document.getElementById('ct-numero').value.trim();
     const relacao = document.getElementById('ct-relacao').value;
+    const selPais = document.getElementById('ct-pais');
+    const ddi = selPais?.value || '55';
+    const codigoPais = (selPais?.selectedOptions?.[0]?.dataset?.code || 'BR').toUpperCase();
+    const digitos = somenteDigitos(numero);
+
     if (!nome || !numero || !relacao) { alert('Preencha todos os campos!'); return; }
-    const lista = JSON.parse(localStorage.getItem('gn_contatos') || '[]');
-    lista.push({ nome, numero: numero.replace(/\D/g,''), relacao });
-    localStorage.setItem('gn_contatos', JSON.stringify(lista));
+    if (digitos.length < 6 || digitos.length > 15) { alert('Número inválido para este país.'); return; }
+
+    const token = localStorage.getItem('gn_token');
+    if (!token) {
+      window.location.href = 'index.html#acesso';
+      return;
+    }
+
+    const novoContato = {
+      nome,
+      relacao,
+      pais: codigoPais,
+      ddi,
+      numero: `+${ddi}${digitos}`,
+      numeroFmt: `+${ddi} ${formatarNumeroPorPais(digitos, codigoPais)}`
+    };
+
+    const resp = await fetch('http://localhost:5000/api/contatos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(novoContato)
+    });
+
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      alert(data.error || 'Falha ao salvar contato.');
+      return;
+    }
+
     document.getElementById('ct-nome').value = '';
     document.getElementById('ct-numero').value = '';
     document.getElementById('ct-relacao').value = '';
-    renderContatos();
+    await renderContatos();
   }
 
+  initContatoPhoneUI();
   renderContatos();
 
   /* ════════════════════════════════════
@@ -1386,12 +1884,82 @@
       .forEach((k) => sessionStorage.removeItem(k));
   }
 
-  function logout() {
-    if (confirm('Deseja sair da conta?')) {
-      clearAuthSession();
-      sessionStorage.setItem('gn_logout_success', '1');
-      window.location.href = 'index.html';
+  const confirmModal = document.getElementById('confirm-modal');
+  const confirmModalTitle = document.getElementById('confirm-modal-title');
+  const confirmModalText = document.getElementById('confirm-modal-text');
+  const confirmModalOk = document.getElementById('confirm-modal-ok');
+  const confirmModalCancel = document.getElementById('confirm-modal-cancel');
+  let confirmResolve = null;
+
+  function fecharConfirmModal(confirmado) {
+    if (!confirmResolve) return;
+    confirmModal.classList.remove('ativo');
+    confirmModal.setAttribute('aria-hidden', 'true');
+    const resolver = confirmResolve;
+    confirmResolve = null;
+    resolver(confirmado);
+  }
+
+  function confirmarAcao(mensagem, titulo = 'Confirmação') {
+    return new Promise((resolve) => {
+      confirmResolve = resolve;
+      confirmModalTitle.textContent = titulo;
+      confirmModalText.textContent = mensagem;
+      confirmModal.classList.add('ativo');
+      confirmModal.setAttribute('aria-hidden', 'false');
+      confirmModalCancel.focus();
+    });
+  }
+
+  confirmModalOk.addEventListener('click', () => fecharConfirmModal(true));
+  confirmModalCancel.addEventListener('click', () => fecharConfirmModal(false));
+  confirmModal.addEventListener('click', (e) => {
+    if (e.target === confirmModal) fecharConfirmModal(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && confirmModal.classList.contains('ativo')) {
+      fecharConfirmModal(false);
     }
+  });
+
+  function voltarParaSite() {
+    // Marca que está voltando para o site principal sem splash
+    localStorage.setItem('gn_returning_home', '1');
+    window.location.href = 'index.html';
+  }
+
+  async function logout() {
+    if (!(await confirmarAcao('Deseja sair da conta?', 'Sair da conta'))) return;
+
+    const token = localStorage.getItem('gn_token');
+    if (token) {
+      try {
+        await fetch(`${AUTH_API}/logout`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (_) {}
+    }
+
+    clearAuthSession();
+    sessionStorage.setItem('gn_logout_success', '1');
+    window.location.href = 'index.html';
+  }
+
+  async function cancelarAssinaturaESair() {
+    if (!(await confirmarAcao('Deseja cancelar sua assinatura e sair?', 'Cancelar assinatura'))) return;
+
+    const token = localStorage.getItem('gn_token');
+    if (token) {
+      try {
+        await fetch(`${SUBS_API}/cancel`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (_) {}
+    }
+
+    await logout();
   }
 </script>
 

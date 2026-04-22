@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
-  <script src="shared-theme.js"></script>
-  <script src="shared-components.js"></script>
+  <script>
+    (function() {
+      const t = localStorage.getItem('theme') || 'dark';
+      if (t === 'light') document.documentElement.classList.add('light-mode');
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
   <title>GuardianNet — Pagamento</title>
@@ -24,6 +29,91 @@
       width: 100%;
       max-width: 900px;
       align-items: start;
+    }
+
+    .auth-inline {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 100px 24px 60px;
+      display: none;
+      min-height: calc(100vh - 24px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-inline.ativo {
+      display: flex;
+    }
+
+    .auth-inline .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .auth-inline-card {
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .auth-inline-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-form input {
+      width: 100%;
+      background: var(--navy-3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--white);
+      outline: none;
+    }
+
+    .auth-form input:focus {
+      border-color: var(--azul-pastel);
+      box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+
+    .auth-msg {
+      min-height: 18px;
+      font-size: 0.82rem;
+      color: var(--white-dim);
+    }
+
+    .auth-link {
+      align-self: flex-start;
+      border: 0;
+      background: transparent;
+      color: var(--azul-pastel);
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .auth-msg.erro {
+      color: var(--red);
+    }
+
+    .auth-msg.ok {
+      color: #4ec97a;
     }
 
     /* ── FORMULÁRIO ── */
@@ -74,8 +164,15 @@
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .form-grupo input::placeholder { color: var(--white-dim); opacity: 0.5; }
-    .form-grupo select option { color: #111; }
+    .form-grupo input::placeholder {
+      color: var(--white-dim);
+      opacity: 0.5;
+    }
+
+    .form-grupo select option {
+      color: var(--white);
+      background: var(--navy-3);
+    }
 
     .form-grupo input:focus {
       border-color: var(--azul-pastel);
@@ -90,7 +187,7 @@
 
     .form-grupo input.erro {
       border-color: var(--red);
-      box-shadow: 0 0 0 3px rgba(255,59,92,0.15);
+      box-shadow: 0 0 0 3px rgba(255, 59, 92, 0.15);
     }
 
     .msg-erro {
@@ -100,20 +197,34 @@
       display: none;
     }
 
-    .form-grupo.invalido .msg-erro { display: block; }
-    .form-grupo.invalido input { border-color: var(--red); }
-    .form-grupo.invalido select { border-color: var(--red); }
+    .form-grupo.invalido .msg-erro {
+      display: block;
+    }
 
-    .detalhes-cobranca { display: none; }
-    .detalhes-cobranca.ativo { display: block; }
+    .form-grupo.invalido input {
+      border-color: var(--red);
+    }
+
+    .form-grupo.invalido select {
+      border-color: var(--red);
+    }
+
+    .detalhes-cobranca {
+      display: none;
+    }
+
+    .detalhes-cobranca.ativo {
+      display: block;
+    }
 
     .valor-rapido {
       margin: 8px 0 12px;
       padding: 12px;
       border: 1px solid var(--border);
       border-radius: 10px;
-      background: rgba(157,217,248,0.05);
+      background: rgba(157, 217, 248, 0.05);
     }
+
     .valor-rapido li {
       font-size: 0.82rem;
       color: var(--white-dim);
@@ -144,7 +255,10 @@
       transition: opacity 0.2s;
     }
 
-    .bandeira.ativa { opacity: 1; border-color: var(--azul-pastel); }
+    .bandeira.ativa {
+      opacity: 1;
+      border-color: var(--azul-pastel);
+    }
 
     /* Botão de pagar */
     .btn-pagar {
@@ -191,7 +305,7 @@
     /* ── CARD VISUAL DO CARTÃO ── */
     .cartao-visual {
       background: linear-gradient(135deg, #1a2a4a, #0d1a35);
-      border: 1px solid rgba(157,217,248,0.2);
+      border: 1px solid rgba(157, 217, 248, 0.2);
       border-radius: 18px;
       padding: 28px;
       margin-bottom: 20px;
@@ -206,14 +320,17 @@
     .cartao-visual::before {
       content: '';
       position: absolute;
-      width: 200px; height: 200px;
+      width: 200px;
+      height: 200px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(157,217,248,0.1) 0%, transparent 70%);
-      top: -50px; right: -50px;
+      background: radial-gradient(circle, rgba(157, 217, 248, 0.1) 0%, transparent 70%);
+      top: -50px;
+      right: -50px;
     }
 
     .cartao-chip {
-      width: 44px; height: 32px;
+      width: 44px;
+      height: 32px;
       background: linear-gradient(135deg, #d4a843, #f0c060);
       border-radius: 6px;
     }
@@ -223,7 +340,7 @@
       font-size: 1.2rem;
       font-weight: 700;
       letter-spacing: 3px;
-      color: rgba(240,244,255,0.9);
+      color: rgba(240, 244, 255, 0.9);
     }
 
     .cartao-info {
@@ -234,7 +351,7 @@
 
     .cartao-label {
       font-size: 0.65rem;
-      color: rgba(240,244,255,0.5);
+      color: rgba(240, 244, 255, 0.5);
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-bottom: 3px;
@@ -243,7 +360,7 @@
     .cartao-valor {
       font-size: 0.9rem;
       font-weight: 600;
-      color: rgba(240,244,255,0.9);
+      color: rgba(240, 244, 255, 0.9);
     }
 
     /* ── RESUMO DO PLANO ── */
@@ -291,10 +408,23 @@
       font-size: 0.88rem;
     }
 
-    .resumo-linha:last-of-type { border-bottom: none; }
-    .resumo-linha .label { color: var(--white-dim); }
-    .resumo-linha .valor { font-weight: 600; }
-    .resumo-linha.total .label { font-weight: 700; color: var(--white); }
+    .resumo-linha:last-of-type {
+      border-bottom: none;
+    }
+
+    .resumo-linha .label {
+      color: var(--white-dim);
+    }
+
+    .resumo-linha .valor {
+      font-weight: 600;
+    }
+
+    .resumo-linha.total .label {
+      font-weight: 700;
+      color: var(--white);
+    }
+
     .resumo-linha.total .valor {
       font-family: var(--font-head);
       font-size: 1.2rem;
@@ -320,14 +450,17 @@
       color: var(--white-dim);
     }
 
-    .resumo-feature span { color: #4ec97a; font-weight: 700; }
+    .resumo-feature span {
+      color: #4ec97a;
+      font-weight: 700;
+    }
 
     /* ── OVERLAY DE PROCESSANDO ── */
     .overlay-processando {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(7,11,20,0.92);
+      background: rgba(7, 11, 20, 0.92);
       backdrop-filter: blur(10px);
       z-index: 9999;
       flex-direction: column;
@@ -336,10 +469,13 @@
       gap: 24px;
     }
 
-    .overlay-processando.ativo { display: flex; }
+    .overlay-processando.ativo {
+      display: flex;
+    }
 
     .spinner {
-      width: 60px; height: 60px;
+      width: 60px;
+      height: 60px;
       border: 3px solid var(--border);
       border-top-color: var(--azul-pastel);
       border-radius: 50%;
@@ -367,13 +503,22 @@
       text-align: center;
     }
 
-    .overlay-sucesso.ativo { display: flex; }
-    .overlay-processando-inner.ativo { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .overlay-sucesso.ativo {
+      display: flex;
+    }
+
+    .overlay-processando-inner.ativo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
 
     .check-circle {
-      width: 80px; height: 80px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      background: rgba(78,201,122,0.15);
+      background: rgba(78, 201, 122, 0.15);
       border: 2px solid #4ec97a;
       display: flex;
       align-items: center;
@@ -383,12 +528,64 @@
     }
 
     @media (max-width: 768px) {
-      .pagamento-container { grid-template-columns: 1fr; }
-      .form-linha { grid-template-columns: 1fr; }
+      .auth-inline {
+        padding: 88px 16px 36px;
+        min-height: auto;
+      }
+
+      .auth-inline-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pagamento-container {
+        grid-template-columns: 1fr;
+      }
+
+      .form-linha {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
+
+  <section class="auth-inline" id="auth-inline">
+    <div class="container">
+      <div class="auth-inline-card">
+        <span class="tag-secao">Acesso</span>
+        <h2 class="titulo-secao" style="margin-bottom:10px">Entre ou crie sua conta</h2>
+        <p class="subtitulo-secao">Faça login/cadastro aqui para continuar com o pagamento e liberar o dashboard depois.
+        </p>
+
+        <div class="auth-inline-grid">
+          <div>
+            <h3 style="font-family:var(--font-head);margin-bottom:12px">Entrar</h3>
+            <form id="form-login" class="auth-form">
+              <input type="email" id="login-email" placeholder="Seu e-mail" required>
+              <input type="password" id="login-senha" placeholder="Sua senha" required minlength="6">
+              <button type="button" id="btn-forgot-password" class="auth-link">Esqueci minha senha</button>
+              <button type="submit" class="btn-primario">Entrar</button>
+              <div id="login-msg" class="auth-msg"></div>
+            </form>
+          </div>
+
+          <div>
+            <h3 style="font-family:var(--font-head);margin-bottom:12px">Criar conta</h3>
+            <form id="form-register" class="auth-form">
+              <input type="text" id="reg-nome" placeholder="Nome completo" required minlength="3">
+              <input type="email" id="reg-email" placeholder="Seu e-mail" required>
+              <input type="password" id="reg-senha" placeholder="Crie uma senha" required minlength="6">
+              <input type="tel" id="reg-telefone" placeholder="Telefone (DDD + Número)" required maxlength="15"
+                oninput="formatarTelefone(this)">
+              <button type="submit" class="btn-primario">Criar conta</button>
+              <div id="register-msg" class="auth-msg"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Header -->
   <header id="header" class="scrolled">
@@ -496,8 +693,7 @@
             </div>
             <div class="form-grupo" id="grupo-cvv">
               <label>CVV</label>
-              <input type="text" id="cvv" placeholder="•••" maxlength="3"
-                oninput="validarCampo('cvv')">
+              <input type="text" id="cvv" placeholder="•••" maxlength="3" oninput="validarCampo('cvv')">
               <div class="msg-erro">CVV inválido</div>
             </div>
           </div>
@@ -509,6 +705,8 @@
             <div class="msg-erro">CPF inválido</div>
           </div>
         </div>
+
+
 
         <ul class="valor-rapido">
           <li>Sem fidelidade: cancele quando quiser.</li>
@@ -565,23 +763,227 @@
 
   <script src="site-animations.js"></script>
   <script>
+    // ── Aplica ícone do tema ──────────────────────────────────────
+    (function() {
+      const icon = document.getElementById('theme-icon');
+      const saved = localStorage.getItem('theme') || 'dark';
+      if (icon) icon.textContent = saved === 'light' ? '☀️' : '🌙';
+    })();
+
+    function toggleTheme() {
+      const html    = document.documentElement;
+      const icon    = document.getElementById('theme-icon');
+      const isLight = html.classList.toggle('light-mode');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      icon.textContent = isLight ? '☀️' : '🌙';
+    }
+
     function toggleMenu() {
       document.getElementById('nav-links').classList.toggle('aberto');
     }
 
     // ── Lê plano da URL ──────────────────────────────────────────
     // Ex: pagamento.html?plano=premium&periodo=anual
-    const params  = new URLSearchParams(window.location.search);
-    const plano   = params.get('plano')   || localStorage.getItem('gn_plano') || 'premium';
+    const params = new URLSearchParams(window.location.search);
+    const plano = params.get('plano') || localStorage.getItem('gn_plano') || 'premium';
     const periodo = params.get('periodo') || localStorage.getItem('gn_periodo') || 'mensal';
+    let tokenAuth = localStorage.getItem('gn_token');
     let etapaPagamento = 1;
+
+    const authInline = document.getElementById('auth-inline');
+    const pagamentoWrapper = document.querySelector('.pagamento-wrapper');
+
+    function setAuthMessage(el, text, type = '') {
+      if (!el) return;
+      el.className = 'auth-msg' + (type ? ` ${type}` : '');
+      el.textContent = text || '';
+    }
+
+    function authRequest(path, payload) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      return fetch(`http://localhost:5000/api/auth${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      }).then(async (resp) => {
+        clearTimeout(timeoutId);
+        const data = await resp.json();
+        if (!resp.ok) {
+          const msg = data.detail ? `${data.error || 'Erro de autenticação'} ${data.detail}` : (data.error || 'Erro de autenticação');
+          throw new Error(msg);
+        }
+        return data;
+      }).catch((err) => {
+        clearTimeout(timeoutId);
+        if (err && err.name === 'AbortError') {
+          throw new Error('A API demorou para responder. Verifique o servidor e a conexão com o banco.');
+        }
+        throw err;
+      });
+    }
+
+    function mostrarAuthInline() {
+      if (authInline) authInline.classList.add('ativo');
+      if (pagamentoWrapper) pagamentoWrapper.style.display = 'none';
+    }
+
+    function liberarPagamento() {
+      if (authInline) authInline.classList.remove('ativo');
+      if (pagamentoWrapper) pagamentoWrapper.style.display = 'flex';
+      localStorage.setItem('gn_logado', 'true');
+    }
+
+    async function buscarAssinaturaAtual(token) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      try {
+        const resp = await fetch('http://localhost:5000/api/subscription/current', {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal
+        });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        return data?.assinatura || null;
+      } catch (_) {
+        return null;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    async function buscarPerfilAuth(token) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      try {
+        const resp = await fetch('http://localhost:5000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal
+        });
+        if (!resp.ok) return null;
+        return await resp.json();
+      } catch (_) {
+        return null;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    async function redirecionarSeJaAssinante(token, perfil = null) {
+      const tipo = ((perfil && perfil.tipo) || localStorage.getItem('gn_tipo') || '').toLowerCase();
+      if (tipo === 'admin') {
+        localStorage.setItem('gn_tipo', 'admin');
+        localStorage.setItem('gn_logado', 'true');
+        window.location.href = 'admin.html';
+        return true;
+      }
+
+      const assinatura = await buscarAssinaturaAtual(token);
+      const status = (assinatura?.status || '').toLowerCase();
+      if (assinatura && (status === 'ativa' || status === 'trialing')) {
+        localStorage.setItem('gn_logado', 'true');
+        localStorage.setItem('gn_plano', assinatura.plano || (params.get('plano') || 'premium'));
+        localStorage.setItem('gn_periodo', assinatura.periodo || (params.get('periodo') || 'mensal'));
+        window.location.href = 'dashboard.html';
+        return true;
+      }
+      return false;
+    }
+
+    (async () => {
+      if (!tokenAuth) {
+        mostrarAuthInline();
+        return;
+      }
+      const perfil = await buscarPerfilAuth(tokenAuth);
+      if (perfil?.tipo) localStorage.setItem('gn_tipo', String(perfil.tipo).toLowerCase());
+      if (perfil?.nome) localStorage.setItem('gn_nome', (perfil.nome || '').split(' ')[0] || 'Usuário');
+      const foiParaDashboard = await redirecionarSeJaAssinante(tokenAuth, perfil);
+      if (!foiParaDashboard) liberarPagamento();
+    })();
+
+    const loginForm = document.getElementById('form-login');
+    const registerForm = document.getElementById('form-register');
+    const forgotPasswordBtn = document.getElementById('btn-forgot-password');
+    const loginMsg = document.getElementById('login-msg');
+    const registerMsg = document.getElementById('register-msg');
+
+    async function iniciarRecuperacaoSenha() {
+      window.location.href = 'redefinir-senha.html';
+    }
+
+    if (forgotPasswordBtn) {
+      forgotPasswordBtn.addEventListener('click', iniciarRecuperacaoSenha);
+    }
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setAuthMessage(loginMsg, 'Entrando...');
+        try {
+          const data = await authRequest('/login', {
+            email: document.getElementById('login-email').value.trim(),
+            senha: document.getElementById('login-senha').value
+          });
+          tokenAuth = data.token;
+          localStorage.setItem('gn_token', data.token);
+          if (data.tipo) localStorage.setItem('gn_tipo', String(data.tipo).toLowerCase());
+          if (data.nome) {
+            localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || 'Usuário');
+          }
+          const foiParaDashboard = await redirecionarSeJaAssinante(data.token, data);
+          if (foiParaDashboard) return;
+          liberarPagamento();
+          setAuthMessage(loginMsg, 'Autenticado. Agora conclua o pagamento.', 'ok');
+        } catch (err) {
+          setAuthMessage(loginMsg, err.message, 'erro');
+        }
+      });
+    }
+
+    if (registerForm) {
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setAuthMessage(registerMsg, 'Criando conta...');
+        try {
+          const nomeDigitado = document.getElementById('reg-nome').value.trim();
+          const data = await authRequest('/register', {
+            nome:     nomeDigitado,
+            email:    document.getElementById('reg-email').value.trim(),
+            senha:    document.getElementById('reg-senha').value,
+            telefone: document.getElementById('reg-telefone').value.trim()
+          });
+          tokenAuth = data.token;
+          localStorage.setItem('gn_token', data.token);
+          if (data.tipo) localStorage.setItem('gn_tipo', String(data.tipo).toLowerCase());
+          // FIX: salva o nome do cadastro (ou o retornado pelo backend)
+          localStorage.setItem('gn_nome', (data.nome || nomeDigitado).split(' ')[0]);
+          const foiParaDashboard = await redirecionarSeJaAssinante(data.token, data);
+          if (foiParaDashboard) return;
+          liberarPagamento();
+          setAuthMessage(registerMsg, 'Conta criada. Agora conclua o pagamento.', 'ok');
+        } catch (err) {
+          setAuthMessage(registerMsg, err.message, 'erro');
+        }
+      });
+    }
+
+    function esconderDetalhesCobranca() {
+      document.getElementById('detalhes-cobranca').classList.remove('ativo');
+    }
+
+    function mostrarDetalhesCobranca() {
+      document.getElementById('detalhes-cobranca').classList.add('ativo');
+    }
 
     // Tabela de preços
     // anual = valor mensal equivalente no plano anual (20% OFF)
     const tabelaPrecos = {
-      basico:  { mensal: 9.90, anual: 7.92 },
+      basico: { mensal: 9.90, anual: 7.92 },
       premium: { mensal: 24.90, anual: 19.92 },
-      escola:  { mensal: 149.00, anual: 119.20 }
+      escola: { mensal: 149.00, anual: 119.20 }
     };
 
     function formatarBRL(valor) {
@@ -612,7 +1014,7 @@
       plano.charAt(0).toUpperCase() + plano.slice(1) + ' ' +
       periodo.charAt(0).toUpperCase() + periodo.slice(1);
     document.getElementById('resumo-periodo').textContent = periodos[periodo];
-    document.getElementById('resumo-total').textContent   = formatarBRL(tabelaPrecos[plano]?.[periodo] ?? 24.90);
+    document.getElementById('resumo-total').textContent = formatarBRL(tabelaPrecos[plano]?.[periodo] ?? 24.90);
     document.getElementById('resumo-desconto').textContent = descontos[plano]?.[periodo] || '—';
 
     if (plano === 'escola') {
@@ -621,16 +1023,16 @@
     }
 
     // ── Preview do cartão em tempo real ─────────────────────────
-    document.getElementById('nome').addEventListener('input', function() {
+    document.getElementById('nome').addEventListener('input', function () {
       const v = this.value.toUpperCase() || 'SEU NOME';
       document.getElementById('prev-nome').textContent = v.slice(0, 22);
     });
 
-    document.getElementById('validade').addEventListener('input', function() {
+    document.getElementById('validade').addEventListener('input', function () {
       document.getElementById('prev-validade').textContent = this.value || 'MM/AA';
     });
 
-    document.getElementById('cvv').addEventListener('input', function() {
+    document.getElementById('cvv').addEventListener('input', function () {
       document.getElementById('prev-cvv').textContent = '•'.repeat(this.value.length) || '•••';
     });
 
@@ -655,15 +1057,37 @@
 
     function formatarValidade(input) {
       let v = input.value.replace(/\D/g, '').slice(0, 4);
-      if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+      if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
       input.value = v;
     }
 
     function formatarCPF(input) {
       let v = input.value.replace(/\D/g, '').slice(0, 11);
-      if (v.length > 9)      v = v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
-      else if (v.length > 6) v = v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
-      else if (v.length > 3) v = v.slice(0,3)+'.'+v.slice(3);
+      if (v.length > 9) v = v.slice(0, 3) + '.' + v.slice(3, 6) + '.' + v.slice(6, 9) + '-' + v.slice(9);
+      else if (v.length > 6) v = v.slice(0, 3) + '.' + v.slice(3, 6) + '.' + v.slice(6);
+      else if (v.length > 3) v = v.slice(0, 3) + '.' + v.slice(3);
+      input.value = v;
+    }
+
+    function formatarTelefone(input) {
+      let v = input.value.replace(/\D/g, ""); // Remove tudo que não é dígito
+
+      if (v.length > 11) v = v.slice(0, 11); // Limita a 11 dígitos (DDD + 9 números)
+
+      if (v.length > 10) {
+        // Formato (XX) XXXXX-XXXX (Celular)
+        v = v.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1) $2-$3");
+      } else if (v.length > 6) {
+        // Formato (XX) XXXX-XXXX (Fixo)
+        v = v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
+      } else if (v.length > 2) {
+        // Formato (XX) XXXX...
+        v = v.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
+      } else if (v.length > 0) {
+        // Formato (XX...
+        v = v.replace(/^(\d*)/, "($1");
+      }
+
       input.value = v;
     }
 
@@ -671,15 +1095,15 @@
     function validarCampo(campo) {
       const grupo = document.getElementById('grupo-' + campo);
       const input = document.getElementById(campo);
-      const v     = input.value.trim();
+      const v = input.value.trim();
       let ok = false;
 
-      switch(campo) {
-        case 'nome':     ok = v.split(' ').length >= 2 && v.length >= 5; break;
-        case 'numero':   ok = v.replace(/\s/g,'').length === 16; break;
+      switch (campo) {
+        case 'nome': ok = v.split(' ').length >= 2 && v.length >= 5; break;
+        case 'numero': ok = v.replace(/\s/g, '').length === 16; break;
         case 'validade': ok = /^\d{2}\/\d{2}$/.test(v); break;
-        case 'cvv':      ok = /^\d{3}$/.test(v); break;
-        case 'cpf':      ok = v.replace(/\D/g,'').length === 11; break;
+        case 'cvv': ok = /^\d{3}$/.test(v); break;
+        case 'cpf': ok = v.replace(/\D/g, '').length === 11; break;
       }
 
       grupo.classList.toggle('invalido', !ok && v.length > 0);
@@ -726,10 +1150,24 @@
     }
 
     function liberarEtapaFinal() {
-      document.getElementById('detalhes-cobranca').classList.add('ativo');
+      mostrarDetalhesCobranca();
       document.getElementById('btn-pagar').textContent = '🔒 Pagar com segurança';
       etapaPagamento = 2;
     }
+
+    // Permite trocar entre PIX e Cartão mesmo após avançar
+    document.getElementById('metodo').addEventListener('change', function () {
+      if (etapaPagamento !== 2) return;
+
+      const btn = document.getElementById('btn-pagar');
+      if (this.value === 'pix') {
+        esconderDetalhesCobranca();
+        btn.textContent = '✅ Confirmar pagamento';
+      } else if (this.value === 'cartao') {
+        mostrarDetalhesCobranca();
+        btn.textContent = '🔒 Pagar com segurança';
+      }
+    });
 
     // ── Processar pagamento ──────────────────────────────────────
     function processar() {
@@ -762,7 +1200,7 @@
 
       const overlay = document.getElementById('overlay');
       const textoEl = document.getElementById('overlay-texto');
-      const subEl   = document.getElementById('overlay-sub');
+      const subEl = document.getElementById('overlay-sub');
 
       // Mostra overlay de processando
       overlay.classList.add('ativo');
@@ -770,9 +1208,9 @@
 
       // Simula etapas de processamento
       const etapas = [
-        { t: 800,  texto: 'Verificando dados...',        sub: 'Validando informações do cartão' },
-        { t: 1800, texto: 'Comunicando com o banco...',  sub: 'Aguardando autorização' },
-        { t: 3000, texto: 'Autorizando pagamento...',    sub: 'Quase lá!' },
+        { t: 800, texto: 'Verificando dados...', sub: 'Validando informações do cartão' },
+        { t: 1800, texto: 'Comunicando com o banco...', sub: 'Aguardando autorização' },
+        { t: 3000, texto: 'Autorizando pagamento...', sub: 'Quase lá!' },
         { t: 4000, texto: null }  // null = mostrar sucesso
       ];
 
@@ -783,38 +1221,55 @@
             document.getElementById('overlay-inner').innerHTML = `
               <div class="check-circle">✅</div>
               <div class="overlay-texto">Pagamento aprovado!</div>
-              <div class="overlay-subtexto">Bem-vindo ao GuardianNet ${plano.charAt(0).toUpperCase()+plano.slice(1)}</div>
+              <div class="overlay-subtexto">Bem-vindo ao GuardianNet ${plano.charAt(0).toUpperCase() + plano.slice(1)}</div>
             `;
 
             // Salva no localStorage
-            localStorage.setItem('gn_logado',  'true');
-            localStorage.setItem('gn_plano',   plano);
+            localStorage.setItem('gn_plano', plano);
             localStorage.setItem('gn_periodo', periodo);
-            localStorage.setItem('gn_nome',    document.getElementById('nome').value.split(' ')[0]);
+            // FIX: nunca sobrescreve o nome do usuário com o nome do cartão.
+            // O gn_nome só é definido aqui se ainda não existir (usuário não logado previamente).
+            if (!localStorage.getItem('gn_nome')) {
+              localStorage.setItem('gn_nome', document.getElementById('nome').value.split(' ')[0]);
+            }
             localStorage.removeItem('gn_trial_started_at');
             localStorage.removeItem('gn_trial_ends_at');
-            
-            // Registra no banco (API local)
-            fetch('http://localhost:5000/api/checkout', {
+
+            // Registra assinatura/pagamento no fluxo oficial
+            fetch('http://localhost:5000/api/subscription/start', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('gn_token') || tokenAuth || ''}`
+              },
               body: JSON.stringify({
-                nome: document.getElementById('nome').value,
                 plano,
                 periodo,
                 metodo,
                 valor: tabelaPrecos[plano]?.[periodo] ?? 24.90
               })
-            }).catch(() => {});
-
-            // Redireciona para dashboard após 1.5s
-            setTimeout(() => {
-              window.location.href = 'dashboard.html';
-            }, 1500);
+            })
+              .then((r) => {
+                if (r.ok) {
+                  localStorage.setItem('gn_logado', 'true');
+                  setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                  }, 1500);
+                } else {
+                  localStorage.removeItem('gn_logado');
+                  alert('Pagamento concluído, mas não foi possível ativar o plano. Tente novamente.');
+                  window.location.href = 'planos.html';
+                }
+              })
+              .catch(() => {
+                localStorage.removeItem('gn_logado');
+                alert('Pagamento concluído, mas houve erro ao ativar assinatura.');
+                window.location.href = 'planos.html';
+              });
 
           } else {
             textoEl.textContent = texto;
-            subEl.textContent   = sub;
+            subEl.textContent = sub;
           }
         }, t);
       });
@@ -822,4 +1277,5 @@
   </script>
 
 </body>
+
 </html>

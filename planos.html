@@ -389,7 +389,7 @@
             <div class="feature-item off"><span class="feature-x">✕</span> Relatórios detalhados</div>
             <div class="feature-item off"><span class="feature-x">✕</span> Suporte prioritário</div>
           </div>
-          <a href="pagamento.html?plano=basico&periodo=mensal" class="btn-plano btn-plano-secundario" id="btn-basico">
+          <a href="pagamento.html?plano=basico&periodo=mensal" class="btn-plano btn-plano-secundario" id="btn-basico" onclick="return exigirLoginParaPlano(event)">
             Assinar Básico
           </a>
         </div>
@@ -416,7 +416,7 @@
             <div class="feature-item"><span class="feature-check">✓</span> Histórico completo</div>
             <div class="feature-item"><span class="feature-check">✓</span> Suporte prioritário</div>
           </div>
-          <a href="pagamento.html?plano=premium&periodo=mensal" class="btn-plano btn-plano-primario" id="btn-premium">
+          <a href="pagamento.html?plano=premium&periodo=mensal" class="btn-plano btn-plano-primario" id="btn-premium" onclick="return exigirLoginParaPlano(event)">
             Assinar Premium
           </a>
         </div>
@@ -442,7 +442,7 @@
             <div class="feature-item"><span class="feature-check">✓</span> SLA garantido</div>
             <div class="feature-item"><span class="feature-check">✓</span> Gerente de conta dedicado</div>
           </div>
-         <a href="pagamento.html?plano=escola&periodo=mensal" class="btn-plano btn-plano-secundario" id="btn-escola">
+         <a href="pagamento.html?plano=escola&periodo=mensal" class="btn-plano btn-plano-secundario" id="btn-escola" onclick="return exigirLoginParaPlano(event)">
             Falar com vendas
         </a>
         </div>
@@ -583,11 +583,42 @@
     atualizarPrecos();
     atualizarLinksPlano();
 
-    function ativarPlanoGratuito(event) {
+    function exigirLoginParaPlano(event) {
+      return true;
+    }
+
+    async function ativarPlanoGratuito(event) {
       event.preventDefault();
+
+      const token = localStorage.getItem('gn_token');
+      if (!token) {
+        alert('Faça login ou crie sua conta para iniciar o plano gratuito.');
+        window.location.href = 'index.html#acesso';
+        return;
+      }
+
       const inicio = new Date();
       const fim = new Date(inicio);
       fim.setDate(fim.getDate() + 30);
+
+      try {
+        const resp = await fetch('http://localhost:5000/api/subscription/start-trial', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!resp.ok) {
+          throw new Error('Não foi possível ativar o plano gratuito agora.');
+        }
+
+        const data = await resp.json();
+        if (data?.trialEndsAt) {
+          localStorage.setItem('gn_trial_ends_at', data.trialEndsAt);
+        }
+      } catch (err) {
+        alert(err.message || 'Erro ao ativar plano gratuito.');
+        return;
+      }
 
       localStorage.setItem('gn_logado', 'true');
       localStorage.setItem('gn_plano', 'gratuito');

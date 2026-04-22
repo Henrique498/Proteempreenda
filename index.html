@@ -343,6 +343,176 @@
       color: var(--white-dim);
     }
 
+    .auth-section {
+      padding: 80px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--navy-2);
+    }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 28px;
+    }
+
+    .auth-card {
+      background: var(--navy-3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .auth-card h3 {
+      font-family: var(--font-head);
+      font-size: 1.15rem;
+      margin-bottom: 14px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-form input {
+      width: 100%;
+      background: var(--navy-2);
+      color: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    .auth-form input:focus {
+      border-color: var(--azul-pastel);
+      box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+
+    .auth-msg {
+      min-height: 20px;
+      font-size: 0.82rem;
+      color: var(--white-dim);
+    }
+
+    .auth-msg.erro { color: var(--red); }
+    .auth-msg.ok { color: #4ec97a; }
+
+    body.auth-locked {
+      overflow: hidden;
+    }
+
+    .auth-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 9997;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(0,200,255,0.14) 0%, transparent 45%),
+        linear-gradient(160deg, rgba(6,10,19,0.96), rgba(5,8,15,0.98));
+      backdrop-filter: blur(6px);
+    }
+
+    .auth-gate.ativo {
+      display: flex;
+    }
+
+    .auth-gate-card {
+      width: min(960px, 100%);
+      background: rgba(9, 13, 24, 0.94);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-deep);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+    }
+
+    .auth-gate-left,
+    .auth-gate-right {
+      padding: 28px;
+    }
+
+    .auth-gate-left {
+      border-right: 1px solid var(--border);
+    }
+
+    .auth-gate-left h2 {
+      font-family: var(--font-head);
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+
+    .auth-gate-left p {
+      color: var(--white-dim);
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+
+    .auth-gate-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .auth-tab {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px;
+      font-weight: 700;
+      background: transparent;
+      color: var(--white-dim);
+      cursor: pointer;
+    }
+
+    .auth-tab.ativo {
+      background: linear-gradient(135deg, var(--azul-pastel), var(--verde-pastel));
+      color: #0a1628;
+    }
+
+    .auth-pane { display: none; }
+    .auth-pane.ativo { display: block; }
+
+    .auth-form .btn-primario {
+      width: 100%;
+      justify-content: center;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .phone-group {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .phone-group select {
+      width: 100%;
+      background: var(--navy-2);
+      color: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 10px;
+      outline: none;
+    }
+
+    .phone-group select:focus {
+      border-color: var(--azul-pastel);
+      box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+
     @media (max-width: 720px) {
       .toast-logout {
         left: 14px;
@@ -350,13 +520,27 @@
         bottom: 14px;
         max-width: none;
       }
+
+      .auth-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-gate-card {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-gate-left {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .phone-group {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-
-  <!-- Skip Link -->
-  <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
 
   <div id="toast-logout" class="toast-logout" role="status" aria-live="polite" aria-atomic="true">
     <span class="ico">✓</span>
@@ -524,10 +708,220 @@
     </div>
   </footer>
 
-  <script src="shared-theme.js"></script>
-  <script src="shared-components.js"></script>
   <script src="site-animations.js"></script>
   <script>
+    // Detectar cliques na logo para voltar ao início sem splash
+    document.addEventListener('DOMContentLoaded', async () => {
+      const logos = document.querySelectorAll('.logo');
+      logos.forEach(logo => {
+        logo.addEventListener('click', (e) => {
+          // Se o href for index.html, marcar que está voltando ao início
+          if (logo.href && logo.href.includes('index.html')) {
+            localStorage.setItem('gn_returning_home', '1');
+          }
+        });
+      });
+    }, { once: true });
+
+    const AUTH_API = 'http://localhost:5000/api/auth';
+    const SUBS_API = 'http://localhost:5000/api/subscription';
+
+    function setAuthMessage(el, text, type = '') {
+      if (!el) return;
+      el.className = 'auth-msg' + (type ? ` ${type}` : '');
+      el.textContent = text || '';
+    }
+
+    async function authRequest(path, payload, token = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      let resp;
+      try {
+        resp = await fetch(`${AUTH_API}${path}`, {
+          method: payload ? 'POST' : 'GET',
+          headers,
+          body: payload ? JSON.stringify(payload) : undefined,
+          signal: controller.signal
+        });
+      } catch (err) {
+        if (err && err.name === 'AbortError') {
+          throw new Error('A API demorou para responder. Verifique o servidor e a conexão com o banco.');
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        const msg = data.detail ? `${data.error || 'Erro de autenticação'} ${data.detail}` : (data.error || 'Erro de autenticação');
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    function salvarSessao(token) {
+      localStorage.setItem('gn_token', token);
+    }
+
+    async function buscarAssinaturaAtual(token) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const resp = await fetch(`${SUBS_API}/current`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal
+        });
+        if (!resp.ok) throw new Error('Falha ao verificar assinatura');
+        const data = await resp.json();
+        return data?.assinatura || null;
+      } catch (err) {
+        if (err && err.name === 'AbortError') {
+          throw new Error('A consulta de assinatura demorou demais.');
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    function abrirGateAuth(tab = 'login') {
+      const gate = document.getElementById('auth-gate');
+      if (!gate) return;
+      gate.classList.add('ativo');
+      gate.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('auth-locked');
+      ativarAbaGate(tab);
+    }
+
+    function fecharGateAuth() {
+      const gate = document.getElementById('auth-gate');
+      if (!gate) return;
+      gate.classList.remove('ativo');
+      gate.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('auth-locked');
+    }
+
+    function ativarAbaGate(tab) {
+      document.querySelectorAll('.auth-tab').forEach((b) => {
+        b.classList.toggle('ativo', b.dataset.tab === tab);
+      });
+      document.querySelectorAll('.auth-pane').forEach((p) => {
+        p.classList.toggle('ativo', p.dataset.pane === tab);
+      });
+    }
+
+    const COUNTRIES = [
+      { code: 'BR', flag: '🇧🇷', name: 'Brasil', dial: '55' },
+      { code: 'US', flag: '🇺🇸', name: 'Estados Unidos', dial: '1' },
+      { code: 'CA', flag: '🇨🇦', name: 'Canadá', dial: '1' },
+      { code: 'PT', flag: '🇵🇹', name: 'Portugal', dial: '351' },
+      { code: 'ES', flag: '🇪🇸', name: 'Espanha', dial: '34' },
+      { code: 'FR', flag: '🇫🇷', name: 'França', dial: '33' },
+      { code: 'DE', flag: '🇩🇪', name: 'Alemanha', dial: '49' },
+      { code: 'IT', flag: '🇮🇹', name: 'Itália', dial: '39' },
+      { code: 'GB', flag: '🇬🇧', name: 'Reino Unido', dial: '44' },
+      { code: 'IE', flag: '🇮🇪', name: 'Irlanda', dial: '353' },
+      { code: 'AR', flag: '🇦🇷', name: 'Argentina', dial: '54' },
+      { code: 'CL', flag: '🇨🇱', name: 'Chile', dial: '56' },
+      { code: 'CO', flag: '🇨🇴', name: 'Colômbia', dial: '57' },
+      { code: 'MX', flag: '🇲🇽', name: 'México', dial: '52' },
+      { code: 'JP', flag: '🇯🇵', name: 'Japão', dial: '81' },
+      { code: 'KR', flag: '🇰🇷', name: 'Coreia do Sul', dial: '82' },
+      { code: 'IN', flag: '🇮🇳', name: 'Índia', dial: '91' },
+      { code: 'AU', flag: '🇦🇺', name: 'Austrália', dial: '61' },
+      { code: 'ZA', flag: '🇿🇦', name: 'África do Sul', dial: '27' }
+    ];
+
+    function onlyDigits(v) {
+      return String(v || '').replace(/\D/g, '');
+    }
+
+    function formatByCountry(digits, countryCode) {
+      const d = onlyDigits(digits);
+      if (!d) return '';
+
+      if (countryCode === 'BR') {
+        if (d.length <= 10) {
+          return d.replace(/(\d{0,2})(\d{0,4})(\d{0,4}).*/, (_, a, b, c) => {
+            let out = '';
+            if (a) out += `(${a}`;
+            if (a.length === 2) out += ') ';
+            if (b) out += b;
+            if (c) out += `-${c}`;
+            return out.trim();
+          });
+        }
+        return d.replace(/(\d{0,2})(\d{0,5})(\d{0,4}).*/, (_, a, b, c) => {
+          let out = '';
+          if (a) out += `(${a}`;
+          if (a.length === 2) out += ') ';
+          if (b) out += b;
+          if (c) out += `-${c}`;
+          return out.trim();
+        });
+      }
+
+      if (countryCode === 'US' || countryCode === 'CA') {
+        return d.replace(/(\d{0,3})(\d{0,3})(\d{0,4}).*/, (_, a, b, c) => {
+          let out = '';
+          if (a) out += `(${a}`;
+          if (a.length === 3) out += ') ';
+          if (b) out += b;
+          if (c) out += `-${c}`;
+          return out.trim();
+        });
+      }
+
+      return d.replace(/(\d{1,3})(?=(\d{3})+(?!\d))/g, '$1 ').trim();
+    }
+
+    async function atualizarEstadoAuth() {
+      const token = localStorage.getItem('gn_token');
+      const navLogin = document.getElementById('nav-login');
+      if (!token) return;
+
+      try {
+        const perfil = await authRequest('/me', null, token);
+        const tipo = (perfil.tipo || 'usuario').toLowerCase();
+        localStorage.setItem('gn_tipo', tipo);
+        localStorage.setItem('gn_nome', (perfil.nome || '').split(' ')[0] || 'Usuário');
+        if (navLogin) {
+          if (tipo === 'admin') {
+            localStorage.setItem('gn_logado', 'true');
+            navLogin.textContent = 'Minha área';
+            navLogin.href = 'admin.html';
+            return;
+          }
+
+          try {
+            const assinatura = await buscarAssinaturaAtual(token);
+            if (assinatura && ['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
+              localStorage.setItem('gn_logado', 'true');
+              navLogin.textContent = 'Ir para Dashboard';
+              navLogin.href = 'dashboard.html';
+            } else {
+              localStorage.removeItem('gn_logado');
+              navLogin.textContent = 'Escolher plano';
+              navLogin.href = 'planos.html';
+            }
+          } catch (_) {
+            navLogin.textContent = 'Escolher plano';
+            navLogin.href = 'planos.html';
+          }
+        }
+      } catch (_) {
+        localStorage.removeItem('gn_token');
+        localStorage.removeItem('gn_logado');
+        localStorage.removeItem('gn_tipo');
+      }
+    }
+
     const header = document.getElementById('header');
     window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 40));
 
@@ -635,9 +1029,116 @@
       document.body.style.overflow = '';
       setTimeout(() => splash.remove(), 420);
     }
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.__gnCurtainActive) {
-        // Se a curtain Lottie está ativa, não usar splash duplicado
+    document.addEventListener('DOMContentLoaded', async () => {
+      const formLogin = document.getElementById('gate-form-login');
+      const formRegister = document.getElementById('gate-form-register');
+      const loginMsg = document.getElementById('gate-login-msg');
+      const registerMsg = document.getElementById('gate-register-msg');
+      const countrySelect = document.getElementById('gate-reg-country');
+      const telefoneInput = document.getElementById('gate-reg-telefone');
+
+      if (countrySelect) {
+        countrySelect.innerHTML = COUNTRIES.map((c) => (
+          `<option value="${c.dial}" data-code="${c.code}">${c.flag} ${c.name} (+${c.dial})</option>`
+        )).join('');
+        countrySelect.value = '55';
+      }
+
+      function formatarTelefoneNoInput() {
+        if (!telefoneInput || !countrySelect) return;
+        const countryCode = (countrySelect.selectedOptions[0]?.dataset.code || 'BR').toUpperCase();
+        telefoneInput.value = formatByCountry(telefoneInput.value, countryCode);
+      }
+
+      if (telefoneInput) {
+        telefoneInput.addEventListener('input', formatarTelefoneNoInput);
+      }
+      if (countrySelect) {
+        countrySelect.addEventListener('change', formatarTelefoneNoInput);
+      }
+
+      document.querySelectorAll('.auth-tab').forEach((btn) => {
+        btn.addEventListener('click', () => ativarAbaGate(btn.dataset.tab));
+      });
+
+      if (formLogin) {
+        formLogin.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setAuthMessage(loginMsg, 'Entrando...');
+          try {
+            const email = document.getElementById('gate-login-email').value.trim();
+            const senha = document.getElementById('gate-login-senha').value;
+            const data = await authRequest('/login', { email, senha });
+            salvarSessao(data.token);
+            if (data.nome) {
+              localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || 'Usuário');
+            }
+            const tipo = (data.tipo || 'usuario').toLowerCase();
+            localStorage.setItem('gn_tipo', tipo);
+            localStorage.setItem('gn_logado', 'true');
+            if (tipo === 'admin') {
+              window.location.href = 'admin.html';
+              return;
+            }
+            window.location.href = 'dashboard.html';
+          } catch (err) {
+            setAuthMessage(loginMsg, err.message, 'erro');
+          }
+        });
+      }
+
+      if (formRegister) {
+        formRegister.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setAuthMessage(registerMsg, 'Criando conta...');
+          try {
+            const email = document.getElementById('gate-reg-email').value.trim();
+            const telefoneLocal = document.getElementById('gate-reg-telefone').value.trim();
+            const ddi = document.getElementById('gate-reg-country').value;
+            const senha = document.getElementById('gate-reg-senha').value;
+            const prefixo = (email.split('@')[0] || 'usuario').replace(/[^a-zA-ZÀ-ÿ0-9]/g, ' ').trim();
+            const nome = (prefixo || 'Novo Usuario').slice(0, 40);
+            const telefoneNumeros = onlyDigits(telefoneLocal);
+            if (telefoneNumeros.length < 6) {
+              setAuthMessage(registerMsg, 'Digite um telefone válido.', 'erro');
+              return;
+            }
+            const telefone = `+${ddi}${telefoneNumeros}`;
+            const data  = await authRequest('/register', { nome, email, senha, telefone });
+            salvarSessao(data.token);
+            localStorage.setItem('gn_nome', (data.nome || nome).split(' ')[0] || 'Usuário');
+            localStorage.setItem('gn_tipo', (data.tipo || 'usuario').toLowerCase());
+            localStorage.setItem('gn_logado', 'true');
+            setAuthMessage(registerMsg, 'Conta criada com sucesso. Bem-vindo!', 'ok');
+            setTimeout(() => {
+              fecharGateAuth();
+              setAuthMessage(registerMsg, '');
+            }, 450);
+          } catch (err) {
+            setAuthMessage(registerMsg, err.message, 'erro');
+          }
+        });
+      }
+
+      await atualizarEstadoAuth();
+
+      const returningHome = localStorage.getItem('gn_returning_home') === '1';
+      const token = localStorage.getItem('gn_token');
+
+      if (returningHome) {
+        localStorage.removeItem('gn_returning_home');
+      }
+
+      // Só não pede login quando acabou de voltar para a home a partir do site/dashboard
+      // Em abertura direta do index (nova entrada), pede login/cadastro normalmente.
+      if (token && returningHome) {
+        fecharGateAuth();
+      } else {
+        abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
+      }
+
+      if (window.__gnCurtainActive || returningHome) {
+        // Se a curtain Lottie está ativa ou voltando ao início, não usar splash duplicado
         if (splash) {
           splash.classList.add('hidden');
           setTimeout(() => splash.remove(), 20);
