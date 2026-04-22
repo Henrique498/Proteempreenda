@@ -2,13 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <script>
-    (function() {
-      const t = localStorage.getItem('theme') || 'dark';
-      if (t === 'light') document.documentElement.classList.add('light-mode');
-    })();
-  </script>
+  <script src="shared-theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Dashboard GuardianNet — Monitore alertas e proteja seus filhos em tempo real.">
   <title>GuardianNet — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -113,7 +110,7 @@
     }
 
     :root.light-mode .sb-logo img {
-      filter: invert(1) hue-rotate(180deg) brightness(0.8);
+      filter: saturate(0.8) contrast(1.1) brightness(0.85);
     }
 
     .sb-logo-nome {
@@ -1147,31 +1144,13 @@
 
   renderRecursosPlan();
 
-  /* Fix logo claro */
-  function fixLogo() {
-    const img = document.getElementById('sb-img');
-    if (!img) return;
-    img.style.filter = document.documentElement.classList.contains('light-mode')
-      ? 'invert(1) hue-rotate(180deg) brightness(.75)' : 'none';
-  }
-  fixLogo();
-
   /* ════════════════════════════════════
-     TEMA
+     TEMA (usa módulo compartilhado)
   ════════════════════════════════════ */
   function toggleTheme() {
-    const isLight = document.documentElement.classList.toggle('light-mode');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    document.getElementById('theme-btn').textContent = isLight ? '☀️' : '🌙';
-    fixLogo();
+    GnTheme.toggle();
     setTimeout(desenharGraficos, 50);
   }
-
-  (function() {
-    const s = localStorage.getItem('theme') || 'dark';
-    const b = document.getElementById('theme-btn');
-    if (b) b.textContent = s === 'light' ? '☀️' : '🌙';
-  })();
 
   /* ════════════════════════════════════
      NAVEGAÇÃO

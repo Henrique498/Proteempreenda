@@ -2,13 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <script>
-    (function() {
-      const t = localStorage.getItem('theme') || 'dark';
-      if (t === 'light') document.documentElement.classList.add('light-mode');
-    })();
-  </script>
+  <script src="shared-theme.js"></script>
+  <script src="shared-components.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
   <title>GuardianNet — Pagamento</title>
   <link rel="stylesheet" href="guardiannet.css">
   <style>
@@ -568,21 +565,6 @@
 
   <script src="site-animations.js"></script>
   <script>
-    // ── Aplica ícone do tema ──────────────────────────────────────
-    (function() {
-      const icon = document.getElementById('theme-icon');
-      const saved = localStorage.getItem('theme') || 'dark';
-      if (icon) icon.textContent = saved === 'light' ? '☀️' : '🌙';
-    })();
-
-    function toggleTheme() {
-      const html    = document.documentElement;
-      const icon    = document.getElementById('theme-icon');
-      const isLight = html.classList.toggle('light-mode');
-      localStorage.setItem('theme', isLight ? 'light' : 'dark');
-      icon.textContent = isLight ? '☀️' : '🌙';
-    }
-
     function toggleMenu() {
       document.getElementById('nav-links').classList.toggle('aberto');
     }
@@ -753,7 +735,9 @@
     function processar() {
       if (etapaPagamento === 1) {
         if (!validarEtapaInicial()) {
-          document.querySelector('.invalido')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var firstErr = document.querySelector('.invalido');
+          if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          GnToast.error('Preencha todos os campos obrigatórios.');
           return;
         }
 
@@ -761,6 +745,7 @@
         if (metodo === 'pix') {
           etapaPagamento = 2;
           document.getElementById('btn-pagar').textContent = '✅ Confirmar pagamento';
+          GnToast.info('Método PIX selecionado. Confirme para gerar o código.', { duration: 4000 });
         } else {
           liberarEtapaFinal();
         }
@@ -769,8 +754,9 @@
 
       const metodo = document.getElementById('metodo').value;
       if (metodo !== 'pix' && !validarTudo()) {
-        // Rola até o primeiro erro
-        document.querySelector('.invalido')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        var firstErr = document.querySelector('.invalido');
+        if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        GnToast.error('Verifique os dados do cartão.');
         return;
       }
 

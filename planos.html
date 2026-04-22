@@ -2,7 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <script src="shared-theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Planos de proteção digital para crianças. Teste gratuito de 30 dias. Cancele quando quiser.">
   <title>GuardianNet — Planos</title>
   <link rel="stylesheet" href="guardiannet.css">
   <style>
@@ -269,14 +271,40 @@
 
     @media (max-width: 900px) { .planos-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 768px) { .planos-grid { grid-template-columns: 1fr; } }
+
+    /* FAQ animation melhorada — transição suave */
+    .faq-item {
+      overflow: hidden;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .faq-item:hover {
+      border-color: var(--azul-pastel);
+    }
+    .faq-pergunta {
+      transition: color 0.2s, background 0.2s;
+    }
+    .faq-pergunta:hover {
+      background: var(--white-faint);
+    }
+    .faq-resposta {
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                  padding 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.3s ease;
+      opacity: 0;
+    }
+    .faq-item.aberto .faq-resposta {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
 
+  <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+
   <header id="header">
     <div class="container">
-      <nav class="nav-inner">
-        <a href="index.html" class="logo"><img src="logo.png" alt="GuardianNet Logo" class="logo-icon">Guardian<span>Net</span></a>
+      <nav class="nav-inner" role="navigation" aria-label="Navegação principal">
+        <a href="index.html" class="logo" aria-label="GuardianNet — Voltar ao início"><img src="logo.png" alt="GuardianNet Logo" class="logo-icon" width="52" height="52">Guardian<span>Net</span></a>
         <ul class="nav-links" id="nav-links">
           <li><a href="index.html">Início</a></li>
           <li><a href="como-funciona.html">Como Funciona</a></li>
@@ -284,15 +312,15 @@
           <li><a href="sobre.html">Sobre</a></li>
           <li><a href="planos.html" class="nav-cta">Começar Grátis</a></li>
         </ul>
-        <button class="theme-toggle" onclick="toggleTheme()">
-          <span id="theme-icon">🌙</span>
+        <button class="theme-toggle" id="theme-toggle-btn" onclick="GnTheme.toggle()" aria-label="Alternar tema claro/escuro">
+          <span id="theme-icon" aria-hidden="true">🌙</span>
         </button>
-        <div class="menu-toggle" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+        <button class="menu-toggle" id="menu-toggle" onclick="toggleMenu()" aria-label="Abrir menu" aria-expanded="false"><span></span><span></span><span></span></button>
       </nav>
     </div>
   </header>
 
-  <section class="page-hero">
+  <section class="page-hero" id="main-content">
     <div class="container">
       <span class="tag-secao animar">Planos</span>
       <h1 class="titulo-secao hero-title-xl animar-2">Proteção para <span>todo tipo de família</span></h1>
@@ -481,27 +509,22 @@
     </div>
   </footer>
 
+  <script src="shared-components.js"></script>
   <script src="site-animations.js"></script>
   <script>
-    window.addEventListener('scroll', () => document.getElementById('header').classList.toggle('scrolled', window.scrollY > 40));
-    function toggleMenu() { document.getElementById('nav-links').classList.toggle('aberto'); }
+    window.addEventListener('scroll', function() {
+      document.getElementById('header').classList.toggle('scrolled', window.scrollY > 40);
+    });
 
-  function toggleTheme() {          // ← função que faltava
-    const html    = document.documentElement;
-    const icon    = document.getElementById('theme-icon');
-    const isLight = html.classList.toggle('light-mode');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    icon.textContent = isLight ? '☀️' : '🌙';
-  }
-
-  function toggleMenu() {
-    document.getElementById('nav-links').classList.toggle('aberto');
-  }
-
-  // ... resto do código
+    function toggleMenu() {
+      var nav = document.getElementById('nav-links');
+      var btn = document.getElementById('menu-toggle');
+      nav.classList.toggle('aberto');
+      if (btn) btn.setAttribute('aria-expanded', nav.classList.contains('aberto') ? 'true' : 'false');
+    }
 
     // Toggle mensal/anual
-    let anual = false;
+    var anual = false;
     function togglePeriodo() {
       anual = !anual;
       document.getElementById('toggle').classList.toggle('anual', anual);
@@ -585,29 +608,12 @@
       el.parentElement.classList.toggle('aberto');
     }
 
-    // Load saved theme preference - Execute immediately
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    const html = document.documentElement;
-    
-    if (savedTheme === 'light') {
-      html.classList.add('light-mode');
-    } else {
-      html.classList.remove('light-mode');
-    }
-
-    const params = new URLSearchParams(window.location.search);
+    // Check trial expired
+    var params = new URLSearchParams(window.location.search);
     if (params.get('trial') === 'expirado') {
-      const aviso = document.getElementById('aviso-expirado');
+      var aviso = document.getElementById('aviso-expirado');
       if (aviso) aviso.classList.remove('hidden');
     }
-    
-    // Update icon when page loads
-    setTimeout(() => {
-      const icon = document.getElementById('theme-icon');
-      if (icon) {
-        icon.textContent = savedTheme === 'light' ? '☀️' : '🌙';
-      }
-    }, 100);
   </script>
 </body>
 </html>

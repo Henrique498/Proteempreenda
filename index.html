@@ -355,6 +355,9 @@
 </head>
 <body>
 
+  <!-- Skip Link -->
+  <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+
   <div id="toast-logout" class="toast-logout" role="status" aria-live="polite" aria-atomic="true">
     <span class="ico">✓</span>
     <span class="txt">Você saiu da conta com sucesso.</span>
@@ -362,15 +365,15 @@
 
   <div id="splash-loading" class="splash-loading" aria-hidden="true">
     <div id="splash-lottie" class="splash-lottie">
-      <img id="splash-fallback" class="splash-lottie-fallback" src="logo.png" alt="GuardianNet">
+      <img id="splash-fallback" class="splash-lottie-fallback" src="logo.png" alt="GuardianNet" width="120" height="120">
     </div>
   </div>
 
   <header id="header">
     <div class="container">
-      <nav class="nav-inner">
-        <a href="index.html" class="logo">
-          <img src="logo.png" alt="GuardianNet Logo" class="logo-icon">
+      <nav class="nav-inner" role="navigation" aria-label="Navegação principal">
+        <a href="index.html" class="logo" aria-label="GuardianNet — Voltar ao início">
+          <img src="logo.png" alt="GuardianNet Logo" class="logo-icon" width="52" height="52">
           Guardian<span>Net</span>
         </a>
         <ul class="nav-links" id="nav-links">
@@ -380,10 +383,10 @@
           <li><a href="sobre.html">Sobre</a></li>
           <li><a href="planos.html" class="nav-cta">Começar Grátis</a></li>
         </ul>
-        <button class="theme-toggle" onclick="toggleTheme()">
-          <span id="theme-icon">🌙</span>
+        <button class="theme-toggle" id="theme-toggle-btn" onclick="GnTheme.toggle()" aria-label="Alternar entre modo claro e escuro">
+          <span id="theme-icon" aria-hidden="true">🌙</span>
         </button>
-        <div class="menu-toggle" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+        <button class="menu-toggle" id="menu-toggle" onclick="toggleMenu()" aria-label="Abrir menu de navegação" aria-expanded="false"><span></span><span></span><span></span></button>
       </nav>
     </div>
   </header>
@@ -392,9 +395,10 @@
     <canvas id="canvas-particulas"></canvas>
     <div class="hero-orbe"></div>
     <div class="container">
+      <div id="main-content">
       <div class="hero-conteudo">
         <div>
-          <div class="hero-badge animar"><span class="dot"></span>Proteção em tempo real com IA</div>
+          <div class="hero-badge animar"><span class="dot" aria-hidden="true"></span>Proteção em tempo real com IA</div>
           <h1 class="hero-titulo animar-2">
             Proteja seu filho
             <span class="linha-cyan">no mundo digital</span>
@@ -520,13 +524,28 @@
     </div>
   </footer>
 
+  <script src="shared-theme.js"></script>
+  <script src="shared-components.js"></script>
   <script src="site-animations.js"></script>
   <script>
     const header = document.getElementById('header');
     window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 40));
 
     function toggleMenu() {
-      document.getElementById('nav-links').classList.toggle('aberto');
+      var nav = document.getElementById('nav-links');
+      var btn = document.getElementById('menu-toggle');
+      nav.classList.toggle('aberto');
+      if (btn) {
+        var isOpen = nav.classList.contains('aberto');
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
+    }
+
+    function iniciarSplashAnimacao() {
+      if (!window.lottie) return Promise.resolve();
+      return new Promise(function(resolve) {
+        if (window.lottie) resolve();
+      });
     }
 
     const canvas = document.getElementById('canvas-particulas');
@@ -560,48 +579,6 @@
     } else {
       ctx.clearRect(0,0,canvas.width,canvas.height);
     }
-
-    const html = document.documentElement;
-    const themeIcon = document.getElementById('theme-icon');
-    const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
-
-    function temaSistemaAtual() {
-      return systemThemeQuery.matches ? 'light' : 'dark';
-    }
-
-    function aplicarTema(theme, persistir = false) {
-      html.classList.toggle('light-mode', theme === 'light');
-      if (themeIcon) themeIcon.textContent = theme === 'light' ? '☀️' : '🌙';
-      if (persistir) {
-        localStorage.setItem('theme', theme);
-        localStorage.setItem('theme_manual', '1');
-      }
-    }
-
-    // Theme toggle (Light/Dark mode)
-    function toggleTheme() {
-      const temaAtual = html.classList.contains('light-mode') ? 'light' : 'dark';
-      const novoTema = temaAtual === 'light' ? 'dark' : 'light';
-      aplicarTema(novoTema, true);
-      iniciarSplashAnimacao();
-    }
-
-    // Tema inicial: sistema operacional por padrão;
-    // só usa preferência salva se usuário já escolheu manualmente.
-    const temaSalvo = localStorage.getItem('theme');
-    const temaManual = localStorage.getItem('theme_manual') === '1';
-    const temaInicial =
-      temaManual && (temaSalvo === 'light' || temaSalvo === 'dark')
-        ? temaSalvo
-        : temaSistemaAtual();
-    aplicarTema(temaInicial, false);
-
-    // Se não houver escolha manual, acompanha o sistema em tempo real
-    systemThemeQuery.addEventListener('change', (event) => {
-      if (localStorage.getItem('theme_manual') === '1') return;
-      aplicarTema(event.matches ? 'light' : 'dark', false);
-      iniciarSplashAnimacao();
-    });
 
     // Splash rápido de entrada
     const splash = document.getElementById('splash-loading');
