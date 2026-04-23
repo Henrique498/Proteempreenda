@@ -69,9 +69,9 @@ def _build_connection_string() -> str:
     return ';'.join(parts) + ';'
 
 
-# ─────────────────────────────────────────────────────────────
+
 #  Pool de conexões simples (thread-safe)
-# ─────────────────────────────────────────────────────────────
+
 _POOL_SIZE    = int(os.getenv('DB_POOL_SIZE', '5'))
 _POOL_TIMEOUT = int(os.getenv('DB_POOL_TIMEOUT', '15'))
 

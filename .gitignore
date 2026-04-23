@@ -1,0 +1,33 @@
+#sensiveis NUNCA SUBIR
+.env
+.evn.local
+*.evn
+.env
+#Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+__pycache__/
+*.pyc
+.env
+
+#vscode
+.vscode/settings.json
+.vscodelaunch.json
+
+#sistema operacional
+.DS_store
+Thumbs.db
+desktop.ini
+
+#logs
+*.log
+logs/
