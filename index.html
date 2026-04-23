@@ -750,6 +750,30 @@
   <script>
     const AUTH_API = 'http://localhost:5000/api/auth';
     const SUBS_API = 'http://localhost:5000/api/subscription';
+    const SESSION_RUNTIME_KEY = 'gn_runtime_session';
+
+    function hasRuntimeSession() {
+      return sessionStorage.getItem(SESSION_RUNTIME_KEY) === '1';
+    }
+
+    function markRuntimeSession() {
+      sessionStorage.setItem(SESSION_RUNTIME_KEY, '1');
+    }
+
+    function clearPersistedAuth() {
+      const keys = [
+        'gn_token',
+        'gn_logado',
+        'gn_tipo',
+        'gn_nome',
+        'gn_plano',
+        'gn_periodo',
+        'gn_trial_started_at',
+        'gn_trial_ends_at'
+      ];
+      keys.forEach((k) => localStorage.removeItem(k));
+      sessionStorage.removeItem('gn_theme_override');
+    }
 
     function setAuthMessage(el, text, type = '') {
       if (!el) return;
@@ -791,6 +815,7 @@
 
     function salvarSessao(token) {
       localStorage.setItem('gn_token', token);
+      markRuntimeSession();
     }
 
     async function buscarAssinaturaAtual(token) {
@@ -909,19 +934,20 @@
     async function atualizarEstadoAuth() {
       const token = localStorage.getItem('gn_token');
       const navLogin = document.getElementById('nav-login');
-      if (!token) return;
+      if (!token) return false;
 
       try {
         const perfil = await authRequest('/me', null, token);
         const tipo = (perfil.tipo || 'usuario').toLowerCase();
         localStorage.setItem('gn_tipo', tipo);
         localStorage.setItem('gn_nome', (perfil.nome || '').split(' ')[0] || 'Usuário');
+        markRuntimeSession();
         if (navLogin) {
           if (tipo === 'admin') {
             localStorage.setItem('gn_logado', 'true');
             navLogin.textContent = 'Minha área';
             navLogin.href = 'admin.html';
-            return;
+            return true;
           }
 
           try {
@@ -940,10 +966,10 @@
             navLogin.href = 'planos.html';
           }
         }
+        return true;
       } catch (_) {
-        localStorage.removeItem('gn_token');
-        localStorage.removeItem('gn_logado');
-        localStorage.removeItem('gn_tipo');
+        clearPersistedAuth();
+        return false;
       }
     }
 
@@ -989,6 +1015,7 @@
     const html = document.documentElement;
     const themeIcon = document.getElementById('theme-icon');
     const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+    const THEME_OVERRIDE_KEY = 'gn_theme_override';
 
     function temaSistemaAtual() {
       return systemThemeQuery.matches ? 'light' : 'dark';
@@ -999,32 +1026,34 @@
       if (themeIcon) themeIcon.textContent = theme === 'light' ? '☀️' : '🌙';
       if (persistir) {
         localStorage.setItem('theme', theme);
-        localStorage.setItem('theme_manual', '1');
       }
+    }
+
+    function temaAtivoDesejado() {
+      const override = sessionStorage.getItem(THEME_OVERRIDE_KEY);
+      if (override === 'light' || override === 'dark') return override;
+      return temaSistemaAtual();
     }
 
     // Theme toggle (Light/Dark mode)
     function toggleTheme() {
       const temaAtual = html.classList.contains('light-mode') ? 'light' : 'dark';
       const novoTema = temaAtual === 'light' ? 'dark' : 'light';
+      sessionStorage.setItem(THEME_OVERRIDE_KEY, novoTema);
       aplicarTema(novoTema, true);
       iniciarSplashAnimacao();
     }
 
-    // Tema inicial: sistema operacional por padrão;
-    // só usa preferência salva se usuário já escolheu manualmente.
-    const temaSalvo = localStorage.getItem('theme');
-    const temaManual = localStorage.getItem('theme_manual') === '1';
-    const temaInicial =
-      temaManual && (temaSalvo === 'light' || temaSalvo === 'dark')
-        ? temaSalvo
-        : temaSistemaAtual();
+    // Sempre abre conforme tema do sistema (ou override da aba atual).
+    const temaInicial = temaAtivoDesejado();
     aplicarTema(temaInicial, false);
+    localStorage.setItem('theme', temaInicial);
 
-    // Se não houver escolha manual, acompanha o sistema em tempo real
+    // Acompanha o sistema em tempo real quando não há override na aba.
     systemThemeQuery.addEventListener('change', (event) => {
-      if (localStorage.getItem('theme_manual') === '1') return;
+      if (sessionStorage.getItem(THEME_OVERRIDE_KEY)) return;
       aplicarTema(event.matches ? 'light' : 'dark', false);
+      localStorage.setItem('theme', event.matches ? 'light' : 'dark');
       iniciarSplashAnimacao();
     });
 
@@ -1083,7 +1112,7 @@
       document.body.style.overflow = '';
       setTimeout(() => splash.remove(), 420);
     }
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const formLogin = document.getElementById('gate-form-login');
       const formRegister = document.getElementById('gate-form-register');
       const loginMsg = document.getElementById('gate-login-msg');
@@ -1115,7 +1144,22 @@
         btn.addEventListener('click', () => ativarAbaGate(btn.dataset.tab));
       });
 
-      abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
+      // Nova aba/sessão: exige autenticação novamente.
+      if (!hasRuntimeSession()) {
+        clearPersistedAuth();
+      }
+
+      const sessaoValida = await atualizarEstadoAuth();
+      const deveAbrirGate = !sessaoValida;
+
+      if (deveAbrirGate) {
+        abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
+      } else {
+        fecharGateAuth();
+        if (window.location.hash === '#acesso') {
+          history.replaceState(null, '', 'index.html');
+        }
+      }
 
       if (formLogin) {
         formLogin.addEventListener('submit', async (e) => {
@@ -1175,8 +1219,6 @@
           }
         });
       }
-
-      atualizarEstadoAuth();
 
       if (window.__gnCurtainActive) {
         // Se a curtain Lottie está ativa, não usar splash duplicado

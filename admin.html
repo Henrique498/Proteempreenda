@@ -2,6 +2,15 @@
 <html lang="pt-BR">
 <head>
 	<meta charset="UTF-8" />
+	<script>
+		(function () {
+			const override = sessionStorage.getItem('gn_theme_override');
+			const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+			const t = (override === 'light' || override === 'dark') ? override : systemTheme;
+			if (t === 'light') document.documentElement.classList.add('light-mode');
+			localStorage.setItem('theme', t);
+		})();
+	</script>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>GuardianNet Admin</title>
 	<link rel="stylesheet" href="guardiannet.css" />
@@ -167,6 +176,7 @@
 	<script>
 		const API = 'http://localhost:5000/api';
 		const AUTH_API = 'http://localhost:5000/api/auth';
+		const SESSION_RUNTIME_KEY = 'gn_runtime_session';
 		const msg = document.getElementById('msg');
 		const adminStatus = document.getElementById('adminStatus');
 		const modal = document.getElementById('admin-modal');
@@ -178,7 +188,8 @@
 
 		let modalResolver = null;
 		let modalOnConfirm = null;
-		function token() { return localStorage.getItem('gn_token') || ''; }
+		function hasRuntimeSession() { return sessionStorage.getItem(SESSION_RUNTIME_KEY) === '1'; }
+		function token() { return hasRuntimeSession() ? (localStorage.getItem('gn_token') || '') : ''; }
 		function setMsg(t) { msg.textContent = t || ''; }
 		function norm(v, fallback = '') { return (v === null || v === undefined) ? fallback : v; }
 		function pick(obj, ...keys) {
@@ -194,6 +205,12 @@
 				.replace(/>/g, '&gt;')
 				.replace(/"/g, '&quot;')
 				.replace(/'/g, '&#39;');
+		}
+		function asBool(v) {
+			if (typeof v === 'boolean') return v;
+			if (typeof v === 'number') return v === 1;
+			const s = String(norm(v, '')).trim().toLowerCase();
+			return s === '1' || s === 'true' || s === 'yes' || s === 'on';
 		}
 
 		function trocarAba(tab, btn = null) {
@@ -278,8 +295,16 @@
 		}
 
 		async function validarAcessoAdmin() {
+			if (!hasRuntimeSession()) {
+				localStorage.removeItem('gn_token');
+				localStorage.removeItem('gn_logado');
+				localStorage.removeItem('gn_tipo');
+				window.location.href = 'index.html#acesso';
+				return false;
+			}
+
 			if (!token()) {
-				window.location.href = 'index.html';
+				window.location.href = 'index.html#acesso';
 				return false;
 			}
 
@@ -314,30 +339,35 @@
 			const tb = document.getElementById('tb-planos');
 			tb.innerHTML = '';
 			planos.forEach(p => {
+				const ativo = asBool(p.Ativo ?? p.ativo);
 				const tr = document.createElement('tr');
-				tr.innerHTML = `<td>${p.Id}</td><td>${p.Nome}</td><td>${p.ValorMensal}</td><td>${p.ValorAnual}</td><td>${p.Ativo ? '1' : '0'}</td>
+				tr.innerHTML = `<td>${p.Id}</td><td>${p.Nome}</td><td>${p.ValorMensal}</td><td>${p.ValorAnual}</td><td>${ativo ? '1' : '0'}</td>
 					<td class="actions">
-						<button class="muted" onclick="editarPlano(${p.Id}, '${(p.Nome||'').replace(/'/g, "\\'")}', '${(p.Descricao||'').replace(/'/g, "\\'")}', ${p.ValorMensal}, ${p.ValorAnual}, ${p.Ativo ? 'true' : 'false'})">Editar</button>
-						<button class="muted" onclick="desativarPlano(${p.Id})">Desativar</button>
+						<button class="muted" onclick="editarPlano(${p.Id}, '${(p.Nome||'').replace(/'/g, "\\'")}', '${(p.Descricao||'').replace(/'/g, "\\'")}', ${p.ValorMensal}, ${p.ValorAnual}, ${ativo ? 'true' : 'false'})">Editar</button>
+						<button class="muted" onclick="desativarPlano(${p.Id})" ${ativo ? '' : 'disabled'}>${ativo ? 'Desativar' : 'Inativo'}</button>
 					</td>`;
 				tb.appendChild(tr);
 			});
 		}
 
 		async function criarPlano() {
-			await req('/planos', 'POST', {
-				nome: document.getElementById('pl-nome').value,
-				descricao: document.getElementById('pl-descricao').value,
-				valorMensal: Number(document.getElementById('pl-mensal').value || 0),
-				valorAnual: Number(document.getElementById('pl-anual').value || 0),
-				ativo: true
-			});
-			document.getElementById('pl-nome').value = '';
-			document.getElementById('pl-descricao').value = '';
-			document.getElementById('pl-mensal').value = '';
-			document.getElementById('pl-anual').value = '';
-			await carregarPlanos();
-			setMsg('Plano criado.');
+			try {
+				await req('/admin/planos', 'POST', {
+					nome: document.getElementById('pl-nome').value,
+					descricao: document.getElementById('pl-descricao').value,
+					valorMensal: Number(document.getElementById('pl-mensal').value || 0),
+					valorAnual: Number(document.getElementById('pl-anual').value || 0),
+					ativo: true
+				});
+				document.getElementById('pl-nome').value = '';
+				document.getElementById('pl-descricao').value = '';
+				document.getElementById('pl-mensal').value = '';
+				document.getElementById('pl-anual').value = '';
+				await carregarPlanos();
+				setMsg('Plano criado.');
+			} catch (e) {
+				setMsg(e.message || 'Falha ao criar plano.');
+			}
 		}
 
 		async function editarPlano(id, nome, descricao, mensal, anual, ativoAtual) {
@@ -358,7 +388,7 @@
 					const m = Number(document.getElementById('md-pl-mensal').value || 0);
 					const a = Number(document.getElementById('md-pl-anual').value || 0);
 					const ativo = document.getElementById('md-pl-ativo').checked;
-					await req(`/planos/${id}`, 'PUT', { nome: n, descricao: d, valorMensal: m, valorAnual: a, ativo });
+					await req(`/admin/planos/${id}`, 'PUT', { nome: n, descricao: d, valorMensal: m, valorAnual: a, ativo });
 					await carregarPlanos();
 					setMsg('Plano atualizado.');
 				}
@@ -372,7 +402,7 @@
 				confirmarTexto: 'Desativar',
 				confirmarClasse: 'danger',
 				onConfirm: async () => {
-					await req(`/planos/${id}`, 'DELETE');
+					await req(`/admin/planos/${id}`, 'DELETE');
 					await carregarPlanos();
 					setMsg('Plano desativado.');
 				}
@@ -400,13 +430,13 @@
 				const email = String(norm(pick(u, 'Email', 'email'), ''));
 				const telefone = String(norm(pick(u, 'Telefone', 'telefone'), ''));
 				const tipo = String(norm(pick(u, 'Tipo', 'tipo'), 'usuario')).toLowerCase();
-				const ativo = Boolean(pick(u, 'Ativo', 'ativo'));
+				const ativo = asBool(pick(u, 'Ativo', 'ativo'));
 
 				const tr = document.createElement('tr');
 				tr.innerHTML = `<td>${id}</td><td>${escAttr(nome)}</td><td>${escAttr(email)}</td><td>${escAttr(telefone)}</td><td>${escAttr(tipo)}</td><td>${ativo ? '1' : '0'}</td>
 					<td class="actions">
 						<button class="muted" onclick="editarUsuario(${id}, '${nome.replace(/'/g, "\\'")}', '${telefone.replace(/'/g, "\\'")}', '${tipo.replace(/'/g, "\\'")}', ${ativo ? 'true' : 'false'})">Editar</button>
-						<button class="muted" onclick="desativarUsuario(${id})">Desativar</button>
+						<button class="muted" onclick="desativarUsuario(${id})" ${ativo ? '' : 'disabled'}>${ativo ? 'Desativar' : 'Inativo'}</button>
 					</td>`;
 				tb.appendChild(tr);
 			});
@@ -414,21 +444,25 @@
 		}
 
 		async function criarUsuario() {
-			const tipo = (document.getElementById('us-tipo').value || 'usuario').trim().toLowerCase();
-			await req('/admin/usuarios', 'POST', {
-				nome: document.getElementById('us-nome').value,
-				email: document.getElementById('us-email').value,
-				senha: document.getElementById('us-senha').value,
-				telefone: document.getElementById('us-telefone').value,
-				tipo
-			});
-			document.getElementById('us-nome').value = '';
-			document.getElementById('us-email').value = '';
-			document.getElementById('us-senha').value = '';
-			document.getElementById('us-telefone').value = '';
-			document.getElementById('us-tipo').value = 'usuario';
-			await carregarUsuarios();
-			setMsg('Usuário criado.');
+			try {
+				const tipo = (document.getElementById('us-tipo').value || 'usuario').trim().toLowerCase();
+				await req('/admin/usuarios', 'POST', {
+					nome: document.getElementById('us-nome').value,
+					email: document.getElementById('us-email').value,
+					senha: document.getElementById('us-senha').value,
+					telefone: document.getElementById('us-telefone').value,
+					tipo
+				});
+				document.getElementById('us-nome').value = '';
+				document.getElementById('us-email').value = '';
+				document.getElementById('us-senha').value = '';
+				document.getElementById('us-telefone').value = '';
+				document.getElementById('us-tipo').value = 'usuario';
+				await carregarUsuarios();
+				setMsg('Usuário criado.');
+			} catch (e) {
+				setMsg(e.message || 'Falha ao criar usuário.');
+			}
 		}
 
 		async function editarUsuario(id, nome, telefone, tipoAtual, ativo) {
@@ -507,6 +541,7 @@
 					<td>${dataFim || '-'}</td>
 					<td class="actions">
 						<button class="muted" onclick="editarAssinatura(${id}, '${periodo.replace(/'/g, "\\'")}', '${status.replace(/'/g, "\\'")}', '${dataFim.replace(/'/g, "\\'")}')">Editar</button>
+						<button class="danger" onclick="excluirAssinatura(${id})">Excluir</button>
 					</td>
 				`;
 				tb.appendChild(tr);
@@ -540,6 +575,20 @@
 					await req(`/admin/assinaturas/${id}`, 'PUT', { periodo, status, dataFim });
 					await carregarAssinaturas();
 					setMsg('Assinatura atualizada.');
+				}
+			});
+		}
+
+		async function excluirAssinatura(id) {
+			await abrirModal({
+				titulo: 'Excluir assinatura',
+				html: `<p style="color:var(--white-dim)">Tem certeza que deseja cancelar a assinatura <strong>#${id}</strong>?</p>`,
+				confirmarTexto: 'Excluir',
+				confirmarClasse: 'danger',
+				onConfirm: async () => {
+					await req(`/admin/assinaturas/${id}`, 'DELETE');
+					await carregarAssinaturas();
+					setMsg('Assinatura cancelada.');
 				}
 			});
 		}

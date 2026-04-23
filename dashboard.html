@@ -4,8 +4,11 @@
   <meta charset="UTF-8">
   <script>
     (function() {
-      const t = localStorage.getItem('theme') || 'dark';
+      const override = sessionStorage.getItem('gn_theme_override');
+      const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      const t = (override === 'light' || override === 'dark') ? override : systemTheme;
       if (t === 'light') document.documentElement.classList.add('light-mode');
+      localStorage.setItem('theme', t);
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -285,6 +288,22 @@
 
     .topbar-logout:hover {
       background: rgba(255,59,92,0.14);
+    }
+
+    .topbar-back {
+      width: auto;
+      border-radius: 999px;
+      padding: 0 12px;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--white);
+      border-color: var(--border);
+      background: rgba(157,217,248,0.08);
+    }
+
+    .topbar-back:hover {
+      background: rgba(157,217,248,0.18);
     }
 
     .user-pill {
@@ -772,6 +791,7 @@
         <span style="color:var(--dim)">🔍</span>
         <input type="text" placeholder="Buscar alertas, contatos...">
       </div>
+      <button class="topbar-btn topbar-back" onclick="window.location.href='index.html'" title="Voltar para o site">↩ Site</button>
       <button class="topbar-btn" onclick="toggleTheme()" id="theme-btn" title="Tema">🌙</button>
       <button class="topbar-btn topbar-logout" onclick="logout()" title="Sair da conta">🚪 Sair</button>
       <div class="user-pill">
@@ -1142,6 +1162,48 @@
 <script>
   const AUTH_API = 'http://localhost:5000/api/auth';
   const SUBS_API = 'http://localhost:5000/api/subscription';
+  const SESSION_RUNTIME_KEY = 'gn_runtime_session';
+  const THEME_OVERRIDE_KEY = 'gn_theme_override';
+  const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+
+  function temaSistemaAtual() {
+    return systemThemeQuery.matches ? 'light' : 'dark';
+  }
+
+  function temaAtivoDesejado() {
+    const override = sessionStorage.getItem(THEME_OVERRIDE_KEY);
+    if (override === 'light' || override === 'dark') return override;
+    return temaSistemaAtual();
+  }
+
+  function aplicarTema(theme) {
+    const isLight = theme === 'light';
+    document.documentElement.classList.toggle('light-mode', isLight);
+    localStorage.setItem('theme', theme);
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = isLight ? '☀️' : '🌙';
+    fixLogo();
+    setTimeout(desenharGraficos, 50);
+  }
+
+  function hasRuntimeSession() {
+    return sessionStorage.getItem(SESSION_RUNTIME_KEY) === '1';
+  }
+
+  function clearPersistedAuthLite() {
+    const keys = [
+      'gn_token',
+      'gn_logado',
+      'gn_tipo',
+      'gn_nome',
+      'gn_plano',
+      'gn_periodo',
+      'gn_trial_started_at',
+      'gn_trial_ends_at'
+    ];
+    keys.forEach((k) => localStorage.removeItem(k));
+    sessionStorage.removeItem(THEME_OVERRIDE_KEY);
+  }
 
   /* ════════════════════════════════════
      PROTEÇÃO DE ROTA
@@ -1160,6 +1222,11 @@
   }
 
   const gnToken = localStorage.getItem('gn_token');
+
+  if (!hasRuntimeSession()) {
+    clearPersistedAuthLite();
+    window.location.href = 'index.html#acesso';
+  }
 
   if (!gnToken) {
     window.location.href = 'index.html#acesso';
@@ -1319,18 +1386,17 @@
      TEMA
   ════════════════════════════════════ */
   function toggleTheme() {
-    const isLight = document.documentElement.classList.toggle('light-mode');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    document.getElementById('theme-btn').textContent = isLight ? '☀️' : '🌙';
-    fixLogo();
-    setTimeout(desenharGraficos, 50);
+    const temaAtual = document.documentElement.classList.contains('light-mode') ? 'light' : 'dark';
+    const novoTema = temaAtual === 'light' ? 'dark' : 'light';
+    sessionStorage.setItem(THEME_OVERRIDE_KEY, novoTema);
+    aplicarTema(novoTema);
   }
 
-  (function() {
-    const s = localStorage.getItem('theme') || 'dark';
-    const b = document.getElementById('theme-btn');
-    if (b) b.textContent = s === 'light' ? '☀️' : '🌙';
-  })();
+  aplicarTema(temaAtivoDesejado());
+  systemThemeQuery.addEventListener('change', (event) => {
+    if (sessionStorage.getItem(THEME_OVERRIDE_KEY)) return;
+    aplicarTema(event.matches ? 'light' : 'dark');
+  });
 
   /* ════════════════════════════════════
      NAVEGAÇÃO

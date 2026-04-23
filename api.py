@@ -325,6 +325,12 @@ def criar_plano():
         return _api_error('Falha ao criar plano.', e)
 
 
+@app.route('/api/admin/planos', methods=['POST'])
+@require_auth
+def admin_criar_plano():
+    return criar_plano()
+
+
 @app.route('/api/planos/<int:plano_id>', methods=['PUT'])
 @require_auth
 def atualizar_plano(plano_id: int):
@@ -360,6 +366,12 @@ def atualizar_plano(plano_id: int):
         return _api_error('Falha ao atualizar plano.', e)
 
 
+@app.route('/api/admin/planos/<int:plano_id>', methods=['PUT'])
+@require_auth
+def admin_atualizar_plano(plano_id: int):
+    return atualizar_plano(plano_id)
+
+
 @app.route('/api/planos/<int:plano_id>', methods=['DELETE'])
 @require_auth
 def remover_plano(plano_id: int):
@@ -371,6 +383,12 @@ def remover_plano(plano_id: int):
         return jsonify({'ok': True}), 200
     except Exception as e:
         return _api_error('Falha ao remover plano.', e)
+
+
+@app.route('/api/admin/planos/<int:plano_id>', methods=['DELETE'])
+@require_auth
+def admin_remover_plano(plano_id: int):
+    return remover_plano(plano_id)
 
 
 @app.route('/api/admin/assinaturas', methods=['GET'])
@@ -453,6 +471,39 @@ def admin_atualizar_assinatura(assinatura_id: int):
         return jsonify({'ok': True}), 200
     except Exception as e:
         return _api_error('Falha ao atualizar assinatura (admin).', e)
+
+
+@app.route('/api/admin/assinaturas/<int:assinatura_id>', methods=['DELETE'])
+@require_auth
+def admin_cancelar_assinatura(assinatura_id: int):
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+
+    try:
+        atual = executar(
+            """
+            SELECT TOP 1 Id
+            FROM dbo.Assinaturas
+            WHERE Id = ?
+            """,
+            (assinatura_id,),
+            fetch=True
+        )
+        if not atual:
+            return jsonify({'error': 'Assinatura não encontrada.'}), 404
+
+        executar(
+            """
+            UPDATE dbo.Assinaturas
+            SET Status = 'cancelada',
+                DataFim = SYSUTCDATETIME()
+            WHERE Id = ?
+            """,
+            (assinatura_id,)
+        )
+        return jsonify({'ok': True}), 200
+    except Exception as e:
+        return _api_error('Falha ao cancelar assinatura (admin).', e)
 
 
 # ============================================================

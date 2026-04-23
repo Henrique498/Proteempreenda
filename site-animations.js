@@ -111,6 +111,29 @@
     curtain.appendChild(lottieContainer);
     document.body.prepend(curtain);
 
+    let leaving = false;
+    let animStartedAt = 0;
+    let hardTimeoutId = null;
+    const MIN_VISIBLE_MS = 1400;
+
+    const leaveCurtain = () => {
+      if (leaving) return;
+      leaving = true;
+      if (hardTimeoutId) {
+        clearTimeout(hardTimeoutId);
+        hardTimeoutId = null;
+      }
+
+      curtain.classList.add('gn-leaving');
+      curtain.addEventListener('animationend', () => {
+        if (curtainAnim) {
+          curtainAnim.destroy();
+          curtainAnim = null;
+        }
+        curtain.remove();
+      }, { once: true });
+    };
+
     const play = () => {
       if (!window.lottie) return;
       const isLight = document.documentElement.classList.contains('light-mode');
@@ -131,18 +154,17 @@
             clearCanvas: true,
           },
         });
+        animStartedAt = performance.now();
         curtainAnim.addEventListener('complete', () => {
-          curtain.classList.add('gn-leaving');
-          curtain.addEventListener('animationend', () => {
-            if (curtainAnim) {
-              curtainAnim.destroy();
-              curtainAnim = null;
-            }
-            curtain.remove();
-          }, { once: true });
+          const elapsed = Math.max(0, performance.now() - animStartedAt);
+          const wait = Math.max(0, MIN_VISIBLE_MS - elapsed);
+          setTimeout(leaveCurtain, wait);
         });
+
+        // Fallback para evitar travar overlay se o evento complete não vier.
+        hardTimeoutId = setTimeout(leaveCurtain, 12000);
       } catch (e) {
-        // fallback silencioso
+        setTimeout(leaveCurtain, 300);
       }
     };
 
@@ -152,18 +174,12 @@
       loadLottieScript().then(play);
     }
 
+    // Fallback extra: se Lottie não carregar, fecha em tempo razoável.
     setTimeout(() => {
-      if (!curtain.classList.contains('gn-leaving')) {
-        curtain.classList.add('gn-leaving');
-        curtain.addEventListener('animationend', () => {
-          if (curtainAnim) {
-            curtainAnim.destroy();
-            curtainAnim = null;
-          }
-          curtain.remove();
-        }, { once: true });
+      if (!leaving && !window.lottie) {
+        leaveCurtain();
       }
-    }, 3800);
+    }, 2500);
   }
 
   function initScrollProgress() {

@@ -5,8 +5,11 @@
   <meta charset="UTF-8">
   <script>
     (function () {
-      const t = localStorage.getItem('theme') || 'dark';
+      const override = sessionStorage.getItem('gn_theme_override');
+      const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      const t = (override === 'light' || override === 'dark') ? override : systemTheme;
       if (t === 'light') document.documentElement.classList.add('light-mode');
+      localStorage.setItem('theme', t);
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -762,19 +765,39 @@
 
   <script src="site-animations.js"></script>
   <script>
-    // ── Aplica ícone do tema ──────────────────────────────────────
-    (function () {
+    const THEME_OVERRIDE_KEY = 'gn_theme_override';
+    const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+
+    function temaSistemaAtual() {
+      return systemThemeQuery.matches ? 'light' : 'dark';
+    }
+
+    function temaAtivoDesejado() {
+      const override = sessionStorage.getItem(THEME_OVERRIDE_KEY);
+      if (override === 'light' || override === 'dark') return override;
+      return temaSistemaAtual();
+    }
+
+    function aplicarTema(theme) {
+      const isLight = theme === 'light';
+      document.documentElement.classList.toggle('light-mode', isLight);
+      localStorage.setItem('theme', theme);
       const icon = document.getElementById('theme-icon');
-      const saved = localStorage.getItem('theme') || 'dark';
-      if (icon) icon.textContent = saved === 'light' ? '☀️' : '🌙';
-    })();
+      if (icon) icon.textContent = isLight ? '☀️' : '🌙';
+    }
+
+    // ── Aplica ícone do tema ──────────────────────────────────────
+    aplicarTema(temaAtivoDesejado());
+    systemThemeQuery.addEventListener('change', (event) => {
+      if (sessionStorage.getItem(THEME_OVERRIDE_KEY)) return;
+      aplicarTema(event.matches ? 'light' : 'dark');
+    });
 
     function toggleTheme() {
-      const html = document.documentElement;
-      const icon = document.getElementById('theme-icon');
-      const isLight = html.classList.toggle('light-mode');
-      localStorage.setItem('theme', isLight ? 'light' : 'dark');
-      icon.textContent = isLight ? '☀️' : '🌙';
+      const temaAtual = document.documentElement.classList.contains('light-mode') ? 'light' : 'dark';
+      const novoTema = temaAtual === 'light' ? 'dark' : 'light';
+      sessionStorage.setItem(THEME_OVERRIDE_KEY, novoTema);
+      aplicarTema(novoTema);
     }
 
     function toggleMenu() {
@@ -783,6 +806,31 @@
 
     // ── Lê plano da URL ──────────────────────────────────────────
     // Ex: pagamento.html?plano=premium&periodo=anual
+    const SESSION_RUNTIME_KEY = 'gn_runtime_session';
+
+    function hasRuntimeSession() {
+      return sessionStorage.getItem(SESSION_RUNTIME_KEY) === '1';
+    }
+
+    function markRuntimeSession() {
+      sessionStorage.setItem(SESSION_RUNTIME_KEY, '1');
+    }
+
+    function clearPersistedAuth() {
+      const keys = [
+        'gn_token',
+        'gn_logado',
+        'gn_tipo',
+        'gn_nome',
+        'gn_plano',
+        'gn_periodo',
+        'gn_trial_started_at',
+        'gn_trial_ends_at'
+      ];
+      keys.forEach((k) => localStorage.removeItem(k));
+      sessionStorage.removeItem('gn_theme_override');
+    }
+
     const params = new URLSearchParams(window.location.search);
     const plano = params.get('plano') || localStorage.getItem('gn_plano') || 'premium';
     const periodo = params.get('periodo') || localStorage.getItem('gn_periodo') || 'mensal';
@@ -791,6 +839,11 @@
 
     const authInline = document.getElementById('auth-inline');
     const pagamentoWrapper = document.querySelector('.pagamento-wrapper');
+
+    if (!hasRuntimeSession()) {
+      clearPersistedAuth();
+      tokenAuth = '';
+    }
 
     function setAuthMessage(el, text, type = '') {
       if (!el) return;
@@ -833,6 +886,7 @@
       if (authInline) authInline.classList.remove('ativo');
       if (pagamentoWrapper) pagamentoWrapper.style.display = 'flex';
       localStorage.setItem('gn_logado', 'true');
+      markRuntimeSession();
     }
 
     async function buscarAssinaturaAtual(token) {
@@ -928,6 +982,7 @@
           });
           tokenAuth = data.token;
           localStorage.setItem('gn_token', data.token);
+          markRuntimeSession();
           if (data.tipo) localStorage.setItem('gn_tipo', String(data.tipo).toLowerCase());
           if (data.nome) {
             localStorage.setItem('gn_nome', (data.nome || '').split(' ')[0] || 'Usuário');
@@ -956,6 +1011,7 @@
           });
           tokenAuth = data.token;
           localStorage.setItem('gn_token', data.token);
+          markRuntimeSession();
           if (data.tipo) localStorage.setItem('gn_tipo', String(data.tipo).toLowerCase());
           // FIX: salva o nome do cadastro (ou o retornado pelo backend)
           localStorage.setItem('gn_nome', (data.nome || nomeDigitado).split(' ')[0]);
@@ -1244,7 +1300,8 @@
                 valor: tabelaPrecos[plano]?.[periodo] ?? 24.90
               })
             })
-              .then((r) => {
+              .then(async (r) => {
+                const data = await r.json().catch(() => ({}));
                 if (r.ok) {
                   localStorage.setItem('gn_logado', 'true');
                   setTimeout(() => {
@@ -1252,7 +1309,8 @@
                   }, 1500);
                 } else {
                   localStorage.removeItem('gn_logado');
-                  alert('Pagamento concluído, mas não foi possível ativar o plano. Tente novamente.');
+                  const detalhe = data?.error || `HTTP ${r.status}`;
+                  alert(`Pagamento concluído, mas não foi possível ativar o plano: ${detalhe}`);
                   window.location.href = 'planos.html';
                 }
               })
