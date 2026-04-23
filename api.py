@@ -373,6 +373,88 @@ def remover_plano(plano_id: int):
         return _api_error('Falha ao remover plano.', e)
 
 
+@app.route('/api/admin/assinaturas', methods=['GET'])
+@require_auth
+def admin_listar_assinaturas():
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+
+    try:
+        resultado = executar(
+            """
+            SELECT
+                a.Id,
+                a.UsuarioId,
+                u.Nome AS UsuarioNome,
+                u.Email AS UsuarioEmail,
+                p.Id AS PlanoId,
+                p.Nome AS PlanoNome,
+                a.Periodo,
+                a.Status,
+                a.DataInicio,
+                a.DataFim,
+                a.CriadoEm
+            FROM dbo.Assinaturas a
+            INNER JOIN dbo.Usuarios u ON u.Id = a.UsuarioId
+            INNER JOIN dbo.Planos p ON p.Id = a.PlanoId
+            ORDER BY a.Id DESC
+            """,
+            fetch=True
+        )
+        return jsonify(resultado), 200
+    except Exception as e:
+        return _api_error('Falha ao listar assinaturas (admin).', e)
+
+
+@app.route('/api/admin/assinaturas/<int:assinatura_id>', methods=['PUT'])
+@require_auth
+def admin_atualizar_assinatura(assinatura_id: int):
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+
+    data = request.get_json(silent=True) or {}
+    status = (data.get('status') or '').strip().lower()
+    periodo = (data.get('periodo') or '').strip().lower()
+    data_fim = data.get('dataFim')
+
+    if status and status not in ('ativa', 'cancelada', 'expirada', 'trialing'):
+        return jsonify({'error': 'Status inválido.'}), 400
+    if periodo and periodo not in ('mensal', 'anual'):
+        return jsonify({'error': 'Período inválido.'}), 400
+
+    try:
+        atual = executar(
+            """
+            SELECT TOP 1 Status, Periodo, DataFim
+            FROM dbo.Assinaturas
+            WHERE Id = ?
+            """,
+            (assinatura_id,),
+            fetch=True
+        )
+        if not atual:
+            return jsonify({'error': 'Assinatura não encontrada.'}), 404
+
+        atual_row = atual[0]
+        status_final = status or str(atual_row.get('Status') or 'ativa').lower()
+        periodo_final = periodo or str(atual_row.get('Periodo') or 'mensal').lower()
+        data_fim_final = data_fim if data_fim not in ('', None) else atual_row.get('DataFim')
+
+        executar(
+            """
+            UPDATE dbo.Assinaturas
+            SET Status = ?,
+                Periodo = ?,
+                DataFim = ?
+            WHERE Id = ?
+            """,
+            (status_final, periodo_final, data_fim_final, assinatura_id)
+        )
+        return jsonify({'ok': True}), 200
+    except Exception as e:
+        return _api_error('Falha ao atualizar assinatura (admin).', e)
+
+
 # ============================================================
 #  ROTA: GET /api/dashboard
 # ============================================================

@@ -9,16 +9,69 @@
 		.wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
 		.card { background: var(--navy-2); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
 		.row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+		.row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 		.row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-		input { width: 100%; background: var(--navy-3); border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; color: var(--white); }
+		input, select, textarea { width: 100%; background: var(--navy-3); border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; color: var(--white); }
+		textarea { min-height: 84px; resize: vertical; }
 		button { border: 0; border-radius: 999px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
 		.ok { background: linear-gradient(135deg, var(--azul-pastel), var(--verde-pastel)); color: #0a1628; }
 		.muted { background: transparent; color: var(--white); border: 1px solid var(--border); }
+		.danger { background: rgba(255,59,92,.14); color: #ff8ca0; border: 1px solid rgba(255,59,92,.35); }
 		table { width: 100%; border-collapse: collapse; }
 		th, td { border-bottom: 1px solid var(--border); padding: 8px; font-size: .9rem; }
 		.actions { display: flex; gap: 8px; }
 		.msg { min-height: 18px; color: var(--white-dim); margin-top: 8px; }
-		@media (max-width: 900px) { .row, .row-3 { grid-template-columns: 1fr; } }
+		.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+		.tab-btn {
+			background: transparent;
+			color: var(--white-dim);
+			border: 1px solid var(--border);
+			border-radius: 999px;
+			padding: 8px 12px;
+			font-weight: 700;
+		}
+		.tab-btn.active {
+			background: linear-gradient(135deg, var(--azul-pastel), var(--verde-pastel));
+			color: #0a1628;
+			border-color: transparent;
+		}
+		.tab-panel { display: none; }
+		.tab-panel.active { display: block; }
+		.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+		.kpi { background: var(--navy-3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+		.kpi-label { color: var(--white-dim); font-size: .8rem; }
+		.kpi-val { font-family: var(--font-head); font-size: 1.3rem; margin-top: 4px; }
+
+		.modal-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(0,0,0,.56);
+			backdrop-filter: blur(3px);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			padding: 16px;
+			z-index: 9999;
+		}
+		.modal-overlay.show { display: flex; }
+		.modal-card {
+			width: min(680px, 100%);
+			background: var(--navy-2);
+			border: 1px solid var(--border);
+			border-radius: 14px;
+			padding: 14px;
+			box-shadow: 0 14px 34px rgba(0,0,0,.4);
+		}
+		.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+		.modal-head h3 { font-family: var(--font-head); font-size: 1.1rem; margin: 0; }
+		.modal-close { background: transparent; color: var(--white); border: 1px solid var(--border); width: 34px; height: 34px; border-radius: 9px; }
+		.modal-body { display: grid; gap: 10px; }
+		.modal-check { display: flex; align-items: center; gap: 8px; color: var(--white-dim); font-size: .9rem; }
+		.modal-check input { width: auto; }
+		.modal-error { min-height: 18px; color: #ff8ca0; font-size: .86rem; }
+		.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+		@media (max-width: 900px) { .row, .row-2, .row-3, .kpis { grid-template-columns: 1fr; } }
 	</style>
 </head>
 <body>
@@ -35,6 +88,15 @@
 		</div>
 
 		<div class="card">
+			<div class="tabs">
+				<button type="button" class="tab-btn active" data-tab="usuarios" onclick="trocarAba('usuarios', this)">Usuários</button>
+				<button type="button" class="tab-btn" data-tab="planos" onclick="trocarAba('planos', this)">Planos</button>
+				<button type="button" class="tab-btn" data-tab="assinaturas" onclick="trocarAba('assinaturas', this)">Assinaturas</button>
+			</div>
+		</div>
+
+		<div id="tab-planos" class="tab-panel">
+			<div class="card">
 			<h2 style="font-family:var(--font-head);margin-bottom:10px">Planos</h2>
 			<div class="row">
 				<input id="pl-nome" placeholder="Nome" />
@@ -47,9 +109,11 @@
 				<thead><tr><th>ID</th><th>Nome</th><th>Mensal</th><th>Anual</th><th>Ativo</th><th>Ações</th></tr></thead>
 				<tbody id="tb-planos"></tbody>
 			</table>
+			</div>
 		</div>
 
-		<div class="card">
+		<div id="tab-usuarios" class="tab-panel active">
+			<div class="card">
 			<h2 style="font-family:var(--font-head);margin-bottom:10px">Usuários</h2>
 			<div class="row">
 				<input id="us-nome" placeholder="Nome" />
@@ -63,6 +127,40 @@
 				<thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Tipo</th><th>Ativo</th><th>Ações</th></tr></thead>
 				<tbody id="tb-usuarios"></tbody>
 			</table>
+			</div>
+		</div>
+
+		<div id="tab-assinaturas" class="tab-panel">
+			<div class="card">
+				<h2 style="font-family:var(--font-head);margin-bottom:10px">Assinaturas</h2>
+				<div class="kpis">
+					<div class="kpi"><div class="kpi-label">Total</div><div id="as-total" class="kpi-val">0</div></div>
+					<div class="kpi"><div class="kpi-label">Ativas</div><div id="as-ativas" class="kpi-val">0</div></div>
+					<div class="kpi"><div class="kpi-label">Canceladas</div><div id="as-canceladas" class="kpi-val">0</div></div>
+				</div>
+				<table style="margin-top:12px">
+					<thead>
+						<tr>
+							<th>ID</th><th>Usuário</th><th>Email</th><th>Plano</th><th>Período</th><th>Status</th><th>Fim</th><th>Ações</th>
+						</tr>
+					</thead>
+					<tbody id="tb-assinaturas"></tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<div id="admin-modal" class="modal-overlay" aria-hidden="true">
+		<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+			<div class="modal-head">
+				<h3 id="admin-modal-title">Editar</h3>
+				<button id="admin-modal-close" type="button" class="modal-close">✕</button>
+			</div>
+			<div id="admin-modal-body" class="modal-body"></div>
+			<div class="modal-actions">
+				<button id="admin-modal-cancel" type="button" class="muted">Cancelar</button>
+				<button id="admin-modal-confirm" type="button" class="ok">Salvar</button>
+			</div>
 		</div>
 	</div>
 
@@ -71,6 +169,15 @@
 		const AUTH_API = 'http://localhost:5000/api/auth';
 		const msg = document.getElementById('msg');
 		const adminStatus = document.getElementById('adminStatus');
+		const modal = document.getElementById('admin-modal');
+		const modalTitle = document.getElementById('admin-modal-title');
+		const modalBody = document.getElementById('admin-modal-body');
+		const modalConfirm = document.getElementById('admin-modal-confirm');
+		const modalCancel = document.getElementById('admin-modal-cancel');
+		const modalClose = document.getElementById('admin-modal-close');
+
+		let modalResolver = null;
+		let modalOnConfirm = null;
 		function token() { return localStorage.getItem('gn_token') || ''; }
 		function setMsg(t) { msg.textContent = t || ''; }
 		function norm(v, fallback = '') { return (v === null || v === undefined) ? fallback : v; }
@@ -88,6 +195,63 @@
 				.replace(/"/g, '&quot;')
 				.replace(/'/g, '&#39;');
 		}
+
+		function trocarAba(tab, btn = null) {
+			document.querySelectorAll('.tab-panel').forEach((p) => {
+				p.classList.toggle('active', p.id === `tab-${tab}`);
+			});
+			document.querySelectorAll('.tab-btn').forEach((b) => {
+				b.classList.toggle('active', b.dataset.tab === tab);
+			});
+			if (tab === 'assinaturas') {
+				carregarAssinaturas().catch((e) => setMsg(e.message));
+			}
+		}
+
+		function fecharModal(resultado = false) {
+			if (!modalResolver) return;
+			modal.classList.remove('show');
+			modal.setAttribute('aria-hidden', 'true');
+			const resolve = modalResolver;
+			modalResolver = null;
+			modalOnConfirm = null;
+			resolve(resultado);
+		}
+
+		function abrirModal({ titulo, html, confirmarTexto = 'Salvar', confirmarClasse = 'ok', onConfirm = null }) {
+			modalTitle.textContent = titulo || 'Editar';
+			modalBody.innerHTML = `${html || ''}<div id="admin-modal-error" class="modal-error"></div>`;
+			modalConfirm.textContent = confirmarTexto;
+			modalConfirm.className = confirmarClasse;
+			modalOnConfirm = onConfirm;
+			modal.classList.add('show');
+			modal.setAttribute('aria-hidden', 'false');
+
+			return new Promise((resolve) => {
+				modalResolver = resolve;
+			});
+		}
+
+		modalConfirm.addEventListener('click', async () => {
+			if (!modalOnConfirm) {
+				fecharModal(true);
+				return;
+			}
+			const errEl = document.getElementById('admin-modal-error');
+			if (errEl) errEl.textContent = '';
+			try {
+				await modalOnConfirm();
+				fecharModal(true);
+			} catch (e) {
+				if (errEl) errEl.textContent = e?.message || 'Falha ao salvar.';
+			}
+		});
+		modalCancel.addEventListener('click', () => fecharModal(false));
+		modalClose.addEventListener('click', () => fecharModal(false));
+		modal.addEventListener('click', (e) => { if (e.target === modal) fecharModal(false); });
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && modal.classList.contains('show')) fecharModal(false);
+		});
 
 		async function req(path, method='GET', body=null) {
 			if (!token()) throw new Error('Sessão expirada. Faça login novamente.');
@@ -168,25 +332,51 @@
 				valorAnual: Number(document.getElementById('pl-anual').value || 0),
 				ativo: true
 			});
+			document.getElementById('pl-nome').value = '';
+			document.getElementById('pl-descricao').value = '';
+			document.getElementById('pl-mensal').value = '';
+			document.getElementById('pl-anual').value = '';
 			await carregarPlanos();
 			setMsg('Plano criado.');
 		}
 
 		async function editarPlano(id, nome, descricao, mensal, anual, ativoAtual) {
-			const n = prompt('Nome', nome); if (n === null) return;
-			const d = prompt('Descrição', descricao); if (d === null) return;
-			const m = prompt('Valor mensal', String(mensal)); if (m === null) return;
-			const a = prompt('Valor anual', String(anual)); if (a === null) return;
-			const ativo = confirm(`Plano ativo?\nOK = ativo | Cancelar = inativo\nEstado atual: ${ativoAtual ? 'ativo' : 'inativo'}`);
-			await req(`/planos/${id}`, 'PUT', { nome: n, descricao: d, valorMensal: Number(m), valorAnual: Number(a), ativo });
-			await carregarPlanos();
-			setMsg('Plano atualizado.');
+			await abrirModal({
+				titulo: `Editar plano #${id}`,
+				html: `
+					<div class="row-2">
+						<input id="md-pl-nome" value="${escAttr(nome)}" placeholder="Nome" />
+						<input id="md-pl-descricao" value="${escAttr(descricao)}" placeholder="Descrição" />
+						<input id="md-pl-mensal" value="${escAttr(mensal)}" placeholder="Valor mensal" />
+						<input id="md-pl-anual" value="${escAttr(anual)}" placeholder="Valor anual" />
+					</div>
+					<label class="modal-check"><input type="checkbox" id="md-pl-ativo" ${ativoAtual ? 'checked' : ''} /> Plano ativo</label>
+				`,
+				onConfirm: async () => {
+					const n = document.getElementById('md-pl-nome').value.trim();
+					const d = document.getElementById('md-pl-descricao').value.trim();
+					const m = Number(document.getElementById('md-pl-mensal').value || 0);
+					const a = Number(document.getElementById('md-pl-anual').value || 0);
+					const ativo = document.getElementById('md-pl-ativo').checked;
+					await req(`/planos/${id}`, 'PUT', { nome: n, descricao: d, valorMensal: m, valorAnual: a, ativo });
+					await carregarPlanos();
+					setMsg('Plano atualizado.');
+				}
+			});
 		}
 
 		async function desativarPlano(id) {
-			await req(`/planos/${id}`, 'DELETE');
-			await carregarPlanos();
-			setMsg('Plano desativado.');
+			await abrirModal({
+				titulo: 'Desativar plano',
+				html: `<p style="color:var(--white-dim)">Tem certeza que deseja desativar o plano <strong>#${id}</strong>?</p>`,
+				confirmarTexto: 'Desativar',
+				confirmarClasse: 'danger',
+				onConfirm: async () => {
+					await req(`/planos/${id}`, 'DELETE');
+					await carregarPlanos();
+					setMsg('Plano desativado.');
+				}
+			});
 		}
 
 		async function carregarUsuarios() {
@@ -232,30 +422,133 @@
 				telefone: document.getElementById('us-telefone').value,
 				tipo
 			});
+			document.getElementById('us-nome').value = '';
+			document.getElementById('us-email').value = '';
+			document.getElementById('us-senha').value = '';
+			document.getElementById('us-telefone').value = '';
+			document.getElementById('us-tipo').value = 'usuario';
 			await carregarUsuarios();
 			setMsg('Usuário criado.');
 		}
 
 		async function editarUsuario(id, nome, telefone, tipoAtual, ativo) {
-			const n = prompt('Nome', nome); if (n === null) return;
-			const t = prompt('Telefone', telefone || ''); if (t === null) return;
-			const tp = prompt('Tipo (usuario/admin)', tipoAtual || 'usuario'); if (tp === null) return;
-			const a = confirm('Manter usuário ativo? (OK = ativo, Cancelar = inativo)');
-			await req(`/admin/usuarios/${id}`, 'PUT', { nome: n, telefone: t, tipo: tp, ativo: a });
-			await carregarUsuarios();
-			setMsg('Usuário atualizado.');
+			await abrirModal({
+				titulo: `Editar usuário #${id}`,
+				html: `
+					<div class="row-2">
+						<input id="md-us-nome" value="${escAttr(nome)}" placeholder="Nome" />
+						<input id="md-us-telefone" value="${escAttr(telefone)}" placeholder="Telefone" />
+						<select id="md-us-tipo">
+							<option value="usuario" ${(tipoAtual || '').toLowerCase() === 'usuario' ? 'selected' : ''}>usuario</option>
+							<option value="admin" ${(tipoAtual || '').toLowerCase() === 'admin' ? 'selected' : ''}>admin</option>
+						</select>
+					</div>
+					<label class="modal-check"><input type="checkbox" id="md-us-ativo" ${ativo ? 'checked' : ''} /> Usuário ativo</label>
+				`,
+				onConfirm: async () => {
+					const n = document.getElementById('md-us-nome').value.trim();
+					const t = document.getElementById('md-us-telefone').value.trim();
+					const tp = document.getElementById('md-us-tipo').value;
+					const a = document.getElementById('md-us-ativo').checked;
+					await req(`/admin/usuarios/${id}`, 'PUT', { nome: n, telefone: t, tipo: tp, ativo: a });
+					await carregarUsuarios();
+					setMsg('Usuário atualizado.');
+				}
+			});
 		}
 
 		async function desativarUsuario(id) {
-			await req(`/admin/usuarios/${id}`, 'DELETE');
-			await carregarUsuarios();
-			setMsg('Usuário desativado.');
+			await abrirModal({
+				titulo: 'Desativar usuário',
+				html: `<p style="color:var(--white-dim)">Tem certeza que deseja desativar o usuário <strong>#${id}</strong>?</p>`,
+				confirmarTexto: 'Desativar',
+				confirmarClasse: 'danger',
+				onConfirm: async () => {
+					await req(`/admin/usuarios/${id}`, 'DELETE');
+					await carregarUsuarios();
+					setMsg('Usuário desativado.');
+				}
+			});
+		}
+
+		async function carregarAssinaturas() {
+			const data = await req('/dashboard');
+			const ass = data?.assinaturas || {};
+			document.getElementById('as-total').textContent = String(ass.Total || 0);
+			document.getElementById('as-ativas').textContent = String(ass.Ativas || 0);
+			document.getElementById('as-canceladas').textContent = String(ass.Canceladas || 0);
+
+			const lista = await req('/admin/assinaturas');
+			const tb = document.getElementById('tb-assinaturas');
+			tb.innerHTML = '';
+			if (!Array.isArray(lista) || !lista.length) {
+				tb.innerHTML = '<tr><td colspan="8" style="color:var(--white-dim)">Nenhuma assinatura encontrada.</td></tr>';
+				setMsg('Resumo de assinaturas carregado.');
+				return;
+			}
+
+			lista.forEach((a) => {
+				const tr = document.createElement('tr');
+				const id = Number(a.Id || a.id || 0);
+				const usuario = escAttr(a.UsuarioNome || a.usuarioNome || '');
+				const email = escAttr(a.UsuarioEmail || a.usuarioEmail || '');
+				const plano = escAttr(a.PlanoNome || a.planoNome || '');
+				const periodo = escAttr(a.Periodo || a.periodo || 'mensal');
+				const status = escAttr(a.Status || a.status || 'ativa');
+				const dataFim = escAttr(String(a.DataFim || a.dataFim || '').replace('T', ' ').slice(0, 19));
+
+				tr.innerHTML = `
+					<td>${id}</td>
+					<td>${usuario}</td>
+					<td>${email}</td>
+					<td>${plano}</td>
+					<td>${periodo}</td>
+					<td>${status}</td>
+					<td>${dataFim || '-'}</td>
+					<td class="actions">
+						<button class="muted" onclick="editarAssinatura(${id}, '${periodo.replace(/'/g, "\\'")}', '${status.replace(/'/g, "\\'")}', '${dataFim.replace(/'/g, "\\'")}')">Editar</button>
+					</td>
+				`;
+				tb.appendChild(tr);
+			});
+
+			setMsg('Resumo de assinaturas carregado.');
+		}
+
+		async function editarAssinatura(id, periodoAtual, statusAtual, dataFimAtual) {
+			await abrirModal({
+				titulo: `Editar assinatura #${id}`,
+				html: `
+					<div class="row-2">
+						<select id="md-as-periodo">
+							<option value="mensal" ${periodoAtual === 'mensal' ? 'selected' : ''}>mensal</option>
+							<option value="anual" ${periodoAtual === 'anual' ? 'selected' : ''}>anual</option>
+						</select>
+						<select id="md-as-status">
+							<option value="ativa" ${statusAtual === 'ativa' ? 'selected' : ''}>ativa</option>
+							<option value="cancelada" ${statusAtual === 'cancelada' ? 'selected' : ''}>cancelada</option>
+							<option value="expirada" ${statusAtual === 'expirada' ? 'selected' : ''}>expirada</option>
+							<option value="trialing" ${statusAtual === 'trialing' ? 'selected' : ''}>trialing</option>
+						</select>
+						<input id="md-as-datafim" placeholder="Data fim (YYYY-MM-DD HH:MM:SS)" value="${escAttr(dataFimAtual || '')}" />
+					</div>
+				`,
+				onConfirm: async () => {
+					const periodo = document.getElementById('md-as-periodo').value;
+					const status = document.getElementById('md-as-status').value;
+					const dataFim = document.getElementById('md-as-datafim').value.trim() || null;
+					await req(`/admin/assinaturas/${id}`, 'PUT', { periodo, status, dataFim });
+					await carregarAssinaturas();
+					setMsg('Assinatura atualizada.');
+				}
+			});
 		}
 
 		async function carregarTudo() {
 			try {
 				await carregarPlanos();
 				await carregarUsuarios();
+				await carregarAssinaturas();
 				setMsg('Conectado com sucesso.');
 			} catch (e) {
 				setMsg(e.message);
