@@ -29,6 +29,7 @@
 		table { width: 100%; border-collapse: collapse; }
 		th, td { border-bottom: 1px solid var(--border); padding: 8px; font-size: .9rem; }
 		.actions { display: flex; gap: 8px; }
+		.actions button[disabled] { opacity: .5; cursor: not-allowed; }
 		.msg { min-height: 18px; color: var(--white-dim); margin-top: 8px; }
 		.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 		.tab-btn {
@@ -129,7 +130,10 @@
 				<input id="us-email" placeholder="Email" />
 				<input id="us-senha" placeholder="Senha (mín. 6)" />
 				<input id="us-telefone" placeholder="Telefone" />
-				<input id="us-tipo" placeholder="Tipo (usuario/admin)" value="usuario" />
+				<select id="us-tipo">
+					<option value="usuario" selected>usuário</option>
+					<option value="admin">admin</option>
+				</select>
 			</div>
 			<div style="margin-top:10px"><button class="ok" onclick="criarUsuario()">Criar usuário</button></div>
 			<table style="margin-top:12px">
@@ -352,11 +356,19 @@
 
 		async function criarPlano() {
 			try {
+				const nome = document.getElementById('pl-nome').value.trim();
+				const descricao = document.getElementById('pl-descricao').value.trim();
+				const mensal = parseValorMonetario(document.getElementById('pl-mensal').value);
+				const anual = parseValorMonetario(document.getElementById('pl-anual').value);
+				if (nome.length < 3) throw new Error('Informe um nome de plano com pelo menos 3 caracteres.');
+				if (!descricao) throw new Error('Informe a descrição do plano.');
+				if (mensal === null || anual === null) throw new Error('Valores mensal/anual inválidos. Use números como 29,90.');
+
 				await req('/admin/planos', 'POST', {
-					nome: document.getElementById('pl-nome').value,
-					descricao: document.getElementById('pl-descricao').value,
-					valorMensal: Number(document.getElementById('pl-mensal').value || 0),
-					valorAnual: Number(document.getElementById('pl-anual').value || 0),
+					nome,
+					descricao,
+					valorMensal: mensal,
+					valorAnual: anual,
 					ativo: true
 				});
 				document.getElementById('pl-nome').value = '';
@@ -385,13 +397,68 @@
 				onConfirm: async () => {
 					const n = document.getElementById('md-pl-nome').value.trim();
 					const d = document.getElementById('md-pl-descricao').value.trim();
-					const m = Number(document.getElementById('md-pl-mensal').value || 0);
-					const a = Number(document.getElementById('md-pl-anual').value || 0);
+					const m = parseValorMonetario(document.getElementById('md-pl-mensal').value);
+					const a = parseValorMonetario(document.getElementById('md-pl-anual').value);
+					if (n.length < 3) throw new Error('Informe um nome com pelo menos 3 caracteres.');
+					if (!d) throw new Error('Informe a descrição do plano.');
+					if (m === null || a === null) throw new Error('Valores mensal/anual inválidos. Use números como 29,90.');
 					const ativo = document.getElementById('md-pl-ativo').checked;
 					await req(`/admin/planos/${id}`, 'PUT', { nome: n, descricao: d, valorMensal: m, valorAnual: a, ativo });
 					await carregarPlanos();
 					setMsg('Plano atualizado.');
 				}
+			});
+		}
+
+		function parseValorMonetario(valor) {
+			if (valor == null) return null;
+			const limpo = String(valor).trim().replace(/\./g, '').replace(',', '.');
+			if (!limpo) return null;
+			const num = Number(limpo);
+			return Number.isFinite(num) ? num : null;
+		}
+
+		function somenteDigitos(valor) {
+			return String(valor || '').replace(/\D/g, '');
+		}
+
+		function formatarTelefone(valor) {
+			const d = somenteDigitos(valor).slice(0, 11);
+			if (d.length <= 2) return d;
+			if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+			if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+			return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+		}
+
+		function formatarMoedaDigitando(valor) {
+			const d = somenteDigitos(valor);
+			if (!d) return '';
+			const centavos = Number(d);
+			if (!Number.isFinite(centavos)) return '';
+			const valorNum = centavos / 100;
+			return valorNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+		}
+
+		function validarEmail(email) {
+			return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+		}
+
+		function instalarMascarasAdmin() {
+			const tel = document.getElementById('us-telefone');
+			const plMensal = document.getElementById('pl-mensal');
+			const plAnual = document.getElementById('pl-anual');
+
+			if (tel) {
+				tel.addEventListener('input', () => {
+					tel.value = formatarTelefone(tel.value);
+				});
+			}
+
+			[plMensal, plAnual].forEach((el) => {
+				if (!el) return;
+				el.addEventListener('input', () => {
+					el.value = formatarMoedaDigitando(el.value);
+				});
 			});
 		}
 
@@ -431,12 +498,14 @@
 				const telefone = String(norm(pick(u, 'Telefone', 'telefone'), ''));
 				const tipo = String(norm(pick(u, 'Tipo', 'tipo'), 'usuario')).toLowerCase();
 				const ativo = asBool(pick(u, 'Ativo', 'ativo'));
+				const nomeSafe = nome.replace(/'/g, "\\'");
 
 				const tr = document.createElement('tr');
 				tr.innerHTML = `<td>${id}</td><td>${escAttr(nome)}</td><td>${escAttr(email)}</td><td>${escAttr(telefone)}</td><td>${escAttr(tipo)}</td><td>${ativo ? '1' : '0'}</td>
 					<td class="actions">
 						<button class="muted" onclick="editarUsuario(${id}, '${nome.replace(/'/g, "\\'")}', '${telefone.replace(/'/g, "\\'")}', '${tipo.replace(/'/g, "\\'")}', ${ativo ? 'true' : 'false'})">Editar</button>
 						<button class="muted" onclick="desativarUsuario(${id})" ${ativo ? '' : 'disabled'}>${ativo ? 'Desativar' : 'Inativo'}</button>
+						<button class="danger" onclick="excluirUsuario(${id}, '${nomeSafe}')">Excluir</button>
 					</td>`;
 				tb.appendChild(tr);
 			});
@@ -445,12 +514,24 @@
 
 		async function criarUsuario() {
 			try {
+				const nome = document.getElementById('us-nome').value.trim();
+				const email = document.getElementById('us-email').value.trim().toLowerCase();
+				const senha = document.getElementById('us-senha').value;
+				const telefoneFmt = document.getElementById('us-telefone').value;
+				const telefone = somenteDigitos(telefoneFmt);
 				const tipo = (document.getElementById('us-tipo').value || 'usuario').trim().toLowerCase();
+
+				if (nome.length < 3) throw new Error('Informe um nome com pelo menos 3 caracteres.');
+				if (!validarEmail(email)) throw new Error('Informe um e-mail válido.');
+				if ((senha || '').length < 6) throw new Error('A senha deve ter no mínimo 6 caracteres.');
+				if (tipo !== 'usuario' && tipo !== 'admin') throw new Error('Tipo inválido. Escolha usuário ou admin.');
+				if (telefone && (telefone.length < 10 || telefone.length > 11)) throw new Error('Telefone inválido. Informe DDD + número.');
+
 				await req('/admin/usuarios', 'POST', {
-					nome: document.getElementById('us-nome').value,
-					email: document.getElementById('us-email').value,
-					senha: document.getElementById('us-senha').value,
-					telefone: document.getElementById('us-telefone').value,
+					nome,
+					email,
+					senha,
+					telefone: telefone || null,
 					tipo
 				});
 				document.getElementById('us-nome').value = '';
@@ -481,14 +562,25 @@
 				`,
 				onConfirm: async () => {
 					const n = document.getElementById('md-us-nome').value.trim();
-					const t = document.getElementById('md-us-telefone').value.trim();
+					const t = somenteDigitos(document.getElementById('md-us-telefone').value);
 					const tp = document.getElementById('md-us-tipo').value;
 					const a = document.getElementById('md-us-ativo').checked;
-					await req(`/admin/usuarios/${id}`, 'PUT', { nome: n, telefone: t, tipo: tp, ativo: a });
+					if (n.length < 3) throw new Error('Informe um nome com pelo menos 3 caracteres.');
+					if (tp !== 'usuario' && tp !== 'admin') throw new Error('Tipo inválido.');
+					if (t && (t.length < 10 || t.length > 11)) throw new Error('Telefone inválido. Informe DDD + número.');
+					await req(`/admin/usuarios/${id}`, 'PUT', { nome: n, telefone: t || null, tipo: tp, ativo: a });
 					await carregarUsuarios();
 					setMsg('Usuário atualizado.');
 				}
 			});
+
+			const mdTel = document.getElementById('md-us-telefone');
+			if (mdTel) {
+				mdTel.value = formatarTelefone(mdTel.value);
+				mdTel.addEventListener('input', () => {
+					mdTel.value = formatarTelefone(mdTel.value);
+				});
+			}
 		}
 
 		async function desativarUsuario(id) {
@@ -501,6 +593,21 @@
 					await req(`/admin/usuarios/${id}`, 'DELETE');
 					await carregarUsuarios();
 					setMsg('Usuário desativado.');
+				}
+			});
+		}
+
+		async function excluirUsuario(id, nome) {
+			await abrirModal({
+				titulo: 'Excluir usuário definitivamente',
+				html: `<p style="color:var(--white-dim)">Tem certeza que deseja excluir o usuário <strong>${escAttr(nome || ('#' + id))}</strong>? Esta ação remove também assinaturas, pagamentos, tokens e contatos vinculados.</p>`,
+				confirmarTexto: 'Excluir definitivamente',
+				confirmarClasse: 'danger',
+				onConfirm: async () => {
+					await req(`/admin/usuarios/${id}/hard-delete`, 'DELETE');
+					await carregarUsuarios();
+					await carregarAssinaturas();
+					setMsg('Usuário excluído definitivamente do banco de dados.');
 				}
 			});
 		}
@@ -582,13 +689,13 @@
 		async function excluirAssinatura(id) {
 			await abrirModal({
 				titulo: 'Excluir assinatura',
-				html: `<p style="color:var(--white-dim)">Tem certeza que deseja cancelar a assinatura <strong>#${id}</strong>?</p>`,
-				confirmarTexto: 'Excluir',
+				html: `<p style="color:var(--white-dim)">Tem certeza que deseja excluir a assinatura <strong>#${id}</strong>? Esta ação remove também pagamentos vinculados.</p>`,
+				confirmarTexto: 'Excluir definitivamente',
 				confirmarClasse: 'danger',
 				onConfirm: async () => {
 					await req(`/admin/assinaturas/${id}`, 'DELETE');
 					await carregarAssinaturas();
-					setMsg('Assinatura cancelada.');
+					setMsg('Assinatura excluída do banco de dados com sucesso.');
 				}
 			});
 		}
@@ -605,6 +712,7 @@
 		}
 
 		document.addEventListener('DOMContentLoaded', async () => {
+			instalarMascarasAdmin();
 			const ok = await validarAcessoAdmin();
 			if (ok) carregarTudo();
 		});

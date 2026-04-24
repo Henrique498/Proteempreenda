@@ -180,19 +180,23 @@ def _autenticar_requisicao():
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT TOP 1 UserId
-            FROM dbo.AuthTokens
-            WHERE TokenHash = ?
-              AND Revogado = 0
-              AND ExpiraEm > ?
-            ORDER BY Id DESC
+            SELECT TOP 1 t.UserId, u.Ativo
+            FROM dbo.AuthTokens t
+            INNER JOIN dbo.Usuarios u ON u.Id = t.UserId
+            WHERE t.TokenHash = ?
+              AND t.Revogado = 0
+              AND t.ExpiraEm > ?
+            ORDER BY t.Id DESC
             """,
             (token_hash, agora),
         )
         row = cur.fetchone()
         if not row:
             return None
-        return row[0]
+        return {
+            'user_id': int(row[0]),
+            'ativo': bool(row[1]),
+        }
     finally:
         conn.close()
 
@@ -200,10 +204,33 @@ def _autenticar_requisicao():
 def require_auth(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        user_id = _autenticar_requisicao()
-        if not user_id:
+        auth_data = _autenticar_requisicao()
+        if not auth_data:
             return jsonify({'error': 'Não autenticado.'}), 401
-        g.user_id = user_id
+
+        if not auth_data.get('ativo', False):
+            try:
+                conn = get_connection()
+                try:
+                    cur = conn.cursor()
+                    cur.execute(
+                        """
+                        UPDATE dbo.AuthTokens
+                        SET Revogado = 1,
+                            RevogadoEm = SYSUTCDATETIME()
+                        WHERE UserId = ?
+                          AND Revogado = 0
+                        """,
+                        (auth_data['user_id'],),
+                    )
+                    conn.commit()
+                finally:
+                    conn.close()
+            except Exception:
+                pass
+            return jsonify({'error': 'Usuário desativado. Contate o administrador.'}), 403
+
+        g.user_id = auth_data['user_id']
         return fn(*args, **kwargs)
     return wrapper
 

@@ -1035,42 +1035,95 @@
 
     // Tabela de preços
     // anual = valor mensal equivalente no plano anual (20% OFF)
+    const API_BASE = 'http://localhost:5000/api';
     const tabelaPrecos = {
       basico: { mensal: 9.90, anual: 7.92 },
       premium: { mensal: 24.90, anual: 19.92 },
       escola: { mensal: 149.00, anual: 119.20 }
     };
 
+    function normalizarTexto(txt) {
+      return String(txt || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function resolverSlugPlano(nomePlano) {
+      const nome = normalizarTexto(nomePlano);
+      if (nome.includes('basico') || nome.includes('pro')) return 'basico';
+      if (nome.includes('premium')) return 'premium';
+      if (nome.includes('escola')) return 'escola';
+      return null;
+    }
+
+    function paraNumeroSeguro(valor, fallback) {
+      const n = Number(valor);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
     function formatarBRL(valor) {
       return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    const descontos = {
-      basico: {
-        mensal: '—',
-        anual: `${formatarBRL(tabelaPrecos.basico.mensal - tabelaPrecos.basico.anual)}/mês (20%)`
-      },
-      premium: {
-        mensal: '—',
-        anual: `${formatarBRL(tabelaPrecos.premium.mensal - tabelaPrecos.premium.anual)}/mês (20%)`
-      },
-      escola: {
-        mensal: '—',
-        anual: `${formatarBRL(tabelaPrecos.escola.mensal - tabelaPrecos.escola.anual)}/mês (20%)`
-      }
-    };
+    function getDescontos() {
+      return {
+        basico: {
+          mensal: '—',
+          anual: `${formatarBRL(tabelaPrecos.basico.mensal - tabelaPrecos.basico.anual)}/mês (20%)`
+        },
+        premium: {
+          mensal: '—',
+          anual: `${formatarBRL(tabelaPrecos.premium.mensal - tabelaPrecos.premium.anual)}/mês (20%)`
+        },
+        escola: {
+          mensal: '—',
+          anual: `${formatarBRL(tabelaPrecos.escola.mensal - tabelaPrecos.escola.anual)}/mês (20%)`
+        }
+      };
+    }
 
     const periodos = { mensal: '1 mês', anual: '12 meses (valor mensal no anual)' };
 
-    // Preenche resumo
-    document.getElementById('resumo-plano-nome').textContent =
-      plano.charAt(0).toUpperCase() + plano.slice(1);
-    document.getElementById('resumo-plano').textContent =
-      plano.charAt(0).toUpperCase() + plano.slice(1) + ' ' +
-      periodo.charAt(0).toUpperCase() + periodo.slice(1);
-    document.getElementById('resumo-periodo').textContent = periodos[periodo];
-    document.getElementById('resumo-total').textContent = formatarBRL(tabelaPrecos[plano]?.[periodo] ?? 24.90);
-    document.getElementById('resumo-desconto').textContent = descontos[plano]?.[periodo] || '—';
+    function preencherResumoPagamento() {
+      const descontos = getDescontos();
+      document.getElementById('resumo-plano-nome').textContent =
+        plano.charAt(0).toUpperCase() + plano.slice(1);
+      document.getElementById('resumo-plano').textContent =
+        plano.charAt(0).toUpperCase() + plano.slice(1) + ' ' +
+        periodo.charAt(0).toUpperCase() + periodo.slice(1);
+      document.getElementById('resumo-periodo').textContent = periodos[periodo];
+      document.getElementById('resumo-total').textContent = formatarBRL(tabelaPrecos[plano]?.[periodo] ?? 24.90);
+      document.getElementById('resumo-desconto').textContent = descontos[plano]?.[periodo] || '—';
+    }
+
+    async function carregarTabelaPrecosDoBanco() {
+      try {
+        const resp = await fetch(`${API_BASE}/planos`);
+        if (!resp.ok) return;
+        const lista = await resp.json();
+        if (!Array.isArray(lista)) return;
+
+        lista.forEach((p) => {
+          const nome = p?.Nome ?? p?.nome;
+          const slug = resolverSlugPlano(nome);
+          if (!slug || !tabelaPrecos[slug]) return;
+          tabelaPrecos[slug].mensal = paraNumeroSeguro(p?.ValorMensal ?? p?.valorMensal, tabelaPrecos[slug].mensal);
+          tabelaPrecos[slug].anual = paraNumeroSeguro(p?.ValorAnual ?? p?.valorAnual, tabelaPrecos[slug].anual);
+        });
+      } catch (_) {
+        // Mantém fallback estático se API indisponível.
+      }
+    }
+
+    async function inicializarResumoPagamento() {
+      preencherResumoPagamento();
+      await carregarTabelaPrecosDoBanco();
+      preencherResumoPagamento();
+    }
+
+    inicializarResumoPagamento();
 
     if (plano === 'escola') {
       document.getElementById('resumo-plano-desc').textContent =

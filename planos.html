@@ -313,7 +313,7 @@
 
   <section class="secao secao-no-top">
     <div class="container">
-      <div class="planos-grid">
+      <div class="planos-grid" id="planos-grid">
 
         <!-- GRATUITO -->
         <div class="plano-card">
@@ -500,6 +500,184 @@
 
   // ... resto do código
 
+    const API_BASE = 'http://localhost:5000/api';
+    const PLANOS_SITE = {
+      basico: { mensal: 9.90, anual: 7.92, nome: 'Básico', descricao: '' },
+      premium: { mensal: 24.90, anual: 19.92, nome: 'Premium', descricao: '' },
+      escola: { mensal: 149.00, anual: 119.20, nome: 'Escola', descricao: '' }
+    };
+    let PLANOS_EXTRAS = [];
+    const PLANOS_EXTRAS_MAP = new Map();
+
+    function normalizarTexto(txt) {
+      return String(txt || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function resolverSlugPlano(nomePlano) {
+      const nome = normalizarTexto(nomePlano);
+      if (nome.includes('gratuito') || nome.includes('gratis') || nome.includes('trial')) return 'gratuito';
+      if (nome.includes('basico') || nome.includes('pro')) return 'basico';
+      if (nome.includes('premium')) return 'premium';
+      if (nome.includes('escola')) return 'escola';
+      return null;
+    }
+
+    function paraNumeroSeguro(valor, fallback) {
+      const n = Number(valor);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function fmtValor(valor) {
+      return paraNumeroSeguro(valor, 0).toFixed(2).replace('.', ',');
+    }
+
+    function renderizarPlanosExtras() {
+      const grid = document.getElementById('planos-grid');
+      if (!grid) return;
+
+      grid.querySelectorAll('.plano-card-extra').forEach((el) => el.remove());
+
+      PLANOS_EXTRAS.forEach((plano) => {
+        const card = document.createElement('div');
+        card.className = 'plano-card plano-card-extra';
+        card.dataset.planId = String(plano.id);
+
+        const nome = document.createElement('div');
+        nome.className = 'plano-nome';
+        nome.textContent = plano.nome || `Plano ${plano.id}`;
+
+        const precoWrap = document.createElement('div');
+        precoWrap.className = 'plano-preco';
+
+        const cifrao = document.createElement('span');
+        cifrao.className = 'plano-cifrao';
+        cifrao.textContent = 'R$';
+
+        const valor = document.createElement('span');
+        valor.className = 'plano-valor';
+
+        precoWrap.appendChild(cifrao);
+        precoWrap.appendChild(valor);
+
+        const periodo = document.createElement('div');
+        periodo.className = 'plano-periodo';
+
+        const periodoEq = document.createElement('div');
+        periodoEq.className = 'plano-periodo-equiv';
+
+        const desc = document.createElement('p');
+        desc.className = 'plano-descricao';
+        desc.textContent = plano.descricao || 'Plano disponível no sistema. Entre em contato para mais detalhes.';
+
+        const divisor = document.createElement('div');
+        divisor.className = 'divisor';
+
+        const btn = document.createElement('a');
+        btn.href = 'sobre.html';
+        btn.className = 'btn-plano btn-plano-secundario';
+        btn.textContent = 'Saiba mais';
+
+        card.appendChild(nome);
+        card.appendChild(precoWrap);
+        card.appendChild(periodo);
+        card.appendChild(periodoEq);
+        card.appendChild(desc);
+        card.appendChild(divisor);
+        card.appendChild(btn);
+
+        grid.appendChild(card);
+      });
+
+      atualizarPlanosExtrasNaTela();
+    }
+
+    function atualizarPlanosExtrasNaTela() {
+      document.querySelectorAll('.plano-card-extra').forEach((card) => {
+        const id = Number(card.dataset.planId);
+        const plano = PLANOS_EXTRAS_MAP.get(id);
+        if (!plano) return;
+
+        const valorEl = card.querySelector('.plano-valor');
+        const periodoEl = card.querySelector('.plano-periodo');
+        const equivEl = card.querySelector('.plano-periodo-equiv');
+        if (!valorEl || !periodoEl || !equivEl) return;
+
+        if (anual) {
+          valorEl.textContent = fmtValor(plano.anual * 12);
+          periodoEl.textContent = '/ano';
+          equivEl.textContent = `R$ ${fmtValor(plano.anual)}/mês`;
+          equivEl.classList.add('ativo');
+        } else {
+          valorEl.textContent = fmtValor(plano.mensal);
+          periodoEl.textContent = '/mês';
+          equivEl.classList.remove('ativo');
+          equivEl.textContent = '';
+        }
+      });
+    }
+
+    async function carregarPlanosDoBanco() {
+      try {
+        const resp = await fetch(`${API_BASE}/planos`);
+        if (!resp.ok) return;
+        const lista = await resp.json();
+        if (!Array.isArray(lista)) return;
+
+        PLANOS_EXTRAS = [];
+        PLANOS_EXTRAS_MAP.clear();
+
+        lista.forEach((p) => {
+          const nome = p?.Nome ?? p?.nome;
+          const slug = resolverSlugPlano(nome);
+          const planoObj = {
+            id: Number(p?.Id ?? p?.id ?? 0),
+            nome: String(nome || '').trim(),
+            descricao: String(p?.Descricao ?? p?.descricao ?? '').trim(),
+            mensal: paraNumeroSeguro(p?.ValorMensal ?? p?.valorMensal, 0),
+            anual: paraNumeroSeguro(p?.ValorAnual ?? p?.valorAnual, 0)
+          };
+
+          if (slug && PLANOS_SITE[slug]) {
+            PLANOS_SITE[slug].nome = planoObj.nome || PLANOS_SITE[slug].nome;
+            PLANOS_SITE[slug].descricao = planoObj.descricao || PLANOS_SITE[slug].descricao;
+            PLANOS_SITE[slug].mensal = planoObj.mensal;
+            PLANOS_SITE[slug].anual = planoObj.anual;
+            return;
+          }
+
+          if (slug === 'gratuito') {
+            return;
+          }
+
+          if (planoObj.id > 0) {
+            PLANOS_EXTRAS.push(planoObj);
+            PLANOS_EXTRAS_MAP.set(planoObj.id, planoObj);
+          }
+        });
+
+        if (PLANOS_SITE.basico.descricao) {
+          const el = document.querySelector('#preco-basico')?.closest('.plano-card')?.querySelector('.plano-descricao');
+          if (el) el.textContent = PLANOS_SITE.basico.descricao;
+        }
+        if (PLANOS_SITE.premium.descricao) {
+          const el = document.querySelector('#preco-premium')?.closest('.plano-card')?.querySelector('.plano-descricao');
+          if (el) el.textContent = PLANOS_SITE.premium.descricao;
+        }
+        if (PLANOS_SITE.escola.descricao) {
+          const el = document.querySelector('#preco-escola')?.closest('.plano-card')?.querySelector('.plano-descricao');
+          if (el) el.textContent = PLANOS_SITE.escola.descricao;
+        }
+
+        renderizarPlanosExtras();
+      } catch (_) {
+        // Mantém fallback estático do HTML se a API não estiver disponível.
+      }
+    }
+
     // Toggle mensal/anual
     let anual = false;
     function togglePeriodo() {
@@ -517,36 +695,40 @@
         document.getElementById('periodo-gratuito').textContent = 'por 30 dias';
         document.getElementById('periodo-gratuito-equiv').classList.remove('ativo');
 
-        document.getElementById('preco-basico').textContent = (9.90 * 12).toFixed(2).replace('.', ',');
+        document.getElementById('preco-basico').textContent = fmtValor(PLANOS_SITE.basico.anual * 12);
         document.getElementById('periodo-basico').textContent = '/ano';
-        document.getElementById('periodo-basico-equiv').textContent = 'R$ 7,92/mês';
+        document.getElementById('periodo-basico-equiv').textContent = `R$ ${fmtValor(PLANOS_SITE.basico.anual)}/mês`;
         document.getElementById('periodo-basico-equiv').classList.add('ativo');
 
-        document.getElementById('preco-premium').textContent = (24.90 * 12).toFixed(2).replace('.', ',');
+        document.getElementById('preco-premium').textContent = fmtValor(PLANOS_SITE.premium.anual * 12);
         document.getElementById('periodo-premium').textContent = '/ano';
-        document.getElementById('periodo-premium-equiv').textContent = 'R$ 19,92/mês';
+        document.getElementById('periodo-premium-equiv').textContent = `R$ ${fmtValor(PLANOS_SITE.premium.anual)}/mês`;
         document.getElementById('periodo-premium-equiv').classList.add('ativo');
 
-        document.getElementById('preco-escola').textContent = (149.00 * 12).toFixed(2).replace('.', ',');
+        document.getElementById('preco-escola').textContent = fmtValor(PLANOS_SITE.escola.anual * 12);
         document.getElementById('periodo-escola').textContent = '/ano';
-        document.getElementById('periodo-escola-equiv').textContent = 'R$ 119,20/mês';
+        document.getElementById('periodo-escola-equiv').textContent = `R$ ${fmtValor(PLANOS_SITE.escola.anual)}/mês`;
         document.getElementById('periodo-escola-equiv').classList.add('ativo');
+
+        atualizarPlanosExtrasNaTela();
       } else {
         // Modo mensal: mostrar apenas preço mensal
         document.getElementById('periodo-gratuito').textContent = 'por 30 dias';
         document.getElementById('periodo-gratuito-equiv').classList.remove('ativo');
 
-        document.getElementById('preco-basico').textContent = '9,90';
+        document.getElementById('preco-basico').textContent = fmtValor(PLANOS_SITE.basico.mensal);
         document.getElementById('periodo-basico').textContent = '/mês por família';
         document.getElementById('periodo-basico-equiv').classList.remove('ativo');
 
-        document.getElementById('preco-premium').textContent = '24,90';
+        document.getElementById('preco-premium').textContent = fmtValor(PLANOS_SITE.premium.mensal);
         document.getElementById('periodo-premium').textContent = '/mês por família';
         document.getElementById('periodo-premium-equiv').classList.remove('ativo');
 
-        document.getElementById('preco-escola').textContent = '149,00';
+        document.getElementById('preco-escola').textContent = fmtValor(PLANOS_SITE.escola.mensal);
         document.getElementById('periodo-escola').textContent = '/mês por instituição';
         document.getElementById('periodo-escola-equiv').classList.remove('ativo');
+
+        atualizarPlanosExtrasNaTela();
       }
     }
 
@@ -557,8 +739,13 @@
       document.getElementById('btn-escola').href = `pagamento.html?plano=escola&periodo=${periodoAtual}`;
     }
 
-    atualizarPrecos();
-    atualizarLinksPlano();
+    async function inicializarPlanos() {
+      await carregarPlanosDoBanco();
+      atualizarPrecos();
+      atualizarLinksPlano();
+    }
+
+    inicializarPlanos();
 
     function exigirLoginParaPlano(event) {
       return true;

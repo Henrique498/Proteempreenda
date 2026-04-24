@@ -1119,6 +1119,7 @@
       const registerMsg = document.getElementById('gate-register-msg');
       const countrySelect = document.getElementById('gate-reg-country');
       const telefoneInput = document.getElementById('gate-reg-telefone');
+      const authErrorMsg = sessionStorage.getItem('gn_auth_error');
 
       if (countrySelect) {
         countrySelect.innerHTML = COUNTRIES.map((c) => (
@@ -1154,6 +1155,10 @@
 
       if (deveAbrirGate) {
         abrirGateAuth(window.location.hash === '#acesso' ? 'cadastro' : 'login');
+        if (authErrorMsg) {
+          setAuthMessage(loginMsg, authErrorMsg, 'erro');
+          sessionStorage.removeItem('gn_auth_error');
+        }
       } else {
         fecharGateAuth();
         if (window.location.hash === '#acesso') {

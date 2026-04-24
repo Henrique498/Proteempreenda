@@ -4,7 +4,7 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from dotenv import load_dotenv
-from conexao import executar
+from conexao import executar, get_connection
 from auth import auth_bp, require_auth
 from subscription import subscription_bp
 from werkzeug.security import generate_password_hash
@@ -265,6 +265,56 @@ def admin_desativar_usuario(user_id: int):
         return _api_error('Falha ao desativar usuário (admin).', e)
 
 
+@app.route('/api/admin/usuarios/<int:user_id>/hard-delete', methods=['DELETE'])
+@require_auth
+def admin_excluir_usuario_definitivo(user_id: int):
+    if not _is_admin_user(g.user_id):
+        return jsonify({'error': 'Acesso negado.'}), 403
+    if user_id == g.user_id:
+        return jsonify({'error': 'Você não pode excluir sua própria conta admin.'}), 400
+
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT TOP 1 Id FROM dbo.Usuarios WHERE Id = ?", (user_id,))
+        if not cur.fetchone():
+            return jsonify({'error': 'Usuário não encontrado.'}), 404
+
+        # Remove registros dependentes na ordem correta para manter integridade referencial.
+        cur.execute(
+            """
+            DELETE p
+            FROM dbo.Pagamentos p
+            INNER JOIN dbo.Assinaturas a ON a.Id = p.AssinaturaId
+            WHERE a.UsuarioId = ?
+            """,
+            (user_id,),
+        )
+
+        cur.execute("DELETE FROM dbo.Assinaturas WHERE UsuarioId = ?", (user_id,))
+        cur.execute("DELETE FROM dbo.AuthTokens WHERE UserId = ?", (user_id,))
+        cur.execute("DELETE FROM dbo.ContatosConfiaveis WHERE UsuarioId = ?", (user_id,))
+        cur.execute("DELETE FROM dbo.Usuarios WHERE Id = ?", (user_id,))
+
+        conn.commit()
+        return jsonify({'ok': True, 'deleted': True}), 200
+    except Exception as e:
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        return _api_error('Falha ao excluir usuário definitivamente (admin).', e)
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
 # ============================================================
 #  ROTA: GET /api/planos
 # ============================================================
@@ -398,8 +448,11 @@ def admin_listar_assinaturas():
         return jsonify({'error': 'Acesso negado.'}), 403
 
     try:
+        incluir_canceladas = str(request.args.get('incluirCanceladas', '0')).strip().lower() in {'1', 'true', 'yes', 'on'}
+        where_canceladas = '' if incluir_canceladas else "WHERE a.Status <> 'cancelada'"
+
         resultado = executar(
-            """
+            f"""
             SELECT
                 a.Id,
                 a.UsuarioId,
@@ -415,6 +468,7 @@ def admin_listar_assinaturas():
             FROM dbo.Assinaturas a
             INNER JOIN dbo.Usuarios u ON u.Id = a.UsuarioId
             INNER JOIN dbo.Planos p ON p.Id = a.PlanoId
+            {where_canceladas}
             ORDER BY a.Id DESC
             """,
             fetch=True
@@ -479,31 +533,54 @@ def admin_cancelar_assinatura(assinatura_id: int):
     if not _is_admin_user(g.user_id):
         return jsonify({'error': 'Acesso negado.'}), 403
 
+    conn = None
     try:
-        atual = executar(
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
             """
             SELECT TOP 1 Id
             FROM dbo.Assinaturas
             WHERE Id = ?
             """,
-            (assinatura_id,),
-            fetch=True
+            (assinatura_id,)
         )
-        if not atual:
+        if not cur.fetchone():
             return jsonify({'error': 'Assinatura não encontrada.'}), 404
 
-        executar(
+        # Remove dependências primeiro para manter integridade referencial.
+        cur.execute(
             """
-            UPDATE dbo.Assinaturas
-            SET Status = 'cancelada',
-                DataFim = SYSUTCDATETIME()
+            DELETE FROM dbo.Pagamentos
+            WHERE AssinaturaId = ?
+            """,
+            (assinatura_id,)
+        )
+
+        cur.execute(
+            """
+            DELETE FROM dbo.Assinaturas
             WHERE Id = ?
             """,
             (assinatura_id,)
         )
-        return jsonify({'ok': True}), 200
+
+        conn.commit()
+        return jsonify({'ok': True, 'deleted': True}), 200
     except Exception as e:
-        return _api_error('Falha ao cancelar assinatura (admin).', e)
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        return _api_error('Falha ao excluir assinatura (admin).', e)
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 # ============================================================

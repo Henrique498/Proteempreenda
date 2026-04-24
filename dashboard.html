@@ -1252,7 +1252,14 @@
       const resp = await fetch(`${AUTH_API}/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!resp.ok) throw new Error('Sessão inválida');
+      if (!resp.ok) {
+        const payload = await resp.json().catch(() => ({}));
+        const msg = String(payload?.error || 'Sessão inválida.');
+        if (resp.status === 403 && /desativado/i.test(msg)) {
+          sessionStorage.setItem('gn_auth_error', msg);
+        }
+        throw new Error(msg);
+      }
       const me = await resp.json();
       if (me?.nome) {
         localStorage.setItem('gn_nome', (me.nome || '').split(' ')[0] || 'Usuário');

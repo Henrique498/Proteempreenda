@@ -815,3 +815,6 @@ INNER JOIN dbo.Planos p
 LEFT JOIN dbo.Pagamentos pg
     ON pg.AssinaturaId = a.Id
 ORDER BY a.Id DESC, pg.DataPagamento DESC;
+
+DELETE FROM dbo.Planos
+WHERE id > 4;
