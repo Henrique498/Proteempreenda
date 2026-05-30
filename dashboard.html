@@ -1160,8 +1160,8 @@
 
 
 <script>
-  const AUTH_API = 'http://localhost:5000/api/auth';
-  const SUBS_API = 'http://localhost:5000/api/subscription';
+  const AUTH_API = 'http://https://proteempreenda.onrender.com0/api/auth';
+  const SUBS_API = 'http://https://proteempreenda.onrender.com0/api/subscription';
   const SESSION_RUNTIME_KEY = 'gn_runtime_session';
   const THEME_OVERRIDE_KEY = 'gn_theme_override';
   const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
@@ -1594,7 +1594,7 @@
   async function buscarContatosApi() {
     const token = localStorage.getItem('gn_token');
     if (!token) return [];
-    const resp = await fetch('http://localhost:5000/api/contatos', {
+    const resp = await fetch('http://https://proteempreenda.onrender.com0/api/contatos', {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!resp.ok) {
@@ -1644,7 +1644,7 @@
     const token = localStorage.getItem('gn_token');
     if (!token) return;
 
-    const resp = await fetch(`http://localhost:5000/api/contatos/${contatoId}`, {
+    const resp = await fetch(`http://https://proteempreenda.onrender.com0/api/contatos/${contatoId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -1683,7 +1683,7 @@
       numeroFmt: `+${ddi} ${formatarNumeroPorPais(digitos, codigoPais)}`
     };
 
-    const resp = await fetch('http://localhost:5000/api/contatos', {
+    const resp = await fetch('http://https://proteempreenda.onrender.com0/api/contatos', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
