@@ -1,3 +1,6 @@
+# auth.py — Proteempreenda
+# Autenticação adaptada para PostgreSQL (Supabase)
+
 from datetime import datetime, timedelta, timezone
 import hashlib
 import re
@@ -10,7 +13,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import os
 
 from conexao import get_connection
-
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
@@ -39,16 +41,12 @@ def _rate_limit(max_calls: int, window_seconds: int):
             now = time.time()
             bucket = _RATE_BUCKETS.get(key, [])
             bucket = [t for t in bucket if now - t < window_seconds]
-
             if len(bucket) >= max_calls:
                 return jsonify({'error': 'Muitas tentativas. Tente novamente em instantes.'}), 429
-
             bucket.append(now)
             _RATE_BUCKETS[key] = bucket
             return fn(*args, **kwargs)
-
         return wrapper
-
     return decorator
 
 
@@ -77,9 +75,9 @@ def _buscar_usuario_por_email(email: str):
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT Id, Nome, Email, SenhaHash, Ativo, Tipo
-            FROM dbo.Usuarios
-            WHERE Email = ?
+            SELECT id, nome, email, senha_hash, ativo, tipo
+            FROM usuarios
+            WHERE email = %s
             """,
             (email,),
         )
@@ -94,9 +92,9 @@ def _buscar_usuario_por_id(user_id: int):
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT Id, Nome, Email, Ativo, CriadoEm, Tipo
-            FROM dbo.Usuarios
-            WHERE Id = ?
+            SELECT id, nome, email, ativo, criado_em, tipo
+            FROM usuarios
+            WHERE id = %s
             """,
             (user_id,),
         )
@@ -114,8 +112,8 @@ def _emitir_token(user_id: int) -> str:
         cur = conn.cursor()
         cur.execute(
             """
-            INSERT INTO dbo.AuthTokens (UserId, TokenHash, ExpiraEm, Revogado)
-            VALUES (?, ?, ?, 0)
+            INSERT INTO auth_tokens (user_id, token_hash, expira_em, revogado)
+            VALUES (%s, %s, %s, FALSE)
             """,
             (user_id, _token_hash(token), expira_em),
         )
@@ -126,23 +124,20 @@ def _emitir_token(user_id: int) -> str:
     return token
 
 
-def _usuario_tem_assinatura_ativa(user_id: int) -> bool:
-    """
-    Verifica se o usuário possui uma assinatura ativa no banco.
-    Retorna False em caso de erro para não bloquear o fluxo de login.
-    """
+def _usuario_tem_assinatura_ativa(user_id: int):
     try:
         conn = get_connection()
         try:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT TOP 1 a.Id, p.Nome AS PlanoNome, a.Periodo, a.Status, a.DataFim
-                FROM dbo.Assinaturas a
-                INNER JOIN dbo.Planos p ON p.Id = a.PlanoId
-                WHERE a.UsuarioId = ?
-                  AND a.Status = 'ativa'
-                ORDER BY a.Id DESC
+                SELECT a.id, p.nome AS plano_nome, a.periodo, a.status, a.data_fim
+                FROM assinaturas a
+                INNER JOIN planos p ON p.id = a.plano_id
+                WHERE a.usuario_id = %s
+                  AND a.status = 'ativa'
+                ORDER BY a.id DESC
+                LIMIT 1
                 """,
                 (user_id,),
             )
@@ -180,13 +175,14 @@ def _autenticar_requisicao():
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT TOP 1 t.UserId, u.Ativo
-            FROM dbo.AuthTokens t
-            INNER JOIN dbo.Usuarios u ON u.Id = t.UserId
-            WHERE t.TokenHash = ?
-              AND t.Revogado = 0
-              AND t.ExpiraEm > ?
-            ORDER BY t.Id DESC
+            SELECT t.user_id, u.ativo
+            FROM auth_tokens t
+            INNER JOIN usuarios u ON u.id = t.user_id
+            WHERE t.token_hash = %s
+              AND t.revogado = FALSE
+              AND t.expira_em > %s
+            ORDER BY t.id DESC
+            LIMIT 1
             """,
             (token_hash, agora),
         )
@@ -215,11 +211,11 @@ def require_auth(fn):
                     cur = conn.cursor()
                     cur.execute(
                         """
-                        UPDATE dbo.AuthTokens
-                        SET Revogado = 1,
-                            RevogadoEm = SYSUTCDATETIME()
-                        WHERE UserId = ?
-                          AND Revogado = 0
+                        UPDATE auth_tokens
+                        SET revogado = TRUE,
+                            revogado_em = NOW()
+                        WHERE user_id = %s
+                          AND revogado = FALSE
                         """,
                         (auth_data['user_id'],),
                     )
@@ -259,17 +255,18 @@ def register():
             cur = conn.cursor()
             cur.execute(
                 """
-                INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash, Telefone, Tipo)
-                OUTPUT INSERTED.Id
-                VALUES (?, ?, ?, ?, 'usuario')
+                INSERT INTO usuarios (nome, email, senha_hash, telefone, tipo)
+                VALUES (%s, %s, %s, %s, 'usuario')
+                RETURNING id
                 """,
                 (nome, email, senha_hash, telefone),
             )
             user_id = cur.fetchone()[0]
             conn.commit()
         except Exception as e:
+            conn.rollback()
             msg = str(e)
-            if '2601' in msg or '2627' in msg or 'UQ_Usuarios_Email' in msg:
+            if 'uq_usuarios_email' in msg.lower() or 'unique' in msg.lower():
                 return jsonify({'error': 'E-mail já cadastrado.'}), 409
             raise
         finally:
@@ -277,21 +274,18 @@ def register():
 
         token = _emitir_token(user_id)
 
-        # ── FIX: retorna hasSubscription=False diretamente.
-        # Usuário recém-criado nunca tem assinatura, eliminando o
-        # round-trip extra para GET /subscription/current após o registro.
         return jsonify({
             'ok':              True,
             'token':           token,
             'ttlHoras':        TOKEN_TTL_HORAS,
             'nome':            nome,
             'tipo':            'usuario',
-            'hasSubscription': False,   # novo usuário, sem assinatura
+            'hasSubscription': False,
             'redirectTo':      'planos.html',
         }), 201
 
     except Exception as e:
-        return jsonify({'error': 'Falha ao criar conta.', 'detail': str(e)}), 500
+        return jsonify({'error': 'Falha ao criar conta.', 'detail': str(e) if DEBUG_ENABLED else ''}), 500
 
 
 @auth_bp.post('/login')
@@ -314,9 +308,6 @@ def login():
             return jsonify({'error': 'Credenciais inválidas.'}), 401
 
         token = _emitir_token(user_id)
-
-        # ── FIX: inclui estado de assinatura na resposta do login também,
-        # evitando o segundo round-trip de GET /subscription/current.
         tem_assinatura, assinatura_info = _usuario_tem_assinatura_ativa(user_id)
 
         payload = {
@@ -342,7 +333,7 @@ def login():
         return jsonify(payload), 200
 
     except Exception as e:
-        return jsonify({'error': 'Falha ao fazer login.', 'detail': str(e)}), 500
+        return jsonify({'error': 'Falha ao fazer login.', 'detail': str(e) if DEBUG_ENABLED else ''}), 500
 
 
 @auth_bp.post('/forgot-password')
@@ -369,13 +360,13 @@ def forgot_password():
             'message': 'Se o e-mail existir, um token de recuperação foi gerado.'
         }
         if DEBUG_ENABLED and token_claro:
-            payload['resetToken']  = token_claro
-            payload['ttlMinutos']  = RESET_TOKEN_TTL_MINUTOS
+            payload['resetToken'] = token_claro
+            payload['ttlMinutos'] = RESET_TOKEN_TTL_MINUTOS
 
         return jsonify(payload), 200
 
     except Exception as e:
-        return jsonify({'error': 'Falha ao iniciar recuperação de senha.', 'detail': str(e)}), 500
+        return jsonify({'error': 'Falha ao iniciar recuperação de senha.', 'detail': str(e) if DEBUG_ENABLED else ''}), 500
 
 
 @auth_bp.post('/reset-password')
@@ -403,25 +394,24 @@ def reset_password():
             cur = conn.cursor()
             cur.execute(
                 """
-                UPDATE dbo.Usuarios
-                SET SenhaHash = ?,
-                    AtualizadoEm = SYSUTCDATETIME()
-                WHERE Id = ?
-                  AND Ativo = 1
+                UPDATE usuarios
+                SET senha_hash = %s,
+                    atualizado_em = NOW()
+                WHERE id = %s
+                  AND ativo = TRUE
                 """,
                 (senha_hash, user_id),
             )
-
             if cur.rowcount == 0:
                 return jsonify({'error': 'Usuário não encontrado ou inativo.'}), 404
 
             cur.execute(
                 """
-                UPDATE dbo.AuthTokens
-                SET Revogado = 1,
-                    RevogadoEm = SYSUTCDATETIME()
-                WHERE UserId = ?
-                  AND Revogado = 0
+                UPDATE auth_tokens
+                SET revogado = TRUE,
+                    revogado_em = NOW()
+                WHERE user_id = %s
+                  AND revogado = FALSE
                 """,
                 (user_id,),
             )
@@ -433,7 +423,7 @@ def reset_password():
         return jsonify({'ok': True, 'message': 'Senha redefinida com sucesso.'}), 200
 
     except Exception as e:
-        return jsonify({'error': 'Falha ao redefinir senha.', 'detail': str(e)}), 500
+        return jsonify({'error': 'Falha ao redefinir senha.', 'detail': str(e) if DEBUG_ENABLED else ''}), 500
 
 
 @auth_bp.get('/me')
@@ -444,12 +434,12 @@ def me():
         if not user:
             return jsonify({'error': 'Usuário não encontrado.'}), 404
 
-        user_id  = int(user[0]) if user[0] is not None else None
-        nome     = str(user[1]) if user[1] is not None else ''
-        email    = str(user[2]) if user[2] is not None else ''
-        ativo    = bool(user[3]) if user[3] is not None else False
+        user_id   = int(user[0]) if user[0] is not None else None
+        nome      = str(user[1]) if user[1] is not None else ''
+        email     = str(user[2]) if user[2] is not None else ''
+        ativo     = bool(user[3]) if user[3] is not None else False
         criado_em = user[4]
-        tipo = str(user[5]).lower() if user[5] is not None else 'usuario'
+        tipo      = str(user[5]).lower() if user[5] is not None else 'usuario'
 
         return jsonify({
             'id':       user_id,
@@ -478,11 +468,11 @@ def logout():
         cur = conn.cursor()
         cur.execute(
             """
-            UPDATE dbo.AuthTokens
-            SET Revogado = 1,
-                RevogadoEm = SYSUTCDATETIME()
-            WHERE TokenHash = ?
-              AND Revogado = 0
+            UPDATE auth_tokens
+            SET revogado = TRUE,
+                revogado_em = NOW()
+            WHERE token_hash = %s
+              AND revogado = FALSE
             """,
             (token_hash,),
         )
