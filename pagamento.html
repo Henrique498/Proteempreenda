@@ -855,7 +855,7 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      return fetch(`http://https://proteempreenda.onrender.com0/api/auth${path}`, {
+      return fetch(`http://https://proteempreenda.onrender.com/api/auth${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -893,7 +893,7 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        const resp = await fetch('http://https://proteempreenda.onrender.com0/api/subscription/current', {
+        const resp = await fetch('http://https://proteempreenda.onrender.com/api/subscription/current', {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         });
@@ -911,7 +911,7 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        const resp = await fetch('http://https://proteempreenda.onrender.com0/api/auth/me', {
+        const resp = await fetch('http://https://proteempreenda.onrender.com/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         });
@@ -1035,7 +1035,7 @@
 
     // Tabela de preços
     // anual = valor mensal equivalente no plano anual (20% OFF)
-    const API_BASE = 'http://https://proteempreenda.onrender.com0/api';
+    const API_BASE = 'https://proteempreenda.onrender.com/api';
     const tabelaPrecos = {
       basico: { mensal: 9.90, anual: 7.92 },
       premium: { mensal: 24.90, anual: 19.92 },
@@ -1340,7 +1340,7 @@
             localStorage.removeItem('gn_trial_ends_at');
 
             // Registra assinatura/pagamento no fluxo oficial
-            fetch('http://https://proteempreenda.onrender.com0/api/subscription/start', {
+            fetch('https://proteempreenda.onrender.com/api/subscription/start', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

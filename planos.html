@@ -500,7 +500,7 @@
 
   // ... resto do código
 
-    const API_BASE = 'http://https://proteempreenda.onrender.com0/api';
+    const API_BASE = 'https://proteempreenda.onrender.com/api';
     const PLANOS_SITE = {
       basico: { mensal: 9.90, anual: 7.92, nome: 'Básico', descricao: '' },
       premium: { mensal: 24.90, anual: 19.92, nome: 'Premium', descricao: '' },
@@ -766,7 +766,7 @@
       fim.setDate(fim.getDate() + 30);
 
       try {
-        const resp = await fetch('http://https://proteempreenda.onrender.com0/api/subscription/start-trial', {
+        const resp = await fetch('https://proteempreenda.onrender.com/api/subscription/start-trial', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` }
         });
