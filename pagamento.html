@@ -855,7 +855,7 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      return fetch(`https://proteempreenda.onrender.com://proteempreenda.onrender.com/api/auth${path}`, {
+      return fetch(`https://proteempreenda.onrender.com/api/auth${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -893,7 +893,7 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        const resp = await fetch('https://proteempreenda.onrender.com://proteempreenda.onrender.com/api/subscription/current', {
+        const resp = await fetch('https://proteempreenda.onrender.com/api/subscription/current', {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         });
@@ -911,7 +911,7 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        const resp = await fetch('https://proteempreenda.onrender.com://proteempreenda.onrender.com/api/auth/me', {
+        const resp = await fetch('https://proteempreenda.onrender.com/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         });
