@@ -137,7 +137,7 @@
     const play = () => {
       if (!window.lottie) return;
       const isLight = document.documentElement.classList.contains('light-mode');
-      const jsonFile = isLight ? 'logoremixbranca.json' : 'Logo-3-remix.json';
+      const jsonFile = isLight ? 'Scene.json' : 'Scene__1_.json';
       try {
         if (curtainAnim) {
           curtainAnim.destroy();
