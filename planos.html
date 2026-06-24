@@ -637,8 +637,8 @@
             id: Number(p?.Id ?? p?.id ?? 0),
             nome: String(nome || '').trim(),
             descricao: String(p?.Descricao ?? p?.descricao ?? '').trim(),
-            mensal: paraNumeroSeguro(p?.ValorMensal ?? p?.valorMensal, 0),
-            anual: paraNumeroSeguro(p?.ValorAnual ?? p?.valorAnual, 0)
+            mensal: paraNumeroSeguro(p?.valor_mensal ?? p?.ValorMensal ?? p?.valorMensal, 0),
+            anual: paraNumeroSeguro(p?.valor_anual ?? p?.ValorAnual ?? p?.valorAnual, 0)
           };
 
           if (slug && PLANOS_SITE[slug]) {

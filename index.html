@@ -386,9 +386,28 @@
       outline: none;
     }
 
+    .auth-form input::placeholder {
+      color: var(--white-dim);
+    }
+
+    :root.light-mode .auth-form input {
+      background: #f3f4f6;
+      color: #111827;
+      border-color: #d1d5db;
+    }
+
+    :root.light-mode .auth-form input::placeholder {
+      color: #6b7280;
+    }
+
     .auth-form input:focus {
       border-color: var(--azul-pastel);
       box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+
+    :root.light-mode .auth-form input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .auth-msg {
@@ -433,6 +452,30 @@
       grid-template-columns: 1.05fr 1fr;
     }
 
+    :root.light-mode .auth-gate {
+      background:
+        radial-gradient(circle at 18% 20%, rgba(59,130,246,0.10) 0%, transparent 45%),
+        linear-gradient(160deg, rgba(255,255,255,0.97), rgba(243,244,246,0.98));
+    }
+
+    :root.light-mode .auth-gate-card {
+      background: rgba(255, 255, 255, 0.97);
+      box-shadow: 0 14px 34px rgba(0,0,0,.12);
+    }
+
+    :root.light-mode .auth-gate-left,
+    :root.light-mode .auth-gate-right {
+      color: #111827;
+    }
+
+    :root.light-mode .auth-gate-left h2 {
+      color: #111827;
+    }
+
+    :root.light-mode .auth-gate-left p {
+      color: #4b5563;
+    }
+
     .auth-gate-left,
     .auth-gate-right {
       padding: 28px;
@@ -464,6 +507,14 @@
       padding: 4px;
       gap: 4px;
       margin-bottom: 16px;
+    }
+
+    :root.light-mode .auth-gate-tabs {
+      background: #f3f4f6;
+    }
+
+    :root.light-mode .auth-tab {
+      color: #4b5563;
     }
 
     .auth-tab {
@@ -508,9 +559,20 @@
       outline: none;
     }
 
+    :root.light-mode .phone-group select {
+      background: #f3f4f6;
+      color: #111827;
+      border-color: #d1d5db;
+    }
+
     .phone-group select:focus {
       border-color: var(--azul-pastel);
       box-shadow: 0 0 0 3px var(--azul-dim);
+    }
+
+    :root.light-mode .phone-group select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     @media (max-width: 720px) {

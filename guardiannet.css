@@ -6,6 +6,30 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap');
 
+
+.logo img.logo-icon, .logo-icon {
+  width: auto !important;   /* Deixa a largura livre para não distorcer */
+  height: 46px !important;  /* Define uma ótima altura para o escudo */
+  max-height: 46px !important;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.3s ease;
+
+  /* Remove completamente o quadrado de fundo, bordas e arredondamento */
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Ajusta o quadrado em volta da logo (caso queiras que ele acompanhe) */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
 /* ── VARIÁVEIS TEMA ESCURO (padrão) ────────────── */
 :root {
   /* CORES */
@@ -384,9 +408,8 @@ header.scrolled {
 
 /* Tema claro: mantém a logo original (sem inverter cores) */
 :root.light-mode .logo-icon {
-  filter: none;
-  background: rgba(58, 138, 191, 0.08);
-  border-color: rgba(58, 138, 191, 0.2);
+  background: transparent !important;
+  border: none !important;
 }
 
 .logo-icon:hover {
@@ -1059,9 +1082,14 @@ footer {
 html { transition: none; }
 html.tema-pronto { transition: background-color var(--duration-base), color var(--duration-base); }
 
+
+
 /* ── RESPONSIVO ────────────────────────────────── */
 @media (max-width: 900px) {
-  .logo-icon { width: 44px; height: 44px; }
+  .logo img.logo-icon { 
+    width: auto !important; 
+    height: 38px !important; /* Tamanho ideal para telemóveis */
+  }
   .nav-links { display: none; }
   .menu-toggle { display: flex; }
   .nav-links.aberto {
