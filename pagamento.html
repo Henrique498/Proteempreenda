@@ -557,7 +557,7 @@
       <div class="auth-inline-card">
         <span class="tag-secao">Acesso</span>
         <h2 class="titulo-secao" style="margin-bottom:10px">Entre ou crie sua conta</h2>
-        <p class="subtitulo-secao">Faça login/cadastro aqui para continuar com o pagamento e liberar o dashboard depois.
+        <p class="subtitulo-secao">Faça login/cadastro aqui para continuar com o pagamento e ativar seu plano.
         </p>
 
         <div class="auth-inline-grid">
@@ -939,7 +939,7 @@
         localStorage.setItem('gn_logado', 'true');
         localStorage.setItem('gn_plano', assinatura.plano || (params.get('plano') || 'premium'));
         localStorage.setItem('gn_periodo', assinatura.periodo || (params.get('periodo') || 'mensal'));
-        window.location.href = 'dashboard.html';
+        window.location.href = 'index.html';
         return true;
       }
       return false;
@@ -1358,7 +1358,7 @@
                 if (r.ok) {
                   localStorage.setItem('gn_logado', 'true');
                   setTimeout(() => {
-                    window.location.href = 'dashboard.html';
+                    window.location.href = 'index.html';
                   }, 1500);
                 } else {
                   localStorage.removeItem('gn_logado');

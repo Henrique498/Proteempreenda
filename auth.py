@@ -326,7 +326,7 @@ def login():
         if tem_assinatura and assinatura_info:
             payload['plano']   = assinatura_info.get('plano')
             payload['periodo'] = assinatura_info.get('periodo')
-            payload['redirectTo'] = 'dashboard.html'
+            payload['redirectTo'] = 'index.html'
         else:
             payload['redirectTo'] = 'planos.html'
 
