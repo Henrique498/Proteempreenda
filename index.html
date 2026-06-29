@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+ <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GuardianNet — Proteção Digital Infantil</title>
+   <script>
+    (function() {
+      var override = sessionStorage.getItem('gn_theme_override');
+      var tema = override || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      if (tema === 'light') document.documentElement.classList.add('light-mode');
+    })();
+  </script>
+ <title>GuardianNet — Proteção Digital Infantil</title>
   <link rel="stylesheet" href="guardiannet.css">
+ 
   <style>
     .hero {
       position: relative;
@@ -319,6 +328,7 @@
       pointer-events: none;
       transition: opacity .25s ease, transform .25s ease;
     }
+    
 
     .toast-logout.show {
       opacity: 1;
