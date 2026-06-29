@@ -290,7 +290,7 @@
 				throw new Error('Sessão expirada.');
 			}
 			if (resp.status === 403) {
-				window.location.href = 'dashboard.html';
+				window.location.href = 'app.html';
 				throw new Error('Acesso negado.');
 			}
 			const data = await resp.json().catch(() => ({}));
@@ -327,7 +327,7 @@
 			const tipo = String(perfil.tipo || 'usuario').toLowerCase();
 			localStorage.setItem('gn_tipo', tipo);
 			if (tipo !== 'admin') {
-				window.location.href = 'dashboard.html';
+				window.location.href = 'app.html';
 				return false;
 			}
 

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GuardianNet — Seu app</title>
+  <link rel="stylesheet" href="guardiannet.css">
+  <style>
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(157,217,248,0.12), transparent 35%),
+        linear-gradient(180deg, rgba(7,11,20,0.98), rgba(7,11,20,1));
+    }
+    .app-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 96px 20px 40px;
+    }
+    .app-card {
+      width: 100%;
+      max-width: 620px;
+      text-align: center;
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-deep);
+      padding: 48px 36px;
+    }
+    .app-icon {
+      width: 84px;
+      height: 84px;
+      border-radius: 22px;
+      background: var(--azul-dim);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      margin: 0 auto 24px;
+    }
+    .app-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--azul-dim);
+      color: var(--azul-pastel);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: .72rem;
+      margin-bottom: 18px;
+    }
+    .app-title {
+      font-family: var(--font-head);
+      font-size: clamp(1.7rem, 4vw, 2.3rem);
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+    .app-title span {
+      background: linear-gradient(135deg, var(--azul-pastel), var(--verde-pastel));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .app-subtitle {
+      color: var(--white-dim);
+      line-height: 1.7;
+      max-width: 460px;
+      margin: 0 auto 28px;
+    }
+    .app-steps {
+      text-align: left;
+      background: var(--navy-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-bottom: 28px;
+    }
+    .app-steps li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      color: var(--white-dim);
+      font-size: .92rem;
+      line-height: 1.6;
+      list-style: none;
+      margin-bottom: 10px;
+    }
+    .app-steps li:last-child { margin-bottom: 0; }
+    .app-steps li .ck { color: var(--verde-pastel); flex-shrink: 0; }
+    .app-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 14px 24px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .2s ease;
+      font: inherit;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--azul-pastel), var(--verde-pastel));
+      color: #0a1628;
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--white);
+      border: 1px solid var(--border);
+    }
+    .app-logout {
+      margin-top: 24px;
+      font-size: .85rem;
+    }
+    .app-logout a {
+      color: var(--white-dim);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+    .app-logout a:hover { color: var(--white); }
+  </style>
+</head>
+<body>
+  <main class="app-wrap">
+    <section class="app-card">
+      <div class="app-icon">📱</div>
+      <span class="app-badge">Em finalização</span>
+      <h1 class="app-title">O app do <span>GuardianNet</span> está quase pronto</h1>
+      <p class="app-subtitle">
+        Sua conta já está ativa! Estamos finalizando os últimos ajustes do aplicativo de monitoramento.
+        Em breve você poderá baixá-lo aqui mesmo.
+      </p>
+
+      <ul class="app-steps">
+        <li><span class="ck">✓</span> Sua assinatura foi confirmada com sucesso.</li>
+        <li><span class="ck">✓</span> Seus dados de acesso já estão prontos para uso.</li>
+        <li><span class="ck">⏳</span> O aplicativo de monitoramento está em fase final de testes.</li>
+        <li><span class="ck">📩</span> Você será avisado por e-mail no momento do lançamento.</li>
+      </ul>
+
+      <div class="app-actions">
+        <a href="index.html" class="btn btn-primary">Voltar para o site</a>
+        <a href="planos.html" class="btn btn-secondary">Ver meu plano</a>
+      </div>
+
+      <div class="app-logout">
+        <a id="link-sair">Sair da conta</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.getElementById('link-sair').addEventListener('click', () => {
+      localStorage.removeItem('gn_token');
+      localStorage.removeItem('gn_logado');
+      localStorage.removeItem('gn_tipo');
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

@@ -1017,7 +1017,7 @@
             if (assinatura && ['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
               localStorage.setItem('gn_logado', 'true');
               navLogin.textContent = 'Ir para Dashboard';
-              navLogin.href = 'dashboard.html';
+              navLogin.href = 'app.html';
             } else {
               localStorage.removeItem('gn_logado');
               navLogin.textContent = 'Escolher plano';
@@ -1247,7 +1247,7 @@
               window.location.href = 'admin.html';
               return;
             }
-            window.location.href = 'dashboard.html';
+            window.location.href = 'app.html';
           } catch (err) {
             setAuthMessage(loginMsg, err.message, 'erro');
           }
