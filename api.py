@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from conexao import executar
 from auth import auth_bp, require_auth
 from subscription import subscription_bp
+from pairing import pairing_bp
 import os
 import secrets
 
@@ -38,6 +39,7 @@ CORS(
 )
 app.register_blueprint(auth_bp)
 app.register_blueprint(subscription_bp)
+app.register_blueprint(pairing_bp)
 
 
 @app.errorhandler(Exception)
