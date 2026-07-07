@@ -106,7 +106,7 @@ def resgatar_codigo():
         cur.execute(
             """
             INSERT INTO usuarios (nome, email, senha_hash, telefone, tipo, responsavel_id, ativo)
-            VALUES (%s, NULL, NULL, NULL, 'crianca', %s, TRUE)
+            VALUES (%s, NULL, NULL, NULL, 'usuario', %s, TRUE)
             RETURNING id
             """,
             (nome, responsavel_id),
