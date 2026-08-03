@@ -10,6 +10,9 @@ from subscription import subscription_bp
 from pairing import pairing_bp
 import os
 import secrets
+from ia.ia_service import ia_bp
+
+
 
 load_dotenv()
 
@@ -40,6 +43,7 @@ CORS(
 app.register_blueprint(auth_bp)
 app.register_blueprint(subscription_bp)
 app.register_blueprint(pairing_bp)
+app.register_blueprint(ia_bp)
 
 
 @app.errorhandler(Exception)
