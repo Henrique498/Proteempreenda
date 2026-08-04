@@ -11,6 +11,7 @@ MODEL_PATH = os.path.join(BASE_DIR, 'modelo_river.pkl')
 
 modelo_river = None
 
+
 def carregar_modelo():
     global modelo_river
     if os.path.exists(MODEL_PATH):
@@ -23,13 +24,13 @@ def carregar_modelo():
     else:
         print(f"Arquivo '{MODEL_PATH}' não encontrado.")
 
+
 carregar_modelo()
 
 _ORDEM_RISCO = {'seguro': 0, 'atencao': 1, 'perigo': 2}
 
 
 def _nivel_river(prob_predador: float) -> str:
-    # Limiares ajustados para serem mais rigorosos e evitar falsos positivos
     if prob_predador >= 0.75:
         return 'perigo'
     if prob_predador >= 0.45:
@@ -38,10 +39,6 @@ def _nivel_river(prob_predador: float) -> str:
 
 
 def _traduzir_se_necessario(texto: str) -> str:
-    """
-    Traduz o texto para o inglês para garantir máxima precisão no
-    modelo de IA treinado com o corpus PAN 2012.
-    """
     try:
         traducao = GoogleTranslator(source='auto', target='en').translate(texto)
         return traducao if traducao else texto
@@ -58,7 +55,7 @@ def analisar_mensagem():
     if not texto:
         return jsonify({'error': 'O campo "texto" é obrigatório.'}), 400
 
-    # Camada 1 — detector de palavras-chave em PT-BR (baseado em regras)
+    # Camada 1 — detector de palavras-chave em PT-BR
     resultado_detector = analisar_texto(texto)
 
     # Camada 2 — modelo Naive Bayes incremental (River)
@@ -67,10 +64,7 @@ def analisar_mensagem():
 
     if modelo_river is not None:
         try:
-            # 1. Traduz temporariamente para o inglês
             texto_en = _traduzir_se_necessario(texto)
-
-            # 2. Executa a predição na IA
             probas = modelo_river.predict_proba_one(texto_en.lower())
             prob_predador = float(probas.get(True, 0.0))
             modelo_nome = 'River-MultinomialNB (com Tradução PT->EN)'
@@ -79,13 +73,12 @@ def analisar_mensagem():
 
     nivel_ia = _nivel_river(prob_predador)
 
-    # Lógica combinada com filtro anti-falso positivo:
-    # Se o detector de palavras-chave não achou nada (score = 0) e a IA deu 'atencao' moderada,
-    # evitamos classificar incorretamente uma frase amigável como perigosa/atenciosa.
+    # Filtro inteligente de decisão:
+    # Se o detector não achou nada (score = 0) E a IA deu alerta moderado baixo (< 0.65), trata como seguro.
+    # Caso contrário, se o detector encontrou termos de risco, prevalece o alerta do detector!
     if resultado_detector['pontuacao'] == 0 and nivel_ia == 'atencao' and prob_predador < 0.65:
         nivel_final = 'seguro'
     else:
-        # Caso contrário, o maior nível de risco entre Detector e Modelo prevalece
         nivel_final = max(resultado_detector['nivel'], nivel_ia, key=lambda n: _ORDEM_RISCO[n])
 
     return jsonify({
@@ -100,10 +93,6 @@ def analisar_mensagem():
 
 @ia_bp.route('/api/ia/aprender', methods=['POST'])
 def aprender_mensagem():
-    """
-    Rota para Aprendizado Contínuo (Online Learning).
-    Permite ensinar novas mensagens ao modelo em tempo real e salvar no .pkl.
-    """
     global modelo_river
 
     data = request.get_json(silent=True) or {}
@@ -117,13 +106,9 @@ def aprender_mensagem():
         return jsonify({'error': 'Modelo de IA não carregado.'}), 500
 
     try:
-        # Traduz a frase para manter a consistência do modelo em inglês
         texto_en = _traduzir_se_necessario(texto).lower()
-
-        # O modelo aprende a nova mensagem em tempo real
         modelo_river.learn_one(texto_en, bool(is_predator))
 
-        # Salva o aprendizado atualizado de volta no arquivo .pkl
         with open(MODEL_PATH, 'wb') as f:
             pickle.dump(modelo_river, f)
 

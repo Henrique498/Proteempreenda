@@ -8,34 +8,32 @@ def _normalizar(texto: str) -> str:
     return texto
 
 
-# Pesos por categoria — ajuste conforme os testes da equipe.
-# Termos ficam em minúsculo e sem acento (a normalização cuida disso).
+# Categorias e termos flexibilizados para evitar falhas por variações de frases
 CATEGORIAS_RISCO = {
     'aliciamento': {
         'peso': 3,
         'termos': [
-            'segredo', 'segredinho', 'nosso segredo', 'e nosso segredo',
-            'nao conta pra ninguem', 'nao conta pra sua mae', 'nao conta pro seu pai',
-            'fica entre nos', 'voce e madura pra sua idade', 'voce e especial pra mim',
-            'confia em mim', 'me manda uma foto', 'manda foto sua', 'manda uma nude',
+            'segredo', 'segredinho', 'nosso segredo', 'fica entre nos',
+            'nao conta', 'nao conte', 'nao fale', 'seus pais',
+            'voce e madura', 'especial pra mim', 'confia em mim',
+            'manda foto', 'manda uma foto', 'manda nude', 'nudes',
             'tira a roupa', 'sem roupa', 'foto sem roupa',
         ],
     },
     'isolamento': {
         'peso': 2,
         'termos': [
-            'nao fala pra ninguem', 'so entre nos dois', 'apaga essa conversa',
-            'deleta isso', 'deleta essa conversa', 'nao mostra pra sua mae',
-            'nao mostra pro seu pai', 'guarda segredo', 'ninguem vai entender isso',
-            'nao deixa ninguem ver',
+            'apaga', 'apague', 'deleta', 'delete', 'esconde', 'esconder',
+            'nao mostra', 'nao deixa ninguem', 'so entre nos', 'guarda segredo',
+            'ninguem vai entender', 'limpa o chat', 'destroi a mensagem',
         ],
     },
     'encontro_pessoal': {
         'peso': 3,
         'termos': [
-            'vamos nos encontrar', 'quero te ver pessoalmente', 'me passa seu endereco',
-            'onde voce mora', 'qual sua escola', 'te busco de carro',
-            'vou ai te buscar', 'marca um lugar pra gente se ver', 'posso ir ai',
+            'vamos nos encontrar', 'te ver pessoalmente', 'seu endereco',
+            'onde voce mora', 'qual sua escola', 'te busco',
+            'vou ai te buscar', 'marca um lugar', 'posso ir ai',
         ],
     },
     'conteudo_impropio': {
@@ -48,17 +46,16 @@ CATEGORIAS_RISCO = {
     'manipulacao_emocional': {
         'peso': 1,
         'termos': [
-            'eu te amo', 'voce e a unica pessoa que me entende',
-            'ninguem te entende como eu', 'seus pais nao te entendem',
-            'sou o unico que se importa com voce', 'voce pode confiar em mim',
-            'sou seu melhor amigo', 'ninguem liga pra voce como eu ligo',
+            'eu te amo', 'unica pessoa que me entende',
+            'ninguem te entende', 'seus pais nao te entendem',
+            'so eu me importo', 'pode confiar em mim', 'sou seu melhor amigo',
         ],
     },
 }
 
 
 def analisar_texto(texto: str) -> dict:
-    """Analisa um texto e retorna pontuação de risco + categorias detectadas."""
+    """Analisa um texto e retorna a pontuação de risco e categorias detectadas."""
     texto_norm = _normalizar(texto)
     pontuacao = 0
     categorias_detectadas = []
@@ -89,7 +86,8 @@ def analisar_texto(texto: str) -> dict:
 if __name__ == '__main__':
     testes = [
         "oi, você viu a lição de matemática?",
-        "não conta pra sua mãe que a gente conversou, é nosso segredo",
+        "Não conta para os seus pais sobre a nossa conversa, tá",
+        "Apaga essas mensagens antes que alguém veja",
         "manda uma foto sua sem roupa, só nossa mesmo",
     ]
     for t in testes:
