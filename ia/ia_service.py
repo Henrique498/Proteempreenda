@@ -16,11 +16,11 @@ if os.path.exists(MODEL_PATH):
     try:
         with open(MODEL_PATH, 'rb') as f:
             modelo_river = pickle.load(f)
-        print(f"✅ Modelo River carregado com sucesso a partir de: {MODEL_PATH}")
+        print(f"Modelo River carregado com sucesso a partir de: {MODEL_PATH}")
     except Exception as e:
-        print(f"⚠️ Erro ao carregar o modelo River: {e}")
+        print(f"Erro ao carregar o modelo River: {e}")
 else:
-    print(f"ℹ️ Arquivo '{MODEL_PATH}' não encontrado. O endpoint responderá com valores padrão até o modelo ser gerado.")
+    print(f"ℹArquivo '{MODEL_PATH}' não encontrado. O endpoint responderá com valores padrão até o modelo ser gerado.")
 
 # 3. Rota /api/ia/analisar que o Flutter (IAService) chama via POST
 @ia_bp.route('/api/ia/analisar', methods=['POST'])

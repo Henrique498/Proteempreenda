@@ -58,13 +58,13 @@ def treinar():
                 except Exception:
                     continue
 
-        print(f"✅ Treinamento concluído com sucesso! {total_mensagens} mensagens processadas.")
+        print(f"Treinamento concluído com sucesso! {total_mensagens} mensagens processadas.")
 
     # 3. Salva o modelo
     with open(MODEL_OUTPUT, "wb") as f:
         pickle.dump(pipeline, f)
 
-    print(f"💾 Modelo salvo com sucesso em: {MODEL_OUTPUT}")
+    print(f"Modelo salvo com sucesso em: {MODEL_OUTPUT}")
 
 if __name__ == "__main__":
     treinar()
