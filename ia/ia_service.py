@@ -29,10 +29,10 @@ _ORDEM_RISCO = {'seguro': 0, 'atencao': 1, 'perigo': 2}
 
 
 def _nivel_river(prob_predador: float) -> str:
-    # Limiares calibrados para o modelo balanceado
-    if prob_predador >= 0.55:
+    # Limiares ajustados para serem mais rigorosos e evitar falsos positivos
+    if prob_predador >= 0.75:
         return 'perigo'
-    if prob_predador >= 0.25:
+    if prob_predador >= 0.45:
         return 'atencao'
     return 'seguro'
 
@@ -79,8 +79,14 @@ def analisar_mensagem():
 
     nivel_ia = _nivel_river(prob_predador)
 
-    # Combinação: o maior nível de risco entre Detector PT-BR e Modelo ML prevalece
-    nivel_final = max(resultado_detector['nivel'], nivel_ia, key=lambda n: _ORDEM_RISCO[n])
+    # Lógica combinada com filtro anti-falso positivo:
+    # Se o detector de palavras-chave não achou nada (score = 0) e a IA deu 'atencao' moderada,
+    # evitamos classificar incorretamente uma frase amigável como perigosa/atenciosa.
+    if resultado_detector['pontuacao'] == 0 and nivel_ia == 'atencao' and prob_predador < 0.65:
+        nivel_final = 'seguro'
+    else:
+        # Caso contrário, o maior nível de risco entre Detector e Modelo prevalece
+        nivel_final = max(resultado_detector['nivel'], nivel_ia, key=lambda n: _ORDEM_RISCO[n])
 
     return jsonify({
         'nivel': nivel_final,
