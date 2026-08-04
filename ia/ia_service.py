@@ -20,7 +20,7 @@ if os.path.exists(MODEL_PATH):
     except Exception as e:
         print(f"Erro ao carregar o modelo River: {e}")
 else:
-    print(f"ℹArquivo '{MODEL_PATH}' não encontrado. O endpoint responderá com valores padrão até o modelo ser gerado.")
+    print(f"'Arquivo '{MODEL_PATH}' não encontrado. O endpoint responderá com valores padrão até o modelo ser gerado.")
 
 # 3. Rota /api/ia/analisar que o Flutter (IAService) chama via POST
 @ia_bp.route('/api/ia/analisar', methods=['POST'])
