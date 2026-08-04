@@ -1,17 +1,14 @@
 import os
 import pickle
 from flask import Blueprint, request, jsonify
+from .detector import analisar_texto
 
-# 1. Cria o Blueprint da IA
 ia_bp = Blueprint('ia', __name__)
 
-# 2. Localiza o caminho do modelo modelo_river.pkl na mesma pasta
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'modelo_river.pkl')
 
 modelo_river = None
-
-# Tenta carregar o modelo treinado em disco
 if os.path.exists(MODEL_PATH):
     try:
         with open(MODEL_PATH, 'rb') as f:
@@ -20,9 +17,20 @@ if os.path.exists(MODEL_PATH):
     except Exception as e:
         print(f"Erro ao carregar o modelo River: {e}")
 else:
-    print(f"'Arquivo '{MODEL_PATH}' não encontrado. O endpoint responderá com valores padrão até o modelo ser gerado.")
+    print(f"Arquivo '{MODEL_PATH}' não encontrado.")
 
-# 3. Rota /api/ia/analisar que o Flutter (IAService) chama via POST
+_ORDEM_RISCO = {'seguro': 0, 'atencao': 1, 'perigo': 2}
+
+
+def _nivel_river(prob_predador: float) -> str:
+    # Com o modelo balanceado, probabilidades acima de 0.25 já indicam atenção e acima de 0.55 perigo
+    if prob_predador >= 0.55:
+        return 'perigo'
+    if prob_predador >= 0.25:
+        return 'atencao'
+    return 'seguro'
+
+
 @ia_bp.route('/api/ia/analisar', methods=['POST'])
 def analisar_mensagem():
     data = request.get_json(silent=True) or {}
@@ -31,27 +39,32 @@ def analisar_mensagem():
     if not texto:
         return jsonify({'error': 'O campo "texto" é obrigatório.'}), 400
 
-    # Se o modelo ainda não existe no servidor
-    if modelo_river is None:
-        return jsonify({
-            'is_predator': False,
-            'score_ia': 0.0,
-            'modelo': 'Sem modelo (.pkl não encontrado)'
-        }), 200
+    # Camada 1 — detector de palavras-chave em PT-BR (baseado em regras)
+    resultado_detector = analisar_texto(texto)
 
-    try:
-        # Predição usando a biblioteca River
-        probas = modelo_river.predict_proba_one(texto)
-        prob_predador = float(probas.get(True, 0.0))
+    # Camada 2 — modelo Naive Bayes incremental (River)
+    prob_predador = 0.0
+    modelo_nome = 'Sem modelo (.pkl não encontrado)'
+    if modelo_river is not None:
+        try:
+            # Normaliza o texto para minúsculas antes de passar no pipeline
+            texto_normalizado = texto.lower()
+            probas = modelo_river.predict_proba_one(texto_normalizado)
+            prob_predador = float(probas.get(True, 0.0))
+            modelo_nome = 'River-MultinomialNB'
+        except Exception as e:
+            return jsonify({'error': f'Falha ao processar texto na IA: {str(e)}'}), 500
 
-        # Classifica como risco se a probabilidade for igual ou superior a 50%
-        is_predator = prob_predador >= 0.5
+    nivel_ia = _nivel_river(prob_predador)
 
-        return jsonify({
-            'is_predator': is_predator,
-            'score_ia': round(prob_predador, 4),
-            'modelo': 'River-MultinomialNB'
-        }), 200
+    # Combinação: o maior nível de risco entre Detector PT-BR e Modelo ML prevalece
+    nivel_final = max(resultado_detector['nivel'], nivel_ia, key=lambda n: _ORDEM_RISCO[n])
 
-    except Exception as e:
-        return jsonify({'error': f'Falha ao processar texto na IA: {str(e)}'}), 500
+    return jsonify({
+        'nivel': nivel_final,
+        'is_predator': nivel_final != 'seguro',
+        'score_ia': round(prob_predador, 4),
+        'score_palavras_chave': resultado_detector['pontuacao'],
+        'categorias_detectadas': resultado_detector['categorias'],
+        'modelo': modelo_nome,
+    }), 200
