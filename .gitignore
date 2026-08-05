@@ -31,3 +31,13 @@ desktop.ini
 #logs
 *.log
 logs/
+
+.atlas-credentials.env
+atlas-credentials.env
+
+.env*
+
+__pycache__/
+*.pyc
+
+__pycache__/

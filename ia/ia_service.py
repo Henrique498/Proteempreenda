@@ -1,28 +1,49 @@
 import os
 import pickle
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from deep_translator import GoogleTranslator
+
+from auth import require_auth
+from subscription import usuario_tem_plano_pago_ativo
 from .detector import analisar_texto
+from .model_store import carregar_modelo_do_banco, salvar_modelo_no_banco
 
 ia_bp = Blueprint('ia', __name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'modelo_river.pkl')
+MODEL_PATH = os.path.join(BASE_DIR, 'modelo_river.pkl')  # só usado como semente inicial
 
 modelo_river = None
 
 
 def carregar_modelo():
+    """
+    Ordem de carregamento:
+    1. Banco (Supabase) — fonte da verdade, sobrevive a redeploy.
+    2. Arquivo local versionado no git — só na primeiríssima vez,
+       quando o banco ainda não tem nenhum modelo salvo.
+    """
     global modelo_river
+
+    try:
+        modelo_river = carregar_modelo_do_banco()
+        if modelo_river is not None:
+            print("Modelo River carregado do banco de dados (Supabase).")
+            return
+    except Exception as e:
+        print(f"Aviso: falha ao carregar modelo do banco: {e}")
+
     if os.path.exists(MODEL_PATH):
         try:
             with open(MODEL_PATH, 'rb') as f:
                 modelo_river = pickle.load(f)
-            print(f"Modelo River carregado com sucesso a partir de: {MODEL_PATH}")
+            print(f"Modelo local carregado a partir de: {MODEL_PATH}")
+            salvar_modelo_no_banco(modelo_river)
+            print("Modelo local salvo no banco pela primeira vez.")
         except Exception as e:
-            print(f"Erro ao carregar o modelo River: {e}")
+            print(f"Erro ao carregar o modelo local: {e}")
     else:
-        print(f"Arquivo '{MODEL_PATH}' não encontrado.")
+        print(f"Nenhum modelo encontrado (nem banco, nem {MODEL_PATH}).")
 
 
 carregar_modelo()
@@ -47,7 +68,9 @@ def _traduzir_se_necessario(texto: str) -> str:
         return texto
 
 
+# ── Testar mensagem — precisa estar logado, mas NÃO precisa de plano pago ──
 @ia_bp.route('/api/ia/analisar', methods=['POST'])
+@require_auth
 def analisar_mensagem():
     data = request.get_json(silent=True) or {}
     texto = str(data.get('texto', '')).strip()
@@ -55,12 +78,10 @@ def analisar_mensagem():
     if not texto:
         return jsonify({'error': 'O campo "texto" é obrigatório.'}), 400
 
-    # Camada 1 — detector de palavras-chave em PT-BR
     resultado_detector = analisar_texto(texto)
 
-    # Camada 2 — modelo Naive Bayes incremental (River)
     prob_predador = 0.0
-    modelo_nome = 'Sem modelo (.pkl não encontrado)'
+    modelo_nome = 'Sem modelo carregado'
 
     if modelo_river is not None:
         try:
@@ -73,9 +94,6 @@ def analisar_mensagem():
 
     nivel_ia = _nivel_river(prob_predador)
 
-    # Filtro inteligente de decisão:
-    # Se o detector não achou nada (score = 0) E a IA deu alerta moderado baixo (< 0.65), trata como seguro.
-    # Caso contrário, se o detector encontrou termos de risco, prevalece o alerta do detector!
     if resultado_detector['pontuacao'] == 0 and nivel_ia == 'atencao' and prob_predador < 0.65:
         nivel_final = 'seguro'
     else:
@@ -91,9 +109,16 @@ def analisar_mensagem():
     }), 200
 
 
+# ── Ensinar o modelo — precisa de plano pago (Básico, Premium ou Escola) ──
 @ia_bp.route('/api/ia/aprender', methods=['POST'])
+@require_auth
 def aprender_mensagem():
     global modelo_river
+
+    if not usuario_tem_plano_pago_ativo(g.user_id):
+        return jsonify({
+            'error': 'Esse recurso é exclusivo para assinantes (plano Básico ou superior).'
+        }), 403
 
     data = request.get_json(silent=True) or {}
     texto = str(data.get('texto', '')).strip()
@@ -109,14 +134,14 @@ def aprender_mensagem():
         texto_en = _traduzir_se_necessario(texto).lower()
         modelo_river.learn_one(texto_en, bool(is_predator))
 
-        with open(MODEL_PATH, 'wb') as f:
-            pickle.dump(modelo_river, f)
+        # Persiste no Supabase — sobrevive a redeploy do Render.
+        salvar_modelo_no_banco(modelo_river)
 
         return jsonify({
             'sucesso': True,
-            'mensagem': 'Novo aprendizado incorporado e salvo no modelo com sucesso!',
+            'mensagem': 'Novo aprendizado incorporado e salvo no banco com sucesso!',
             'texto_processado': texto_en,
-            'is_predator': bool(is_predator)
+            'is_predator': bool(is_predator),
         }), 200
 
     except Exception as e:

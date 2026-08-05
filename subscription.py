@@ -395,3 +395,25 @@ def cancelar_assinatura():
         return jsonify({'ok': True}), 200
     except Exception as e:
         return _erro_json('Falha ao cancelar assinatura.', str(e), 500)
+
+PLANOS_PAGOS = {'basico', 'premium', 'escola'}
+
+
+def usuario_tem_plano_pago_ativo(user_id: int) -> bool:
+    """True se o usuário tem um plano PAGO (não-gratuito) com status ativo/trialing e não vencido."""
+    row = _buscar_assinatura_atual(user_id)
+    if not row:
+        return False
+
+    plano_nome = row[2]
+    status     = (row[4] or '').lower()
+    data_fim   = _parse_datetime(row[6])
+    plano_slug = _slug_from_plan_name(plano_nome)
+
+    if plano_slug not in PLANOS_PAGOS:
+        return False
+    if status not in {'ativa', 'trialing'}:
+        return False
+    if data_fim and datetime.now(timezone.utc).replace(tzinfo=None) > data_fim:
+        return False
+    return True
