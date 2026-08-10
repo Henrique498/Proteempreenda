@@ -3,17 +3,21 @@
 <head>
  <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="assets/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
-  <link rel="apple-touch-icon" href="assets/favicon-512x512.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <script>
     (function() {
       var override = sessionStorage.getItem('gn_theme_override');
       var tema = override || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
       if (tema === 'light') document.documentElement.classList.add('light-mode');
+      if (localStorage.getItem('gn_logado') === 'true') {
+        document.documentElement.classList.add('gn-logado');
+      }
     })();
   </script>
+  <style>
+    html.gn-logado #nav-item-planos,
+    html.gn-logado #nav-item-comecar { display: none; }
+  </style>
  <title>GuardianNet — Proteção Digital Infantil</title>
   <link rel="stylesheet" href="guardiannet.css">
  
@@ -613,6 +617,166 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* ── Ícone de conta (usuário logado) ─────────────────────── */
+    .nav-item-conta {
+      position: relative;
+      list-style: none;
+    }
+
+    .nav-conta-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--azul-dim);
+      color: var(--azul-pastel);
+      cursor: pointer;
+      font-size: 1.15rem;
+      transition: all 0.25s;
+    }
+
+    .nav-conta-btn:hover {
+      background: var(--azul-pastel);
+      color: var(--navy);
+    }
+
+    .nav-item-conta.aberto .nav-conta-btn {
+      background: var(--azul-pastel);
+      color: var(--navy);
+    }
+
+    .nav-conta-menu {
+      position: absolute;
+      top: calc(100% + 14px);
+      right: 0;
+      width: 280px;
+      background: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-deep);
+      padding: 18px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+      z-index: 500;
+    }
+
+    .nav-item-conta.aberto .nav-conta-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .nav-conta-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-conta-avatar-lg {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--azul-dim);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .nav-conta-nome {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--white);
+      margin-bottom: 2px;
+    }
+
+    .nav-conta-plano-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--azul-pastel);
+      background: var(--azul-dim);
+      border-radius: 100px;
+      padding: 3px 10px;
+    }
+
+    .nav-conta-info {
+      margin-bottom: 14px;
+    }
+
+    .nav-conta-status {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--white-dim);
+      line-height: 1.5;
+    }
+
+    .nav-conta-status.trial { color: var(--verde-pastel); }
+    .nav-conta-status.ativa { color: var(--white-dim); }
+    .nav-conta-status.expirada { color: var(--red); }
+
+    .nav-conta-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 10px;
+      font: inherit;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--white-dim);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-conta-link:hover {
+      background: var(--azul-dim);
+      color: var(--white);
+    }
+
+    .nav-conta-link.nav-conta-sair {
+      color: var(--red);
+      margin-top: 4px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      border-radius: 0 0 10px 10px;
+    }
+
+    .nav-conta-link.nav-conta-sair:hover {
+      background: rgba(255, 59, 92, 0.1);
+      color: var(--red);
+    }
+
+    @media (max-width: 900px) {
+      .nav-conta-menu {
+        position: static;
+        width: 100%;
+        margin-top: 12px;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        display: none;
+      }
+      .nav-item-conta.aberto .nav-conta-menu { display: block; }
+    }
   </style>
 </head>
 <body>
@@ -620,6 +784,7 @@
   <section class="auth-gate" id="auth-gate" aria-hidden="true">
     <div class="auth-gate-card" id="acesso">
       <div class="auth-gate-left">
+
         <h2>Entre para continuar</h2>
         <p>Faça login para entrar direto no seu dashboard. Se ainda não tem conta, cadastre-se em segundos e continue navegando no site.</p>
         <p style="font-size:.9rem;color:var(--white-dim)">Ao escolher um plano, você só confirma o pagamento.</p>
@@ -676,9 +841,27 @@
         <ul class="nav-links" id="nav-links">
           <li><a href="index.html" class="ativo">Início</a></li>
           <li><a href="como-funciona.html">Como Funciona</a></li>
-          <li><a href="planos.html">Planos</a></li>
+          <li id="nav-item-planos"><a href="planos.html">Planos</a></li>
           <li><a href="sobre.html">Sobre</a></li>
-          <li><a href="planos.html" class="nav-cta">Começar Grátis</a></li>
+          <li id="nav-item-comecar"><a href="planos.html" class="nav-cta">Começar Grátis</a></li>
+          <li id="nav-item-conta" class="nav-item-conta" style="display:none;">
+            <button type="button" id="nav-conta-btn" class="nav-conta-btn" aria-haspopup="true" aria-expanded="false" title="Minha conta">
+              <span>👤</span>
+            </button>
+            <div class="nav-conta-menu" id="nav-conta-menu">
+              <div class="nav-conta-header">
+                <div class="nav-conta-avatar-lg">👤</div>
+                <div>
+                  <div class="nav-conta-nome" id="nav-conta-nome">Minha conta</div>
+                  <span class="nav-conta-plano-badge" id="nav-conta-plano-badge">Plano —</span>
+                </div>
+              </div>
+              <div class="nav-conta-info" id="nav-conta-info"></div>
+              <a href="app.html" class="nav-conta-link">📊 Ir para o Dashboard</a>
+              <a href="planos.html" class="nav-conta-link">🔄 Trocar plano</a>
+              <button type="button" id="nav-conta-sair" class="nav-conta-link nav-conta-sair">🚪 Sair da conta</button>
+            </div>
+          </li>
         </ul>
         <button class="theme-toggle" onclick="toggleTheme()">
           <span id="theme-icon">🌙</span>
@@ -1006,44 +1189,114 @@
       return d.replace(/(\d{1,3})(?=(\d{3})+(?!\d))/g, '$1 ').trim();
     }
 
+    const NOMES_PLANO = { gratuito: 'Gratuito', basico: 'Básico', premium: 'Premium', escola: 'Escola' };
+
+    function formatarDataBR(iso) {
+      if (!iso) return null;
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toLocaleDateString('pt-BR');
+    }
+
+    function aplicarEstadoNavPublico(logado) {
+      const navPlanos = document.getElementById('nav-item-planos');
+      const navComecar = document.getElementById('nav-item-comecar');
+      const navConta = document.getElementById('nav-item-conta');
+      document.documentElement.classList.toggle('gn-logado', !!logado);
+      if (navPlanos)  navPlanos.style.display  = logado ? 'none' : '';
+      if (navComecar) navComecar.style.display = logado ? 'none' : '';
+      if (navConta)   navConta.style.display   = logado ? '' : 'none';
+    }
+
+    function preencherNavConta({ nome, tipo, assinatura } = {}) {
+      const nomeEl  = document.getElementById('nav-conta-nome');
+      const planoEl = document.getElementById('nav-conta-plano-badge');
+      const infoEl  = document.getElementById('nav-conta-info');
+
+      if (nomeEl) nomeEl.textContent = nome || localStorage.getItem('gn_nome') || 'Minha conta';
+
+      if (tipo === 'admin') {
+        if (planoEl) planoEl.textContent = 'Administrador';
+        if (infoEl) infoEl.innerHTML = '<span class="nav-conta-status">Acesso administrativo</span>';
+        return;
+      }
+
+      const planoSlug = assinatura ? (assinatura.plano || '') : '';
+      const status = (assinatura?.status || '').toLowerCase();
+      if (planoEl) {
+        planoEl.textContent = planoSlug ? `Plano ${NOMES_PLANO[planoSlug] || planoSlug}` : 'Sem plano ativo';
+      }
+
+      if (infoEl) {
+        const dataRef = assinatura?.trialEndsAt || assinatura?.nextBillingAt || assinatura?.dataFim;
+        const dataFmt = formatarDataBR(dataRef);
+
+        if (status === 'trialing' && dataFmt) {
+          infoEl.innerHTML = `<span class="nav-conta-status trial">🎁 Período gratuito até ${dataFmt}</span>`;
+        } else if (status === 'ativa' && dataFmt) {
+          infoEl.innerHTML = `<span class="nav-conta-status ativa">🔄 Renova em ${dataFmt}</span>`;
+        } else if (status === 'ativa') {
+          infoEl.innerHTML = '<span class="nav-conta-status ativa">✅ Assinatura ativa</span>';
+        } else if (status === 'expirada') {
+          infoEl.innerHTML = '<span class="nav-conta-status expirada">⚠️ Plano expirado</span>';
+        } else if (!assinatura) {
+          infoEl.innerHTML = '<span class="nav-conta-status">Nenhuma assinatura encontrada</span>';
+        } else {
+          infoEl.innerHTML = '';
+        }
+      }
+    }
+
     async function atualizarEstadoAuth() {
       const token = localStorage.getItem('gn_token');
-      const navLogin = document.getElementById('nav-login');
-      if (!token) return false;
+      if (!token) {
+        aplicarEstadoNavPublico(false);
+        return false;
+      }
 
       try {
         const perfil = await authRequest('/me', null, token);
         const tipo = (perfil.tipo || 'usuario').toLowerCase();
+        const primeiroNome = (perfil.nome || '').split(' ')[0] || 'Usuário';
         localStorage.setItem('gn_tipo', tipo);
-        localStorage.setItem('gn_nome', (perfil.nome || '').split(' ')[0] || 'Usuário');
+        localStorage.setItem('gn_nome', primeiroNome);
         markRuntimeSession();
-        if (navLogin) {
-          if (tipo === 'admin') {
+
+        if (tipo === 'admin') {
+          localStorage.setItem('gn_logado', 'true');
+          aplicarEstadoNavPublico(true);
+          preencherNavConta({ nome: primeiroNome, tipo });
+          return true;
+        }
+
+        try {
+          const assinatura = await buscarAssinaturaAtual(token);
+          const status = (assinatura?.status || '').toLowerCase();
+          const temPlanoAtivo = assinatura && ['ativa', 'trialing'].includes(status);
+
+          if (temPlanoAtivo) {
             localStorage.setItem('gn_logado', 'true');
-            navLogin.textContent = 'Minha área';
-            navLogin.href = 'admin.html';
-            return true;
+            localStorage.setItem('gn_plano', assinatura.plano || '');
+          } else {
+            localStorage.removeItem('gn_logado');
           }
 
-          try {
-            const assinatura = await buscarAssinaturaAtual(token);
-            if (assinatura && ['ativa', 'trialing'].includes((assinatura.status || '').toLowerCase())) {
-              localStorage.setItem('gn_logado', 'true');
-              navLogin.textContent = 'Ir para Dashboard';
-              navLogin.href = 'app.html';
-            } else {
-              localStorage.removeItem('gn_logado');
-              navLogin.textContent = 'Escolher plano';
-              navLogin.href = 'planos.html';
-            }
-          } catch (_) {
-            navLogin.textContent = 'Escolher plano';
-            navLogin.href = 'planos.html';
-          }
+          // Mostra o ícone de conta sempre que o login for válido — mesmo sem
+          // plano ativo — para que "Sair da conta" e "Trocar plano" fiquem
+          // acessíveis; some com Planos/Começar Grátis só quando há plano ativo
+          // (evita esconder a forma de assinar de quem ainda não tem plano).
+          aplicarEstadoNavPublico(temPlanoAtivo);
+          const navConta = document.getElementById('nav-item-conta');
+          if (navConta && !temPlanoAtivo) navConta.style.display = '';
+          preencherNavConta({ nome: primeiroNome, tipo, assinatura });
+        } catch (_) {
+          aplicarEstadoNavPublico(false);
         }
+
         return true;
       } catch (_) {
         clearPersistedAuth();
+        aplicarEstadoNavPublico(false);
         return false;
       }
     }
@@ -1054,6 +1307,46 @@
     function toggleMenu() {
       document.getElementById('nav-links').classList.toggle('aberto');
     }
+
+    // ── Menu de conta (dropdown) ────────────────────────────────
+    (function initNavConta() {
+      const item = document.getElementById('nav-item-conta');
+      const btn = document.getElementById('nav-conta-btn');
+      const sair = document.getElementById('nav-conta-sair');
+      if (!item || !btn) return;
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const aberto = item.classList.toggle('aberto');
+        btn.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (item.classList.contains('aberto') && !item.contains(e.target)) {
+          item.classList.remove('aberto');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          item.classList.remove('aberto');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      if (sair) {
+        sair.addEventListener('click', () => {
+          localStorage.removeItem('gn_token');
+          localStorage.removeItem('gn_logado');
+          localStorage.removeItem('gn_tipo');
+          localStorage.removeItem('gn_nome');
+          localStorage.removeItem('gn_plano');
+          localStorage.removeItem('gn_periodo');
+          window.location.href = 'index.html';
+        });
+      }
+    })();
 
     const canvas = document.getElementById('canvas-particulas');
     const ctx = canvas.getContext('2d');

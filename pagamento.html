@@ -3,7 +3,6 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/png" href="assets/favicon.png">
   <script>
     (function () {
       const override = sessionStorage.getItem('gn_theme_override');
@@ -934,26 +933,23 @@
         return true;
       }
 
+      // Se a pessoa chegou aqui com um plano específico escolhido (ex: clicou
+      // em "Assinar" ou "Trocar plano" em planos.html), sempre deixamos ela
+      // ver a tela de pagamento — mesmo que já tenha assinatura ativa, pois
+      // pode ser justamente uma troca de plano. O redirecionamento automático
+      // só serve para quem cai em pagamento.html sem nenhum plano escolhido.
+      const planoNaUrl = params.get('plano');
+      if (planoNaUrl) {
+        return false;
+      }
+
       const assinatura = await buscarAssinaturaAtual(token);
       const status = (assinatura?.status || '').toLowerCase();
 
-      // Plano/período que o usuário está tentando assinar agora (vindo da URL,
-      // ex: pagamento.html?plano=premium&periodo=anual).
-      const planoDesejado   = (params.get('plano')   || '').toLowerCase();
-      const periodoDesejado = (params.get('periodo') || '').toLowerCase();
-
-      // Só é "redundante" (e deve voltar pro dashboard) se o plano ativo for
-      // exatamente o mesmo que o usuário está tentando comprar de novo.
-      // Se ele está tentando mudar de plano (ou não veio nenhum ?plano= na URL),
-      // deixa seguir para a tela de pagamento normalmente.
-      const tentandoMesmoPlano = planoDesejado && periodoDesejado &&
-        (assinatura?.plano || '').toLowerCase() === planoDesejado &&
-        (assinatura?.periodo || '').toLowerCase() === periodoDesejado;
-
-      if (assinatura && (status === 'ativa' || status === 'trialing') && tentandoMesmoPlano) {
+      if (assinatura && (status === 'ativa' || status === 'trialing')) {
         localStorage.setItem('gn_logado', 'true');
-        localStorage.setItem('gn_plano', assinatura.plano || planoDesejado || 'premium');
-        localStorage.setItem('gn_periodo', assinatura.periodo || periodoDesejado || 'mensal');
+        localStorage.setItem('gn_plano', assinatura.plano || 'premium');
+        localStorage.setItem('gn_periodo', assinatura.periodo || 'mensal');
         window.location.href = 'index.html';
         return true;
       }
