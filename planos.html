@@ -214,6 +214,75 @@
     .feature-x { color: #555; font-size: 0.95rem; flex-shrink: 0; margin-top: 2px; font-weight: 700; }
     .feature-item.off { color: var(--white-dim); opacity: 0.6; }
 
+    /* Contador de crianças adicionais (Premium plus) */
+    .criancas-contador {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: -4px 0 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(122, 184, 240, 0.08);
+      border: 1px solid rgba(122, 184, 240, 0.25);
+    }
+    .criancas-label {
+      font-size: 0.78rem;
+      color: var(--white-dim);
+      line-height: 1.3;
+    }
+    .criancas-preco-extra {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--azul-pastel);
+      margin-top: 2px;
+      font-weight: 600;
+    }
+    .contador-controles {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .btn-contador {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(122, 184, 240, 0.45);
+      background: var(--navy-2);
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .btn-contador:hover {
+      background: var(--azul-pastel);
+      color: var(--navy);
+      transform: scale(1.08);
+    }
+    .btn-contador:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-contador:disabled:hover {
+      background: var(--navy-2);
+      color: var(--white);
+    }
+    .contador-valor {
+      min-width: 18px;
+      text-align: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--white);
+    }
+
     .btn-plano {
       display: block;
       text-align: center;
@@ -318,9 +387,9 @@
     <div class="container">
       <div class="planos-grid" id="planos-grid">
 
-        <!-- GRATUITO -->
+        <!-- GRATUITO / TRIAL -->
         <div class="plano-card">
-          <div class="plano-nome">Gratuito</div>
+          <div class="plano-nome">Trial</div>
           <div class="plano-trial">30 dias grátis</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
@@ -328,17 +397,13 @@
           </div>
           <div class="plano-periodo" id="periodo-gratuito">por 30 dias</div>
           <div class="plano-periodo-equiv" id="periodo-gratuito-equiv"></div>
-          <p class="plano-descricao">Teste de 30 dias no plano gratuito. Ideal para começar com proteção básica para até 2 crianças.</p>
+          <p class="plano-descricao">Comece gratuitamente com os recursos essenciais para proteção digital infantil.</p>
           <div class="divisor"></div>
           <div class="plano-features">
             <div class="feature-item"><span class="feature-check">✓</span> Até 2 crianças monitoradas</div>
             <div class="feature-item"><span class="feature-check">✓</span> Até 2 responsáveis</div>
-            <div class="feature-item"><span class="feature-check">✓</span> Análise de texto básica</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Análise de texto básico</div>
             <div class="feature-item"><span class="feature-check">✓</span> Alertas por nível de risco</div>
-            <div class="feature-item off"><span class="feature-x">✕</span> Análise de áudio</div>
-            <div class="feature-item off"><span class="feature-x">✕</span> Relatórios detalhados</div>
-            <div class="feature-item off"><span class="feature-x">✕</span> Alertas de ligação</div>
-            <div class="feature-item off"><span class="feature-x">✕</span> Suporte prioritário</div>
           </div>
           <a href="app.html" class="btn-plano btn-plano-secundario" onclick="ativarPlanoGratuito(event)">Começar grátis</a>
         </div>
@@ -348,11 +413,11 @@
           <div class="plano-nome">Básico</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
-            <span class="plano-valor" id="preco-basico">9,90</span>
+            <span class="plano-valor" id="preco-basico">24,90</span>
           </div>
           <div class="plano-periodo" id="periodo-basico">/mês por família</div>
           <div class="plano-periodo-equiv" id="periodo-basico-equiv"></div>
-          <p class="plano-descricao">Proteção expandida para pequenas famílias. Mais crianças e responsáveis com recursos essenciais.</p>
+          <p class="plano-descricao">Proteção essencial para famílias que precisam de mais recursos de monitoramento.</p>
           <div class="divisor"></div>
           <div class="plano-features">
             <div class="feature-item"><span class="feature-check">✓</span> Até 3 crianças monitoradas</div>
@@ -360,13 +425,8 @@
             <div class="feature-item"><span class="feature-check">✓</span> Análise de texto com IA</div>
             <div class="feature-item"><span class="feature-check">✓</span> Alertas de ligação</div>
             <div class="feature-item"><span class="feature-check">✓</span> Relatórios simples</div>
-            <div class="feature-item off"><span class="feature-x">✕</span> Análise de áudio</div>
-            <div class="feature-item off"><span class="feature-x">✕</span> Relatórios detalhados</div>
-            <div class="feature-item off"><span class="feature-x">✕</span> Suporte prioritário</div>
           </div>
-          <a href="pagamento.html?plano=basico&periodo=mensal" class="btn-plano btn-plano-secundario" id="btn-basico" onclick="return exigirLoginParaPlano(event)">
-            Assinar Básico
-          </a>
+          <a href="pagamento.html?plano=basico&periodo=mensal" class="btn-plano btn-plano-secundario" id="btn-basico" onclick="return exigirLoginParaPlano(event)">Assinar Básico</a>
         </div>
 
         <!-- PREMIUM -->
@@ -375,11 +435,11 @@
           <div class="plano-nome text-azul">Premium</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
-            <span class="plano-valor" id="preco-premium">24,90</span>
+            <span class="plano-valor" id="preco-premium">44,90</span>
           </div>
           <div class="plano-periodo" id="periodo-premium">/mês por família</div>
           <div class="plano-periodo-equiv" id="periodo-premium-equiv"></div>
-          <p class="plano-descricao">Proteção completa para famílias. Todos os recursos disponíveis sem limite.</p>
+          <p class="plano-descricao">Proteção completa para famílias com recursos avançados de análise e acompanhamento.</p>
           <div class="divisor"></div>
           <div class="plano-features">
             <div class="feature-item"><span class="feature-check">✓</span> Até 6 crianças monitoradas</div>
@@ -391,35 +451,46 @@
             <div class="feature-item"><span class="feature-check">✓</span> Histórico completo</div>
             <div class="feature-item"><span class="feature-check">✓</span> Suporte prioritário</div>
           </div>
-          <a href="pagamento.html?plano=premium&periodo=mensal" class="btn-plano btn-plano-primario" id="btn-premium" onclick="return exigirLoginParaPlano(event)">
-            Assinar Premium
-          </a>
+          <a href="pagamento.html?plano=premium&periodo=mensal" class="btn-plano btn-plano-primario" id="btn-premium" onclick="return exigirLoginParaPlano(event)">Assinar Premium</a>
         </div>
 
-        <!-- ESCOLA -->
+        <!-- PREMIUM PLUS -->
         <div class="plano-card">
-          <div class="plano-nome">Escola</div>
+          <div class="plano-nome">Premium plus</div>
           <div class="plano-preco">
             <span class="plano-cifrao">R$</span>
-            <span class="plano-valor" id="preco-escola">149,00</span>
+            <span class="plano-valor" id="preco-premiumplus">49,90</span>
           </div>
-          <div class="plano-periodo" id="periodo-escola">/mês por instituição</div>
-          <div class="plano-periodo-equiv" id="periodo-escola-equiv"></div>
-          <p class="plano-descricao">Para escolas e instituições educacionais. Licença para toda a comunidade escolar.</p>
+          <div class="plano-periodo" id="periodo-premiumplus">/mês por família</div>
+          <div class="plano-periodo-equiv" id="periodo-premiumplus-equiv"></div>
+          <p class="plano-descricao">Para famílias maiores, com possibilidade de adicionar crianças além das 6 incluídas.</p>
+
+          <div class="criancas-contador">
+            <span class="criancas-label">
+              Crianças adicionais
+              <span class="criancas-preco-extra" id="criancas-extra-preco">+ R$ 0,00/mês</span>
+            </span>
+            <div class="contador-controles">
+              <button type="button" class="btn-contador" id="btn-remover-crianca" onclick="alterarCriancasExtra(-1)" aria-label="Remover criança">−</button>
+              <span class="contador-valor" id="criancas-extra-valor">0</span>
+              <button type="button" class="btn-contador" id="btn-adicionar-crianca" onclick="alterarCriancasExtra(1)" aria-label="Adicionar criança">+</button>
+            </div>
+          </div>
+
           <div class="divisor"></div>
           <div class="plano-features">
-            <div class="feature-item"><span class="feature-check">✓</span> Alunos ilimitados</div>
-            <div class="feature-item"><span class="feature-check">✓</span> Painel administrativo</div>
-            <div class="feature-item"><span class="feature-check">✓</span> Todos os recursos Premium</div>
-            <div class="feature-item"><span class="feature-check">✓</span> Relatórios por turma</div>
-            <div class="feature-item"><span class="feature-check">✓</span> Integração com sistemas escolares</div>
-            <div class="feature-item"><span class="feature-check">✓</span> Treinamento para educadores</div>
-            <div class="feature-item"><span class="feature-check">✓</span> SLA garantido</div>
-            <div class="feature-item"><span class="feature-check">✓</span> Gerente de conta dedicado</div>
+            <div class="feature-item"><span class="feature-check">✓</span> A partir de 6 crianças</div>
+            <div class="feature-item"><span class="feature-check">✓</span> + R$ 4,00 por criança adicional</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Adicione quantas quiser</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Contatos ilimitados</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Análise de texto avançada (IA)</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Análise de mensagens de voz</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Alertas de ligações suspeitas</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Relatórios detalhados</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Histórico completo</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Suporte prioritário</div>
           </div>
-         <a href="pagamento.html?plano=escola&periodo=mensal" class="btn-plano btn-plano-secundario" id="btn-escola" onclick="return exigirLoginParaPlano(event)">
-            Falar com vendas
-        </a>
+          <a href="pagamento.html?plano=premiumplus&periodo=mensal" class="btn-plano btn-plano-secundario" id="btn-premiumplus" onclick="return exigirLoginParaPlano(event)">Assinar Premium plus</a>
         </div>
 
       </div>
@@ -466,7 +537,7 @@
             Tem desconto para múltiplas crianças?
             <span class="faq-seta">+</span>
           </div>
-          <div class="faq-resposta">O plano Premium já inclui crianças ilimitadas no mesmo preço. Não há cobrança adicional por criança no plano familiar.</div>
+          <div class="faq-resposta">O plano Premium inclui até 6 crianças. No plano Premium plus, você pode adicionar quantas crianças quiser por R$ 4,00 por criança adicional.</div>
         </div>
       </div>
     </div>
@@ -505,9 +576,9 @@
 
     const API_BASE = 'https://proteempreenda.onrender.com/api';
     const PLANOS_SITE = {
-      basico: { mensal: 9.90, anual: 7.92, nome: 'Básico', descricao: '' },
-      premium: { mensal: 24.90, anual: 19.92, nome: 'Premium', descricao: '' },
-      escola: { mensal: 149.00, anual: 119.20, nome: 'Escola', descricao: '' }
+      basico: { mensal: 24.90, anual: 19.92, nome: 'Básico', descricao: '' },
+      premium: { mensal: 44.90, anual: 35.92, nome: 'Premium', descricao: '' },
+      premiumplus: { mensal: 49.90, anual: 39.92, nome: 'Premium plus', descricao: '' }
     };
     let PLANOS_EXTRAS = [];
     const PLANOS_EXTRAS_MAP = new Map();
@@ -524,8 +595,9 @@
       const nome = normalizarTexto(nomePlano);
       if (nome.includes('gratuito') || nome.includes('gratis') || nome.includes('trial')) return 'gratuito';
       if (nome.includes('basico') || nome.includes('pro')) return 'basico';
+      if (nome.includes('premium plus') || nome.includes('premiumplus')) return 'premiumplus';
       if (nome.includes('premium')) return 'premium';
-      if (nome.includes('escola')) return 'escola';
+      if (nome.includes('escola') || nome.includes('institucional') || nome.includes('creche')) return 'escola';
       return null;
     }
 
@@ -652,7 +724,7 @@
             return;
           }
 
-          if (slug === 'gratuito') {
+          if (slug === 'gratuito' || slug === 'escola') {
             return;
           }
 
@@ -670,15 +742,31 @@
           const el = document.querySelector('#preco-premium')?.closest('.plano-card')?.querySelector('.plano-descricao');
           if (el) el.textContent = PLANOS_SITE.premium.descricao;
         }
-        if (PLANOS_SITE.escola.descricao) {
-          const el = document.querySelector('#preco-escola')?.closest('.plano-card')?.querySelector('.plano-descricao');
-          if (el) el.textContent = PLANOS_SITE.escola.descricao;
+        if (PLANOS_SITE.premiumplus.descricao) {
+          const el = document.querySelector('#preco-premiumplus')?.closest('.plano-card')?.querySelector('.plano-descricao');
+          if (el) el.textContent = PLANOS_SITE.premiumplus.descricao;
         }
 
         renderizarPlanosExtras();
       } catch (_) {
         // Mantém fallback estático do HTML se a API não estiver disponível.
       }
+    }
+
+    // Crianças adicionais (Premium plus)
+    const VALOR_CRIANCA_EXTRA = 4.00;
+    const MAX_CRIANCAS_EXTRA = 50;
+    let criancasExtra = 0;
+
+    function alterarCriancasExtra(delta) {
+      criancasExtra = Math.min(MAX_CRIANCAS_EXTRA, Math.max(0, criancasExtra + delta));
+      document.getElementById('criancas-extra-valor').textContent = criancasExtra;
+      const btnRemover = document.getElementById('btn-remover-crianca');
+      const btnAdicionar = document.getElementById('btn-adicionar-crianca');
+      if (btnRemover) btnRemover.disabled = criancasExtra <= 0;
+      if (btnAdicionar) btnAdicionar.disabled = criancasExtra >= MAX_CRIANCAS_EXTRA;
+      atualizarPrecos();
+      atualizarLinksPlano();
     }
 
     // Toggle mensal/anual
@@ -708,10 +796,12 @@
         document.getElementById('periodo-premium-equiv').textContent = `R$ ${fmtValor(PLANOS_SITE.premium.anual)}/mês`;
         document.getElementById('periodo-premium-equiv').classList.add('ativo');
 
-        document.getElementById('preco-escola').textContent = fmtValor(PLANOS_SITE.escola.anual * 12);
-        document.getElementById('periodo-escola').textContent = '/ano';
-        document.getElementById('periodo-escola-equiv').textContent = `R$ ${fmtValor(PLANOS_SITE.escola.anual)}/mês`;
-        document.getElementById('periodo-escola-equiv').classList.add('ativo');
+        const mensalEquivComExtra = PLANOS_SITE.premiumplus.anual + criancasExtra * VALOR_CRIANCA_EXTRA;
+        document.getElementById('preco-premiumplus').textContent = fmtValor(mensalEquivComExtra * 12);
+        document.getElementById('periodo-premiumplus').textContent = '/ano';
+        document.getElementById('periodo-premiumplus-equiv').textContent = `R$ ${fmtValor(mensalEquivComExtra)}/mês`;
+        document.getElementById('periodo-premiumplus-equiv').classList.add('ativo');
+        document.getElementById('criancas-extra-preco').textContent = `+ ${fmtValor(criancasExtra * VALOR_CRIANCA_EXTRA)}/mês`;
 
         atualizarPlanosExtrasNaTela();
       } else {
@@ -727,9 +817,10 @@
         document.getElementById('periodo-premium').textContent = '/mês por família';
         document.getElementById('periodo-premium-equiv').classList.remove('ativo');
 
-        document.getElementById('preco-escola').textContent = fmtValor(PLANOS_SITE.escola.mensal);
-        document.getElementById('periodo-escola').textContent = '/mês por instituição';
-        document.getElementById('periodo-escola-equiv').classList.remove('ativo');
+        document.getElementById('preco-premiumplus').textContent = fmtValor(PLANOS_SITE.premiumplus.mensal + criancasExtra * VALOR_CRIANCA_EXTRA);
+        document.getElementById('periodo-premiumplus').textContent = '/mês por família';
+        document.getElementById('periodo-premiumplus-equiv').classList.remove('ativo');
+        document.getElementById('criancas-extra-preco').textContent = `+ ${fmtValor(criancasExtra * VALOR_CRIANCA_EXTRA)}/mês`;
 
         atualizarPlanosExtrasNaTela();
       }
@@ -739,10 +830,12 @@
       const periodoAtual = anual ? 'anual' : 'mensal';
       document.getElementById('btn-basico').href = `pagamento.html?plano=basico&periodo=${periodoAtual}`;
       document.getElementById('btn-premium').href = `pagamento.html?plano=premium&periodo=${periodoAtual}`;
-      document.getElementById('btn-escola').href = `pagamento.html?plano=escola&periodo=${periodoAtual}`;
+      document.getElementById('btn-premiumplus').href = `pagamento.html?plano=premiumplus&periodo=${periodoAtual}&criancas=${criancasExtra}`;
     }
 
     async function inicializarPlanos() {
+      const btnRemoverInicial = document.getElementById('btn-remover-crianca');
+      if (btnRemoverInicial) btnRemoverInicial.disabled = true;
       await carregarPlanosDoBanco();
       atualizarPrecos();
       atualizarLinksPlano();
