@@ -12,7 +12,7 @@ from conexao import get_connection
 
 subscription_bp = Blueprint('subscription', __name__, url_prefix='/api/subscription')
 
-PLANOS_VALIDOS = {'gratuito', 'basico', 'premium', 'escola'}
+PLANOS_VALIDOS = {'gratuito', 'basico', 'premium', 'premiumplus'}
 PERIODOS_VALIDOS = {'mensal', 'anual'}
 DEBUG_ENABLED = str(os.getenv('FLASK_DEBUG', 'false')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
@@ -29,13 +29,13 @@ def _slug_from_plan_name(nome: str) -> str:
     n = _normalize_text(nome)
     if 'gratuito' in n:
         return 'gratuito'
-    if 'escola' in n:
-        return 'escola'
+    if 'plus' in n or 'premiumplus' in n:
+        return 'premiumplus'
     if 'premium' in n:
         return 'premium'
     if 'basico' in n or n == 'pro':
         return 'basico'
-    return n or 'premium'
+    return ''
 
 
 def _resolver_plano(cur, plano_slug: str):
@@ -396,7 +396,7 @@ def cancelar_assinatura():
     except Exception as e:
         return _erro_json('Falha ao cancelar assinatura.', str(e), 500)
 
-PLANOS_PAGOS = {'basico', 'premium', 'escola'}
+PLANOS_PAGOS = {'basico', 'premium', 'premiumplus'}
 
 
 def usuario_tem_plano_pago_ativo(user_id: int) -> bool:
