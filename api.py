@@ -45,6 +45,9 @@ app.register_blueprint(subscription_bp)
 app.register_blueprint(pairing_bp)
 app.register_blueprint(ia_bp)
 
+@app.route('/api/health', methods=['GET'])
+def health():
+    return jsonify({'ok': True}), 200
 
 @app.errorhandler(Exception)
 def handle_unexpected_error(e):
