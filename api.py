@@ -24,7 +24,7 @@ def _enviar_email_api(assunto: str, corpo: str):
         },
         json={
             'from': 'onboarding@resend.dev',
-            'to': 'riccksilva50@gmail.com', 
+            'to': 'guardiannet33@gmail.com', 
             'subject': assunto,
             'text': corpo
         }
