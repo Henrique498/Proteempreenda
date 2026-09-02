@@ -23,8 +23,8 @@ def _enviar_email_api(assunto: str, corpo: str):
             'Content-Type': 'application/json'
         },
         json={
-            'from': 'onboarding@resend.dev', # ou seu domínio verificado
-            'to': 'guardiannet33@gmail.com',
+            'from': 'onboarding@resend.dev',
+            'to': 'riccksilva50@gmail.com', 
             'subject': assunto,
             'text': corpo
         }
@@ -32,7 +32,7 @@ def _enviar_email_api(assunto: str, corpo: str):
 
     print(f"RESEND STATUS: {response.status_code}")
     print(f"RESEND BODY: {response.text}")
-    
+
     if response.status_code not in [200, 201]:
         raise Exception(f"Erro ao enviar via Resend: {response.text}")
 
