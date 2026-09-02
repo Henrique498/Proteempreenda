@@ -85,8 +85,9 @@ def analisar_mensagem():
 
     if modelo_river is not None:
         try:
-            texto_en = _traduzir_se_necessario(texto)
-            probas = modelo_river.predict_proba_one(texto_en.lower())
+            #texto_en = _traduzir_se_necessario(texto)
+            #probas = modelo_river.predict_proba_one(texto_en.lower())
+            probas = modelo_river.predict_proba_one(texto.lower())
             prob_predador = float(probas.get(True, 0.0))
             modelo_nome = 'River-MultinomialNB (com Tradução PT->EN)'
         except Exception as e:
