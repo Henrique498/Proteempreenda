@@ -128,6 +128,7 @@ def receber_feedback():
         _enviar_email_smtp(f"Feedback GuardianNet - {topic}", corpo)
         return jsonify({'ok': True, 'mensagem': 'Feedback enviado com sucesso!'}), 200
     except Exception as e:
+        print(f"ERRO NO SMTP: {str(e)}") # Adicione esta linha para ver o detalhe no log
         return _api_error('Falha ao enviar e-mail de feedback.', e)
 
 
