@@ -11,6 +11,30 @@ from pairing import pairing_bp
 import os
 import secrets
 from ia.ia_service import ia_bp
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+def _enviar_email_smtp(assunto: str, corpo: str):
+    servidor = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+    porta = int(os.getenv('MAIL_PORT', 587))
+    usuario = os.getenv('MAIL_USER', 'guardiannet33@gmail.com')
+    senha = os.getenv('MAIL_PASSWORD', '')
+
+    if not senha:
+        raise Exception("Credenciais de e-mail não configuradas no servidor.")
+
+    msg = MIMEMultipart()
+    msg['From'] = usuario
+    msg['To'] = 'guardiannet33@gmail.com'
+    msg['Subject'] = assunto
+
+    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))
+
+    with smtplib.SMTP(servidor, porta) as server:
+        server.starttls()
+        server.login(usuario, senha)
+        server.send_message(msg)
 
 
 
@@ -80,6 +104,31 @@ def _is_admin_request() -> bool:
     if not ADMIN_API_KEY:
         return False
     return request.headers.get('X-Admin-Key', '') == ADMIN_API_KEY
+
+# ── POST /api/feedback ────────────────────────────────────────
+@app.route('/api/feedback', methods=['POST'])
+def receber_feedback():
+    data = request.get_json(silent=True) or {}
+    rating = data.get('rating')
+    topic = (data.get('topic') or 'Geral').strip()
+    message = (data.get('message') or '').strip()
+
+    if not rating or not message:
+        return jsonify({'error': 'Avaliação e mensagem são obrigatórias.'}), 400
+
+    estrelas = '★' * int(rating) + '☆' * (5 - int(rating))
+    corpo = (
+        f"Novo Feedback Recebido no GuardianNet:\n\n"
+        f"Avaliação: {estrelas} ({rating} de 5)\n"
+        f"Tópico: {topic}\n\n"
+        f"Mensagem:\n{message}"
+    )
+
+    try:
+        _enviar_email_smtp(f"Feedback GuardianNet - {topic}", corpo)
+        return jsonify({'ok': True, 'mensagem': 'Feedback enviado com sucesso!'}), 200
+    except Exception as e:
+        return _api_error('Falha ao enviar e-mail de feedback.', e)
 
 
 def _validar_plano_payload(data):
