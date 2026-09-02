@@ -29,6 +29,10 @@ def _enviar_email_api(assunto: str, corpo: str):
             'text': corpo
         }
     )
+
+    print(f"RESEND STATUS: {response.status_code}")
+    print(f"RESEND BODY: {response.text}")
+    
     if response.status_code not in [200, 201]:
         raise Exception(f"Erro ao enviar via Resend: {response.text}")
 
@@ -114,6 +118,7 @@ def receber_feedback():
         _enviar_email_api(f"Feedback GuardianNet - {topic}", corpo)
         return jsonify({'ok': True, 'mensagem': 'Feedback enviado com sucesso!'}), 200
     except Exception as e:
+        print(f"ERRO CRTICO FEEDBACK: {str(e)}") # Mostra o erro exato no log
         return _api_error('Falha ao enviar e-mail de feedback.', e)
 
 
