@@ -11,30 +11,26 @@ from pairing import pairing_bp
 import os
 import secrets
 from ia.ia_service import ia_bp
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 
-def _enviar_email_smtp(assunto: str, corpo: str):
-    servidor = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-    porta = int(os.getenv('MAIL_PORT', 587))
-    usuario = os.getenv('MAIL_USER', 'guardiannet33@gmail.com')
-    senha = os.getenv('MAIL_PASSWORD', '')
-
-    if not senha:
-        raise Exception("Credenciais de e-mail não configuradas no servidor.")
-
-    msg = MIMEMultipart()
-    msg['From'] = usuario
-    msg['To'] = 'guardiannet33@gmail.com'
-    msg['Subject'] = assunto
-
-    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))
-
-    with smtplib.SMTP(servidor, porta) as server:
-        server.starttls()
-        server.login(usuario, senha)
-        server.send_message(msg)
+def _enviar_email_api(assunto: str, corpo: str):
+    resend_api_key = os.getenv('RESEND_API_KEY')
+    
+    response = requests.post(
+        'https://api.resend.com/emails',
+        headers={
+            'Authorization': f'Bearer {resend_api_key}',
+            'Content-Type': 'application/json'
+        },
+        json={
+            'from': 'onboarding@resend.dev', # ou seu domínio verificado
+            'to': 'guardiannet33@gmail.com',
+            'subject': assunto,
+            'text': corpo
+        }
+    )
+    if response.status_code not in [200, 201]:
+        raise Exception(f"Erro ao enviar via Resend: {response.text}")
 
 
 
@@ -96,16 +92,6 @@ def apply_security_headers(response):
     response.headers['Cache-Control'] = 'no-store'
     return response
 
-
-ADMIN_API_KEY = os.getenv('ADMIN_API_KEY', '').strip()
-
-
-def _is_admin_request() -> bool:
-    if not ADMIN_API_KEY:
-        return False
-    return request.headers.get('X-Admin-Key', '') == ADMIN_API_KEY
-
-# ── POST /api/feedback ────────────────────────────────────────
 @app.route('/api/feedback', methods=['POST'])
 def receber_feedback():
     data = request.get_json(silent=True) or {}
@@ -125,11 +111,19 @@ def receber_feedback():
     )
 
     try:
-        _enviar_email_smtp(f"Feedback GuardianNet - {topic}", corpo)
+        _enviar_email_api(f"Feedback GuardianNet - {topic}", corpo)
         return jsonify({'ok': True, 'mensagem': 'Feedback enviado com sucesso!'}), 200
     except Exception as e:
-        print(f"ERRO NO SMTP: {str(e)}") # Adicione esta linha para ver o detalhe no log
         return _api_error('Falha ao enviar e-mail de feedback.', e)
+
+
+ADMIN_API_KEY = os.getenv('ADMIN_API_KEY', '').strip()
+
+
+def _is_admin_request() -> bool:
+    if not ADMIN_API_KEY:
+        return False
+    return request.headers.get('X-Admin-Key', '') == ADMIN_API_KEY
 
 
 def _validar_plano_payload(data):
