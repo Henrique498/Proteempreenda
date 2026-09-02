@@ -91,6 +91,8 @@ def analisar_mensagem():
             prob_predador = float(probas.get(True, 0.0))
             modelo_nome = 'River-MultinomialNB (com Tradução PT->EN)'
         except Exception as e:
+            print(f"!!! ERRO NA ANALISE IA: {str(e)}")
+            import traceback; traceback.print_exc()
             return jsonify({'error': f'Falha ao processar texto na IA: {str(e)}'}), 500
 
     nivel_ia = _nivel_river(prob_predador)
