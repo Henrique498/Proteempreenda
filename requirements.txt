@@ -11,6 +11,12 @@
 # feito com uma versão antiga do Pipeline, incompatível com a nova).
 # Fixar todas as versões garante builds reprodutíveis: o que funciona
 # hoje continua funcionando amanhã, até você decidir atualizar de propósito.
+#
+# deep-translator REMOVIDO: o modelo (treinar_pan12.py) foi treinado
+# direto em PT-BR, sem tradução. Traduzir o texto pra EN antes de
+# aprender/prever fazia o modelo tratar tudo como vocabulário
+# desconhecido — essa era a causa real do bug de aprendizado que não
+# "pegava". Ver ia_service.py atualizado.
 
 Flask==3.1.3
 Flask-Cors==6.0.5
@@ -18,5 +24,4 @@ psycopg2-binary==2.9.12
 python-dotenv==1.2.3
 Werkzeug==3.1.8
 gunicorn==26.2.0
-deep-translator==1.11.4
 river==0.26.1

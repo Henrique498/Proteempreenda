@@ -1,7 +1,6 @@
 import os
 import pickle
 from flask import Blueprint, request, jsonify, g
-from deep_translator import GoogleTranslator
 
 from auth import require_auth
 from subscription import usuario_tem_plano_pago_ativo
@@ -89,15 +88,6 @@ def _nivel_river(prob_predador: float) -> str:
     return "seguro"
 
 
-def _traduzir_se_necessario(texto: str) -> str:
-    try:
-        traducao = GoogleTranslator(source="auto", target="en").translate(texto)
-        return traducao if traducao else texto
-    except Exception as e:
-        print(f"Aviso de tradução: {e}. Usando texto original.")
-        return texto
-
-
 # ── Testar mensagem — precisa estar logado, mas NÃO precisa de plano pago ──
 @ia_bp.route("/api/ia/analisar", methods=["POST"])
 @require_auth
@@ -115,11 +105,13 @@ def analisar_mensagem():
 
     if modelo_river is not None:
         try:
-            # texto_en = _traduzir_se_necessario(texto)
-            # probas = modelo_river.predict_proba_one(texto_en.lower())
+            # O modelo foi treinado direto em PT-BR (corpus pan12-br-*, ver
+            # treinar_pan12.py) — sem nenhuma tradução. Prever em EN faz o
+            # modelo tratar o texto como vocabulário desconhecido e cai pra
+            # "seguro" independente do conteúdo real. NÃO traduzir aqui.
             probas = modelo_river.predict_proba_one(texto.lower())
             prob_predador = float(probas.get(True, 0.0))
-            modelo_nome = "River-MultinomialNB (com Tradução PT->EN)"
+            modelo_nome = "River-MultinomialNB (PT-BR direto, sem tradução)"
         except Exception as e:
             print(f"!!! ERRO NA ANALISE IA: {str(e)}")
             import traceback
@@ -187,8 +179,11 @@ def aprender_mensagem():
         return jsonify({"error": "Modelo de IA não carregado."}), 500
 
     try:
-        texto_en = _traduzir_se_necessario(texto).lower()
-        modelo_river.learn_one(texto_en, bool(is_predator))
+        # Mesma regra do analisar_mensagem: sem tradução. O modelo (River +
+        # BagOfWords) foi treinado direto em PT-BR — aprender em EN criava
+        # um vocabulário isolado que o predict (em PT) nunca alcançava.
+        texto_proc = texto.lower()
+        modelo_river.learn_one(texto_proc, bool(is_predator))
 
         # Persiste no Supabase — sobrevive a redeploy do Render.
         salvar_modelo_no_banco(modelo_river)
@@ -198,7 +193,7 @@ def aprender_mensagem():
                 {
                     "sucesso": True,
                     "mensagem": "Novo aprendizado incorporado e salvo no banco com sucesso!",
-                    "texto_processado": texto_en,
+                    "texto_processado": texto_proc,
                     "is_predator": bool(is_predator),
                 }
             ),
