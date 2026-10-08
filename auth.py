@@ -103,9 +103,9 @@ def _buscar_usuario_por_id(user_id: int):
         conn.close()
 
 
-def _emitir_token(user_id: int) -> str:
+def _emitir_token(user_id: int, ttl_horas: int = TOKEN_TTL_HORAS) -> str:
     token = _gerar_token()
-    expira_em = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=TOKEN_TTL_HORAS)
+    expira_em = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=ttl_horas)
 
     conn = get_connection()
     try:

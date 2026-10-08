@@ -1,7 +1,7 @@
 # pairing.py — GuardianNet
 # Fluxo de pareamento responsável -> criança via código curto de 6 dígitos
 
-import random
+import secrets
 import string
 from datetime import datetime, timedelta, timezone
 
@@ -13,10 +13,15 @@ from conexao import get_connection
 pairing_bp = Blueprint('pairing', __name__, url_prefix='/api/pairing')
 
 CODIGO_TTL_MINUTOS = 10
+CRIANCA_TOKEN_TTL_HORAS = 24 * 30   # monitoramento não pode parar a cada 24h
 
 
 def _gerar_codigo() -> str:
-    return ''.join(random.choices(string.digits, k=6))
+    return ''.join(secrets.choice(string.digits) for _ in range(6))
+
+
+def _agora():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 @pairing_bp.post('/generate')
@@ -32,6 +37,8 @@ def gerar_codigo():
         if not row or (row[0] or '').lower() not in ('usuario', 'admin'):
             return jsonify({'error': 'Apenas responsáveis podem gerar código de pareamento.'}), 403
 
+        agora = _agora()
+
         # Invalida códigos antigos não usados desse responsável
         cur.execute(
             """
@@ -42,9 +49,24 @@ def gerar_codigo():
             (g.user_id,),
         )
 
-        codigo = _gerar_codigo()
-        expira_em = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=CODIGO_TTL_MINUTOS)
+        # Garante que nenhum outro código ATIVO tenha o mesmo número
+        codigo = None
+        for _ in range(10):
+            candidato = _gerar_codigo()
+            cur.execute(
+                """
+                SELECT 1 FROM codigos_pareamento
+                WHERE codigo = %s AND usado = FALSE AND expira_em > %s
+                """,
+                (candidato, agora),
+            )
+            if not cur.fetchone():
+                codigo = candidato
+                break
+        if codigo is None:
+            return jsonify({'error': 'Não foi possível gerar o código agora. Tente de novo.'}), 503
 
+        expira_em = agora + timedelta(minutes=CODIGO_TTL_MINUTOS)
         cur.execute(
             """
             INSERT INTO codigos_pareamento (responsavel_id, codigo, expira_em, usado)
@@ -80,43 +102,46 @@ def resgatar_codigo():
     conn = get_connection()
     try:
         cur = conn.cursor()
-        agora = datetime.now(timezone.utc).replace(tzinfo=None)
 
+        # Resgate atômico: quem queimar o código primeiro ganha, o outro recebe 404.
         cur.execute(
             """
-            SELECT id, responsavel_id
-            FROM codigos_pareamento
-            WHERE codigo = %s AND usado = FALSE AND expira_em > %s
-            ORDER BY id DESC LIMIT 1
+            UPDATE codigos_pareamento
+            SET usado = TRUE
+            WHERE id = (
+                SELECT id FROM codigos_pareamento
+                WHERE codigo = %s AND usado = FALSE AND expira_em > %s
+                ORDER BY id DESC LIMIT 1
+                FOR UPDATE
+            )
+            RETURNING responsavel_id
             """,
-            (codigo, agora),
+            (codigo, _agora()),
         )
         row = cur.fetchone()
         if not row:
+            conn.rollback()
             return jsonify({'error': 'Código inválido ou expirado. Peça um novo código ao responsável.'}), 404
 
-        pareamento_id, responsavel_id = row
+        responsavel_id = row[0]
 
         cur.execute("SELECT nome FROM usuarios WHERE id = %s", (responsavel_id,))
         resp_row = cur.fetchone()
         nome_responsavel = resp_row[0] if resp_row else 'Responsável'
 
-        # Cria a conta da criança vinculada ao responsável.
-        # Sem senha própria — o único jeito de entrar é via novo código do responsável.
+        # Conta da criança: tipo 'crianca', sem senha. Só entra via novo código.
         cur.execute(
             """
             INSERT INTO usuarios (nome, email, senha_hash, telefone, tipo, responsavel_id, ativo)
-            VALUES (%s, NULL, NULL, NULL, 'usuario', %s, TRUE)
+            VALUES (%s, NULL, NULL, NULL, 'crianca', %s, TRUE)
             RETURNING id
             """,
             (nome, responsavel_id),
         )
         crianca_id = cur.fetchone()[0]
-
-        cur.execute("UPDATE codigos_pareamento SET usado = TRUE WHERE id = %s", (pareamento_id,))
         conn.commit()
 
-        token = _emitir_token(crianca_id)
+        token = _emitir_token(crianca_id, ttl_horas=CRIANCA_TOKEN_TTL_HORAS)
 
         return jsonify({
             'ok': True,

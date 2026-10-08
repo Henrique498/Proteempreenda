@@ -4,6 +4,10 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+
+load_dotenv()
+
+
 from conexao import executar
 from auth import auth_bp, require_auth
 from subscription import subscription_bp
@@ -12,6 +16,9 @@ import os
 import secrets
 from ia.ia_service import ia_bp
 import requests
+
+
+ # Registra o Blueprint da IA
 
 def _enviar_email_api(assunto: str, corpo: str):
     resend_api_key = os.getenv('RESEND_API_KEY')
@@ -38,11 +45,12 @@ def _enviar_email_api(assunto: str, corpo: str):
 
 
 
-load_dotenv()
+
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
 
+app.register_blueprint(ia_bp) 
 
 def _as_bool(value: str, default: bool = False) -> bool:
     if value is None:
