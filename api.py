@@ -50,7 +50,7 @@ def _enviar_email_api(assunto: str, corpo: str):
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
 
-app.register_blueprint(ia_bp) 
+
 
 def _as_bool(value: str, default: bool = False) -> bool:
     if value is None:
