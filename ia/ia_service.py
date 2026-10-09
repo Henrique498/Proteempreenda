@@ -118,12 +118,11 @@ _ORDEM_RISCO = {"seguro": 0, "atencao": 1, "perigo": 2}
 
 
 def _nivel_river(prob_predador: float) -> str:
-    if prob_predador >= 0.75:
+    if prob_predador >= 0.90:
         return "perigo"
-    if prob_predador >= 0.45:
+    if prob_predador >= 0.60:
         return "atencao"
     return "seguro"
-
 
 # ── Analisar (login obrigatório, plano pago NÃO) ──────────────
 @ia_bp.route("/api/ia/analisar", methods=["POST"])
@@ -165,12 +164,13 @@ def analisar_mensagem():
 
     nivel_ia = _nivel_river(prob_predador)
 
-    if (resultado_detector["pontuacao"] == 0
-            and nivel_ia == "atencao" and prob_predador < 0.65):
-        nivel_final = "seguro"
+    nivel_det = resultado_detector["nivel"]
+    if nivel_det == "perigo":
+        nivel_final = "perigo"      # palavras fortes de aliciamento bastam
+    elif nivel_ia == "perigo" and nivel_det == "seguro":
+        nivel_final = "atencao"     # só o modelo desconfiou: no máximo atenção
     else:
-        nivel_final = max(resultado_detector["nivel"], nivel_ia,
-                          key=lambda n: _ORDEM_RISCO[n])
+        nivel_final = max(nivel_det, nivel_ia, key=lambda n: _ORDEM_RISCO[n])
 
     return jsonify({
         "nivel": nivel_final,
