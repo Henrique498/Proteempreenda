@@ -31,17 +31,17 @@ CATEGORIAS_RISCO = {
             'apaga a conversa', 'apaga essa conversa', 'apaga as mensagens',
             'deleta as mensagens', 'limpa o chat', 'destroi a mensagem',
             'pra ninguem ver', 'ninguem vai entender', 'so entre nos',
-            'guarda segredo', 'outro app',
+            'guarda segredo',
         ],
-        'fracos': ['apaga', 'apague', 'deleta', 'esconde'],
+        'fracos': ['apaga', 'apague', 'deleta', 'esconde', 'outro app'],
     },
     'encontro_pessoal': {
         'fortes': [
             'vamos nos encontrar', 'te ver pessoalmente', 'te busco na escola',
             'vou ai te buscar', 'marca um lugar', 'posso ir ai',
-            'sozinha em casa', 'sozinho em casa', 'seu endereco',
         ],
-        'fracos': ['onde voce mora', 'qual sua escola'],
+        'fracos': ['onde voce mora', 'qual sua escola', 'sozinha em casa',
+                   'sozinho em casa', 'seu endereco'],
     },
     'conteudo_impropio': {
         'fortes': [

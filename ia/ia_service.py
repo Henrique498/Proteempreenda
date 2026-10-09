@@ -10,13 +10,15 @@ from flask import Blueprint, request, jsonify, g
 from auth import require_auth
 from conexao import get_connection, executar
 from subscription import usuario_tem_plano_pago_ativo
+from .decisao import decidir
 from .detector import analisar_texto
 from .model_store import carregar_modelo_do_banco, salvar_modelo_no_banco
+from .normalizacao import normalizar_texto
 
 ia_bp = Blueprint("ia", __name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "modelo_river.pkl")  # semente inicial
+MODEL_PATH = os.path.join(BASE_DIR, "modelo_river.pkl")  # semente inicial (só se o banco estiver vazio)
 
 FEEDBACK_PESO = 3          # quantas vezes cada feedback é aprendido
 SYNC_INTERVALO = 2.0       # s entre checagens de feedback novo (outros workers)
@@ -30,12 +32,10 @@ _overrides = {}            # texto_hash -> bool (feedback mais recente)
 
 
 # ── Utilidades ────────────────────────────────────────────────
-def _normalizar(texto: str) -> str:
-    return re.sub(r"\s+", " ", texto.strip().lower())
-
-
 def _hash(texto: str) -> str:
-    return hashlib.sha256(_normalizar(texto).encode("utf-8")).hexdigest()
+    # NÃO mude esta função: os hashes já gravados em feedback_ia dependem dela.
+    base = re.sub(r"\s+", " ", texto.strip().lower())
+    return hashlib.sha256(base.encode("utf-8")).hexdigest()
 
 
 def _revalidar_plano_pipeline(modelo):
@@ -64,7 +64,7 @@ def carregar_modelo():
             with open(MODEL_PATH, "rb") as f:
                 modelo_river = pickle.load(f)
             _revalidar_plano_pipeline(modelo_river)
-            salvar_modelo_no_banco(modelo_river)  # semente, só na 1ª vez
+            salvar_modelo_no_banco(modelo_river)
             print("Modelo local carregado e salvo como base no banco.")
         except Exception as e:
             print(f"Erro ao carregar o modelo local: {e}")
@@ -81,8 +81,8 @@ def carregar_modelo():
 def _aplicar_feedback(row: dict):
     global _ultimo_feedback_id
     label = bool(row["is_predator"])
-    texto_proc = row["texto"].lower()
-    if modelo_river is not None:
+    texto_proc = normalizar_texto(row["texto"])
+    if modelo_river is not None and texto_proc:
         for _ in range(FEEDBACK_PESO):
             modelo_river.learn_one(texto_proc, label)
     _overrides[row["texto_hash"].strip()] = label
@@ -114,15 +114,6 @@ def _sincronizar_feedback(force: bool = False):
 
 carregar_modelo()
 
-_ORDEM_RISCO = {"seguro": 0, "atencao": 1, "perigo": 2}
-
-
-def _nivel_river(prob_predador: float) -> str:
-    if prob_predador >= 0.90:
-        return "perigo"
-    if prob_predador >= 0.60:
-        return "atencao"
-    return "seguro"
 
 # ── Analisar (login obrigatório, plano pago NÃO) ──────────────
 @ia_bp.route("/api/ia/analisar", methods=["POST"])
@@ -148,29 +139,22 @@ def analisar_mensagem():
             "modelo": "Feedback confirmado pelo responsável",
         }), 200
 
-    resultado_detector = analisar_texto(texto)
+    texto_n = normalizar_texto(texto)
+    resultado_detector = analisar_texto(texto_n)
     prob_predador = 0.0
     modelo_nome = "Sem modelo carregado"
 
     if modelo_river is not None:
         try:
             with _lock:
-                probas = modelo_river.predict_proba_one(texto.lower())
+                probas = modelo_river.predict_proba_one(texto_n)
             prob_predador = float(probas.get(True, 0.0))
             modelo_nome = "River-MultinomialNB (PT-BR direto, sem tradução)"
         except Exception as e:
             print(f"!!! ERRO NA ANALISE IA: {e}")
             return jsonify({"error": f"Falha ao processar texto na IA: {e}"}), 500
 
-    nivel_ia = _nivel_river(prob_predador)
-
-    nivel_det = resultado_detector["nivel"]
-    if nivel_det == "perigo":
-        nivel_final = "perigo"      # palavras fortes de aliciamento bastam
-    elif nivel_ia == "perigo" and nivel_det == "seguro":
-        nivel_final = "atencao"     # só o modelo desconfiou: no máximo atenção
-    else:
-        nivel_final = max(nivel_det, nivel_ia, key=lambda n: _ORDEM_RISCO[n])
+    nivel_final = decidir(resultado_detector["nivel"], prob_predador)
 
     return jsonify({
         "nivel": nivel_final,

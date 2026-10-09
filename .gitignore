@@ -41,3 +41,5 @@ __pycache__/
 *.pyc
 
 __pycache__/
+
+ia/exemplos_feedback.json
