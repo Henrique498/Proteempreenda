@@ -1,83 +1,48 @@
 import os
-import xml.etree.ElementTree as ET
 import pickle
 import random
+import xml.etree.ElementTree as ET
+
 from river import feature_extraction, naive_bayes
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+from exemplos_curados import NORMAL, RISCO
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 XML_PATH = os.path.join(BASE_DIR, "pan12-br-all-isys-conversation-corpus.xml")
 MODEL_OUTPUT = os.path.join(BASE_DIR, "modelo_river.pkl")
 
 
 def treinar():
-    if not os.path.exists(XML_PATH):
-        print(f"❌ Arquivo XML não encontrado em: {XML_PATH}")
-        return
-
-    # 1. Procura automaticamente qualquer arquivo .txt de predadores na pasta ia/
     predadores = set()
-    txt_encontrados = 0
-
     for file in os.listdir(BASE_DIR):
         if file.endswith(".txt") and "predator" in file.lower():
-            txt_path = os.path.join(BASE_DIR, file)
-            txt_encontrados += 1
-            print(f"📄 Lendo arquivo de IDs: {file}")
-            with open(txt_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    p_id = line.strip()
-                    if p_id:
-                        predadores.add(p_id)
+            with open(os.path.join(BASE_DIR, file), "r", encoding="utf-8") as f:
+                predadores |= {l.strip() for l in f if l.strip()}
+    print(f"IDs de predadores: {len(predadores)}")
 
-    if txt_encontrados == 0:
-        print(f"❌ Erro: Nenhum arquivo .txt de predadores foi encontrado na pasta: {BASE_DIR}")
-        print("👉 Verifique se o arquivo .txt está salvo DENTRO da pasta 'ia/'.")
-        return
+    pos, neg = [], []
+    for msg in ET.parse(XML_PATH).getroot().findall(".//message"):
+        author, text = msg.find("author"), msg.find("text")
+        if text is None or not text.text:
+            continue
+        aid = author.text.strip() if author is not None and author.text else ""
+        (pos if aid in predadores else neg).append(text.text.strip().lower())
 
-    print(f"👥 Total de IDs de predadores mapeados: {len(predadores)}")
-    print("📦 Lendo e processando o arquivo XML PT-BR...")
+    # MUDANÇA PRINCIPAL: usa TODAS as mensagens normais (antes só 4%).
+    # Assim o modelo aprende que "oi", "escola", "pais" etc. são conversa comum.
+    dados = [(t, True) for t in pos] + [(t, False) for t in neg]
+    dados += [(t.lower(), True) for t in RISCO] + [(t.lower(), False) for t in NORMAL]
+    random.seed(42)
+    random.shuffle(dados)
 
     pipeline = feature_extraction.BagOfWords(ngram_range=(1, 2)) | naive_bayes.MultinomialNB(alpha=1.0)
+    for texto, rotulo in dados:
+        pipeline.learn_one(texto, rotulo)
 
-    tree = ET.parse(XML_PATH)
-    root = tree.getroot()
-
-    total_predadores = 0
-    total_normais = 0
-
-    random.seed(42)
-
-    # 2. Varre as mensagens dentro da estrutura XML
-    for msg in root.findall('.//message'):
-        author = msg.find('author')
-        text = msg.find('text')
-
-        if text is not None and text.text:
-            mensagem_texto = text.text.strip().lower()
-            author_id = author.text.strip() if author is not None and author.text else ""
-
-            # Verifica se o autor é predador
-            is_predator = author_id in predadores
-
-            if is_predator:
-                pipeline.learn_one(mensagem_texto, True)
-                total_predadores += 1
-            else:
-                # Amostragem para manter as classes balanceadas (~1:1)
-                if random.random() < 0.04:
-                    pipeline.learn_one(mensagem_texto, False)
-                    total_normais += 1
-
-    print("\n✅ Treinamento em Português concluído!")
-    print(f"📊 Mensagens suspeitas processadas (PT-BR): {total_predadores}")
-    print(f"📊 Mensagens normais processadas (PT-BR): {total_normais}")
-
-    # 3. Salva o novo modelo em Português
+    print(f"Risco: {len(pos)} + {len(RISCO)} curados | Normal: {len(neg)} + {len(NORMAL)} curados")
     with open(MODEL_OUTPUT, "wb") as f:
         pickle.dump(pipeline, f)
-
-    print(f"💾 Modelo salvo com sucesso em: {MODEL_OUTPUT}")
+    print(f"Modelo salvo em {MODEL_OUTPUT}")
 
 
 if __name__ == "__main__":
